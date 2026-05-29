@@ -466,29 +466,37 @@ const COMBOS_3 = [
 // ===== 数字生成 =====
 function generateNumbers(categories) {
   const numbers = [];
+  const usedDisplays = new Set();
+
   const pool = {
-    '正数': () => randomFrom([randPosInt, randPosFrac, () => ({ display: '\\pi', value: Math.PI, cat: '正数' })]),
-    '负数': () => randomFrom([randNegInt, randNegFrac]),
-    '整数': () => randomFrom([randPosInt, randNegInt, () => ({ display: '0', value: 0, cat: '整数' })]),
-    '分数': () => randomFrom([randPosFrac, randNegFrac]),
-    '有理数': () => randomFrom([randPosInt, randNegInt, randPosFrac, randNegFrac, () => ({ display: '0', value: 0, cat: '有理数' })]),
-    '无理数': () => randomFrom([randIrrational]),
-    '非负整数': () => randomFrom([randPosInt, () => ({ display: '0', value: 0, cat: '非负整数' })]),
-    '非正整数': () => randomFrom([randNegInt, () => ({ display: '0', value: 0, cat: '非正整数' })]),
-    '正整数': () => randPosInt(),
-    '负整数': () => randNegInt(),
-    '正分数': () => randPosFrac(),
-    '负分数': () => randNegFrac()
+    '正数': [randPosInt, randPosFrac, () => ({ display: '\\pi', value: Math.PI })],
+    '负数': [randNegInt, randNegFrac],
+    '整数': [randPosInt, randNegInt, () => ({ display: '0', value: 0 })],
+    '分数': [randPosFrac, randNegFrac],
+    '有理数': [randPosInt, randNegInt, randPosFrac, randNegFrac, () => ({ display: '0', value: 0 })],
+    '无理数': [randIrrational],
+    '非负整数': [randPosInt, () => ({ display: '0', value: 0 })],
+    '非正整数': [randNegInt, () => ({ display: '0', value: 0 })],
+    '正整数': [randPosInt],
+    '负整数': [randNegInt],
+    '正分数': [randPosFrac],
+    '负分数': [randNegFrac]
   };
 
   categories.forEach(cat => {
     const count = categories.length === 2 ? randBetween(3, 4) : randBetween(2, 3);
-    for (let i = 0; i < count; i++) {
-      const gen = pool[cat];
-      if (gen) {
-        const num = gen();
+    const generators = pool[cat];
+    let attempts = 0;
+    let generated = 0;
+    while (generated < count && attempts < 50) {
+      attempts++;
+      const gen = generators[randBetween(0, generators.length - 1)];
+      const num = gen();
+      if (!usedDisplays.has(num.display)) {
+        usedDisplays.add(num.display);
         num.cat = cat;
         numbers.push(num);
+        generated++;
       }
     }
   });
@@ -739,6 +747,15 @@ function getDropTarget(x, y) {
   return null;
 }
 
+// 0 既属于非负整数也属于非正整数
+function isZeroSpecialCase(card, slotCat) {
+  const idx = parseInt(card.dataset.idx);
+  const num = state.numbers[idx];
+  if (num.display !== '0') return false;
+  const zeroCats = ['非负整数', '非正整数', '整数', '有理数'];
+  return zeroCats.includes(slotCat);
+}
+
 // ===== 处理放置 =====
 function handleDrop(card, slot) {
   const cardCat = card.dataset.cat;
@@ -746,7 +763,9 @@ function handleDrop(card, slot) {
   const animalIdx = parseInt(slot.dataset.idx);
   const emojiEl = document.getElementById('animal-' + animalIdx);
 
-  if (cardCat === slotCat) {
+  const isCorrect = cardCat === slotCat || isZeroSpecialCase(card, slotCat);
+
+  if (isCorrect) {
     // 正确：数字消失
     card.classList.add('consumed');
     state.score += 10 + state.combo * 2;
