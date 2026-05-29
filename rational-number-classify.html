@@ -117,8 +117,7 @@ body {
   transform: scale(0) rotate(180deg);
   opacity: 0;
 }
-.score { font-size: 1.2em; }
-.combo { font-size: 1em; color: #ffd700; margin-left: 10px; }
+.combo { font-size: 1.2em; color: #ffd700; }
 
 /* 动物区域 */
 .animals-zone {
@@ -297,29 +296,119 @@ body {
 
 /* 图鉴页 */
 #album-page { display: none; height: 100vh; color: #fff; overflow-y: auto; }
-#album-page h2 {
-  text-align: center;
-  padding: 20px;
-  font-size: 1.8em;
+.album-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 20px;
 }
+.album-header h2 { font-size: 1.5em; }
 .album-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 15px;
+  gap: 12px;
   padding: 0 20px 20px;
 }
 .album-card {
   background: rgba(255,255,255,0.1);
   border-radius: 15px;
-  padding: 20px;
+  padding: 15px 10px;
   text-align: center;
   transition: transform 0.2s;
+  cursor: pointer;
 }
+.album-card:hover { transform: scale(1.05); }
 .album-card.unlocked { background: rgba(255,255,255,0.2); }
 .album-card.locked { opacity: 0.5; }
 .album-card .emoji { font-size: 2.5em; }
+.album-card .album-animal-img { width: 60px; height: 60px; object-fit: contain; }
 .album-card .name { margin-top: 8px; font-size: 0.9em; }
-.album-card .costume { font-size: 0.8em; color: #ffd700; margin-top: 4px; }
+.album-grid .world-header {
+  grid-column: 1/-1;
+  font-size: 1.1em;
+  margin-top: 12px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.3);
+}
+
+/* 动物详情页 */
+#animal-detail { height: 100vh; color: #fff; overflow-y: auto; }
+.detail-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+.detail-carousel {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin: 20px 0;
+}
+.carousel-card {
+  width: 200px;
+  height: 200px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: transform 0.4s;
+}
+.carousel-card img {
+  width: 160px;
+  height: 160px;
+  object-fit: contain;
+}
+.carousel-card .carousel-mystery {
+  font-size: 4em;
+  opacity: 0.5;
+  display: none;
+}
+.carousel-card.mystery img { display: none; }
+.carousel-card.mystery .carousel-mystery { display: block; }
+.carousel-card.flipping { transform: rotateY(90deg); }
+.carousel-btn {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: #fff;
+  font-size: 2em;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.carousel-btn:hover { background: rgba(255,255,255,0.35); }
+.carousel-dots {
+  display: flex;
+  gap: 8px;
+  margin: 15px 0;
+}
+.carousel-dots .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+  transition: background 0.3s;
+}
+.carousel-dots .dot.active { background: #ffd700; }
+.carousel-label {
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-bottom: 15px;
+  min-height: 1.5em;
+}
+.detail-desc {
+  background: rgba(255,255,255,0.1);
+  border-radius: 15px;
+  padding: 20px;
+  max-width: 400px;
+  width: 100%;
+  line-height: 1.7;
+  font-size: 0.95em;
+}
 
 /* 结算页 */
 #result-page {
@@ -391,7 +480,7 @@ body {
   <div class="game-header">
     <button class="btn-back" onclick="showEntry()">←</button>
     <div class="hearts" id="hearts"></div>
-    <div><span class="score" id="score">0分</span><span class="combo" id="combo"></span></div>
+    <div><span class="combo" id="combo"></span></div>
   </div>
   <div class="animals-zone" id="animals-zone"></div>
   <div class="numbers-zone" id="numbers-zone"></div>
@@ -424,11 +513,34 @@ body {
 
 <!-- 图鉴页 -->
 <div id="album-page">
-  <h2>🏆 动物图鉴</h2>
+  <div class="album-header">
+    <button class="btn-back" onclick="showEntry()">←</button>
+    <h2>🏆 动物图鉴</h2>
+    <div style="width:40px;"></div>
+  </div>
   <div class="album-grid" id="album-grid"></div>
-  <p style="text-align:center; padding: 20px;">
-    <button class="btn btn-secondary" onclick="showEntry()">返回</button>
-  </p>
+</div>
+
+<!-- 动物详情页 -->
+<div id="animal-detail" style="display:none;">
+  <div class="album-header">
+    <button class="btn-back" onclick="showAlbum()">←</button>
+    <h2 id="detail-title"></h2>
+    <div style="width:40px;"></div>
+  </div>
+  <div class="detail-content">
+    <div class="detail-carousel">
+      <button class="carousel-btn carousel-left" onclick="carouselPrev()">‹</button>
+      <div class="carousel-card" id="carousel-card">
+        <img id="carousel-img" src="" alt="">
+        <div class="carousel-mystery">❓</div>
+      </div>
+      <button class="carousel-btn carousel-right" onclick="carouselNext()">›</button>
+    </div>
+    <div class="carousel-dots" id="carousel-dots"></div>
+    <div class="carousel-label" id="carousel-label"></div>
+    <div class="detail-desc" id="detail-desc"></div>
+  </div>
 </div>
 
 <!-- 结算页 -->
@@ -629,6 +741,7 @@ function saveSave(data) { localStorage.setItem('math-animal-save', JSON.stringif
 function showAlbum() {
   document.getElementById('entry-page').style.display = 'none';
   document.getElementById('guide-page').style.display = 'none';
+  document.getElementById('animal-detail').style.display = 'none';
   document.getElementById('album-page').style.display = 'block';
   renderAlbum();
 }
@@ -739,7 +852,6 @@ function updateHeader() {
     span.textContent = '❤️';
     heartsEl.appendChild(span);
   }
-  document.getElementById('score').textContent = state.score + '分';
   document.getElementById('combo').textContent = state.combo > 1 ? `${state.combo}连击!` : '';
 }
 
@@ -834,7 +946,6 @@ function handleDrop(card, slot) {
   if (isCorrect) {
     // 正确：数字消失
     card.classList.add('consumed');
-    state.score += 10 + state.combo * 2;
     state.combo++;
     if (state.combo > state.maxCombo) state.maxCombo = state.combo;
 
@@ -929,7 +1040,6 @@ function checkWin() {
       const resultPage = document.getElementById('result-page');
       document.getElementById('result-title').textContent = '🎉 全部完成！';
       document.getElementById('result-stats').innerHTML = `
-        得分：${state.score}<br>
         用时：${elapsed}秒<br>
         最高连击：${state.maxCombo}<br>
         剩余生命：${'❤️'.repeat(state.lives)}
@@ -946,13 +1056,46 @@ function retryGame() {
 }
 
 // ===== 图鉴 =====
+// ===== 动物介绍数据 =====
+const ANIMAL_DESC = {
+  dog: '金毛寻回犬，性格温顺友善，是人类最忠实的伙伴。它们聪明好学，喜欢和人一起玩耍，是最受欢迎的家庭犬之一。',
+  cat: '橘猫，圆润可爱，性格独立又亲人。它们白天喜欢晒太阳打盹，夜晚则化身灵活的小猎手。',
+  rabbit: '白兔，温柔胆小，有着柔软的毛发和标志性的长耳朵。它们喜欢安静的环境，爱吃胡萝卜和青草。',
+  fox: '赤狐，聪明机警，有着火红的皮毛和蓬松的大尾巴。它们是出色的猎手，在各种环境中都能生存。',
+  panda: '大熊猫，中国国宝，圆滚滚的身体配上经典的黑白配色。它们看似笨拙，实则身手敏捷，最爱啃竹子。',
+  unicorn: '独角兽，传说中的神秘生物，额头上有一只闪耀的金角。据说只有心地纯洁的人才能见到它。',
+  turtle: '小龟，行动缓慢但坚韧不拔，背着重重的壳也从不放弃。寿命很长，是长寿的象征。',
+  lizard: '蜥蜴，身手敏捷的爬行高手，能在墙壁上自由行走。遇到危险时会断尾逃生，过段时间尾巴还能长回来。',
+  croc: '鳄鱼，水中的霸主，拥有强大的咬合力。虽然看起来凶猛，但鳄鱼妈妈对宝宝非常温柔。',
+  snake: '蟒蛇，没有四肢却能灵活移动的神奇动物。它们用舌头感知周围环境，是天生的猎手。',
+  dino: '恐龙，远古时代的霸主，曾统治地球上亿年。虽然已经灭绝，但它们的故事永远令人着迷。',
+  dragon: '神龙，传说中最强大的爬行生物，能腾云驾雾、呼风唤雨。极其稀有，千载难逢。',
+  eagle: '雄鹰，天空之王，拥有锐利的目光和强健的翅膀。它们能在数千米高空发现地面上的猎物。',
+  parrot: '鹦鹉，色彩斑斓的聪明鸟类，能模仿人类说话。它们性格活泼，喜欢和人互动。',
+  owl: '猫头鹰，夜晚的守望者，能在黑暗中精准捕猎。它们的头可以旋转270度，是森林中的智者。',
+  bat: '蝙蝠，唯一能真正飞行的哺乳动物。它们用超声波导航，在夜空中自由翱翔。',
+  dove: '白鸽，和平的象征，有着纯白的羽毛和优雅的飞行姿态。它们方向感极强，能从千里之外找到回家的路。',
+  dodo: '渡渡鸟，已灭绝的传奇鸟类，曾生活在毛里求斯岛上。虽然不会飞，但它们的故事提醒我们珍惜每一个物种。',
+  puffer: '河豚，遇到危险会把自己鼓成一个圆球的可爱鱼类。虽然体内有毒素，但在日本是珍贵的美食。',
+  squid: '鱿鱼，海洋中的火箭，靠喷水推进快速移动。它们有三颗心脏和蓝色的血液，是海洋中的奇妙生物。',
+  octopus: '章鱼，拥有八条灵活触手的海洋智者。它们能变色伪装、开瓶盖、走迷宫，智商极高。',
+  shark: '鲨鱼，海洋中的顶级猎手，已在地球上生存了四亿年。它们的牙齿一生中会更换数万颗。',
+  whale: '蓝鲸，地球上最大的动物，心脏有一辆小汽车那么大。它们的歌声能传播数百公里。',
+  seadragon: '海龙王，传说中统治海洋的神秘生物，能掀起滔天巨浪。据说只在最深的海沟中才能一睹真容。'
+};
+
+const COSTUME_NAMES = { royal: '皇族形态', magic: '星空魔法', ice: '冰晶龙骑' };
+
+// ===== 图鉴 =====
+let carouselState = { items: [], currentIdx: 0, animalData: null, worldData: null };
+
 function renderAlbum() {
   const grid = document.getElementById('album-grid');
   const save = loadSave();
   grid.innerHTML = '';
   WORLDS.forEach(world => {
     const header = document.createElement('div');
-    header.style.cssText = 'grid-column: 1/-1; font-size:1.2em; margin-top:15px; padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.3);';
+    header.className = 'world-header';
     header.textContent = world.icon + ' ' + world.name;
     grid.appendChild(header);
 
@@ -960,15 +1103,108 @@ function renderAlbum() {
       const unlocked = save.unlocked[animal.id];
       const card = document.createElement('div');
       card.className = 'album-card ' + (unlocked ? 'unlocked' : 'locked');
-      const costumeText = unlocked ? unlocked.join('、') : (animal.hidden ? '??? (稀有)' : '未解锁');
+      card.onclick = () => showAnimalDetail(animal, world);
+
+      let visual;
+      if (unlocked && animal.img) {
+        visual = `<img class="album-animal-img" src="${IMG_BASE}${world.folder}/${animal.img}" alt="${animal.name}">`;
+      } else if (unlocked) {
+        visual = `<div class="emoji">${animal.emoji}</div>`;
+      } else {
+        visual = `<div class="emoji">❓</div>`;
+      }
+
       card.innerHTML = `
-        <div class="emoji">${unlocked ? animal.emoji : '❓'}</div>
+        ${visual}
         <div class="name">${unlocked ? animal.name : (animal.hidden ? '???' : animal.name)}</div>
-        <div class="costume">${costumeText}</div>
       `;
       grid.appendChild(card);
     });
   });
+}
+
+function showAnimalDetail(animal, world) {
+  const save = loadSave();
+  const unlocked = save.unlocked[animal.id] || [];
+
+  document.getElementById('album-page').style.display = 'none';
+  document.getElementById('animal-detail').style.display = 'block';
+  document.getElementById('detail-title').textContent = unlocked.length > 0 ? animal.name : '???';
+  document.getElementById('detail-desc').textContent = unlocked.length > 0 ? (ANIMAL_DESC[animal.id] || '一只神秘的动物...') : '尚未解锁，继续游戏来发现它吧！';
+
+  // 构建轮播项
+  const items = [];
+  // 普通态
+  if (animal.img) {
+    items.push({ type: 'img', src: IMG_BASE + world.folder + '/' + animal.img, label: '幼年形态', unlocked: unlocked.length > 0 });
+  } else {
+    items.push({ type: 'emoji', content: animal.emoji, label: '普通形态', unlocked: unlocked.length > 0 });
+  }
+  // 变装
+  if (animal.costumes) {
+    animal.costumes.forEach(file => {
+      const key = file.replace('.png', '').split('-').pop();
+      const label = COSTUME_NAMES[key] || key;
+      items.push({ type: 'img', src: IMG_BASE + world.folder + '/' + file, label: label, unlocked: unlocked.includes(key) });
+    });
+  }
+
+  carouselState = { items, currentIdx: 0, animalData: animal, worldData: world };
+  renderCarousel();
+}
+
+function renderCarousel() {
+  const { items, currentIdx } = carouselState;
+  const item = items[currentIdx];
+  const card = document.getElementById('carousel-card');
+  const img = document.getElementById('carousel-img');
+  const label = document.getElementById('carousel-label');
+  const dots = document.getElementById('carousel-dots');
+
+  if (item.unlocked) {
+    card.classList.remove('mystery');
+    if (item.type === 'img') {
+      img.src = item.src;
+      img.style.display = 'block';
+    } else {
+      img.style.display = 'none';
+      card.innerHTML = `<div style="font-size:5em;">${item.content}</div><div class="carousel-mystery" style="display:none;">❓</div>`;
+    }
+    label.textContent = item.label;
+  } else {
+    card.classList.add('mystery');
+    img.style.display = 'none';
+    label.textContent = '未收集';
+  }
+
+  // 圆点
+  dots.innerHTML = '';
+  items.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i === currentIdx ? ' active' : '');
+    dot.onclick = () => { carouselState.currentIdx = i; flipCarousel(); };
+    dots.appendChild(dot);
+  });
+}
+
+function flipCarousel() {
+  const card = document.getElementById('carousel-card');
+  card.classList.add('flipping');
+  setTimeout(() => {
+    renderCarousel();
+    card.classList.remove('flipping');
+  }, 200);
+}
+
+function carouselPrev() {
+  const { items } = carouselState;
+  carouselState.currentIdx = (carouselState.currentIdx - 1 + items.length) % items.length;
+  flipCarousel();
+}
+function carouselNext() {
+  const { items } = carouselState;
+  carouselState.currentIdx = (carouselState.currentIdx + 1) % items.length;
+  flipCarousel();
 }
 
 // 初始化
@@ -992,6 +1228,7 @@ function showEntry() {
   document.getElementById('game-page').style.display = 'none';
   document.getElementById('album-page').style.display = 'none';
   document.getElementById('guide-page').style.display = 'none';
+  document.getElementById('animal-detail').style.display = 'none';
   document.getElementById('result-page').classList.remove('show');
   document.body.style.background = 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)';
 }
