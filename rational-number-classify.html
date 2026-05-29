@@ -56,6 +56,11 @@ body {
 .world-card:active { transform: scale(0.95); }
 .world-card .world-icon { font-size: 2.2em; }
 .world-card .world-name { margin-top: 6px; font-size: 0.95em; font-weight: bold; }
+
+/* 玩法说明页 */
+.guide-section { margin-bottom: 18px; }
+.guide-section h3 { font-size: 1.1em; margin-bottom: 6px; }
+.guide-section p { font-size: 0.95em; line-height: 1.6; opacity: 0.9; }
 .btn {
   padding: 15px 40px;
   font-size: 1.2em;
@@ -91,6 +96,18 @@ body {
   padding: 15px 20px;
   color: #fff;
 }
+.btn-back {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: #fff;
+  font-size: 1.4em;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-back:hover { background: rgba(255,255,255,0.35); }
 .hearts { font-size: 1.8em; }
 .hearts .heart {
   display: inline-block;
@@ -118,6 +135,13 @@ body {
 }
 .animal-emoji {
   font-size: 3.5em;
+  transition: transform 0.5s, filter 0.3s;
+  position: relative;
+}
+.animal-img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
   transition: transform 0.5s, filter 0.3s;
   position: relative;
 }
@@ -150,7 +174,7 @@ body {
   50% { transform: scale(1.15) rotate(5deg); }
   75% { transform: scale(1.1) rotate(-3deg); }
 }
-.animal-emoji.chewing { animation: chew 0.6s ease; }
+.animal-emoji.chewing, .animal-img.chewing { animation: chew 0.6s ease; }
 
 /* 哭泣动画 */
 @keyframes cry {
@@ -160,7 +184,7 @@ body {
   60% { transform: translateX(-3px); }
   80% { transform: translateX(3px); }
 }
-.animal-emoji.crying { animation: cry 0.5s ease; }
+.animal-emoji.crying, .animal-img.crying { animation: cry 0.5s ease; }
 .animal-slot .cry-bubble {
   position: absolute;
   top: -10px;
@@ -182,7 +206,7 @@ body {
   50% { filter: brightness(2) hue-rotate(90deg); transform: scale(1.5); }
   100% { filter: brightness(1.2) hue-rotate(0deg); transform: scale(1.3); }
 }
-.animal-emoji.transforming { animation: transform-glow 1s ease forwards; }
+.animal-emoji.transforming, .animal-img.transforming { animation: transform-glow 1s ease forwards; }
 
 /* 数字区域 */
 .numbers-zone {
@@ -322,12 +346,50 @@ body {
   <h1>🌍 有理数大冒险</h1>
   <p class="subtitle">选择一个动物世界，开始喂食吧！</p>
   <div class="world-grid" id="world-grid"></div>
-  <button class="btn btn-secondary" onclick="showAlbum()" style="margin-top:20px;">动物图鉴</button>
+  <div style="display:flex; gap:10px; margin-top:20px;">
+    <button class="btn btn-secondary" onclick="showGuide()">玩法说明</button>
+    <button class="btn btn-secondary" onclick="showAlbum()">动物图鉴</button>
+  </div>
+</div>
+
+<!-- 玩法说明页 -->
+<div id="guide-page" style="display:none; height:100vh; color:#fff; overflow-y:auto;">
+  <div style="max-width:500px; margin:0 auto; padding:20px;">
+    <h2 style="text-align:center; margin-bottom:20px;">📖 玩法说明</h2>
+    <div class="guide-section">
+      <h3>🎯 游戏目标</h3>
+      <p>把屏幕上的数字拖拽到正确的小动物身上！每只动物代表一种数的分类（如正数、负数、整数、分数等）。</p>
+    </div>
+    <div class="guide-section">
+      <h3>🎮 操作方式</h3>
+      <p>用手指（手机）或鼠标（电脑）按住数字卡片，拖动到你认为正确的动物身上松开即可。</p>
+    </div>
+    <div class="guide-section">
+      <h3>❤️ 生命机制</h3>
+      <p>每局有3条命（红心）。拖错一次扣一条命。3次全错后会弹出"饲养秘笈"帮你复习知识点，然后可以重新挑战。</p>
+    </div>
+    <div class="guide-section">
+      <h3>✨ 变装收集</h3>
+      <p>当某只动物的数字全部正确归类后，它会华丽变身！每只动物有3种不同的变装形态，随机出现。收集进度可以在"动物图鉴"中查看。</p>
+    </div>
+    <div class="guide-section">
+      <h3>🐲 隐藏款动物</h3>
+      <p>每个世界都有一只极稀有的隐藏款动物，需要多次参与游戏才有机会遇到。坚持玩下去，说不定下一局就能碰到！</p>
+    </div>
+    <div class="guide-section">
+      <h3>🏆 得分规则</h3>
+      <p>每次正确归类得10分，连续答对会触发连击加分。最终得分由正确数、连击数和用时综合决定。</p>
+    </div>
+    <p style="text-align:center; margin-top:25px;">
+      <button class="btn btn-primary" onclick="showEntry()">知道了！</button>
+    </p>
+  </div>
 </div>
 
 <!-- 游戏页 -->
 <div id="game-page">
   <div class="game-header">
+    <button class="btn-back" onclick="showEntry()">←</button>
     <div class="hearts" id="hearts"></div>
     <div><span class="score" id="score">0分</span><span class="combo" id="combo"></span></div>
   </div>
@@ -379,31 +441,21 @@ body {
 
 <script>
 // ===== 动物数据 =====
+const IMG_BASE = 'animal world/';
 const WORLDS = [
   {
-    id: 'reptile', name: '爬行世界', icon: '🦎', bg: 'linear-gradient(135deg, #1a472a 0%, #2d5a27 50%, #4a7c3f 100%)',
+    id: 'mammal', name: '哺乳世界', icon: '🐼', folder: 'Mammals', bg: 'linear-gradient(135deg, #4a2c17 0%, #8b5e3c 50%, #d4a574 100%)',
     animals: [
-      { id: 'turtle', emoji: '🐢', name: '小龟' },
-      { id: 'lizard', emoji: '🦎', name: '蜥蜴' },
-      { id: 'croc', emoji: '🐊', name: '鳄鱼' },
-      { id: 'snake', emoji: '🐍', name: '蟒蛇' },
-      { id: 'dino', emoji: '🦖', name: '恐龙' },
-      { id: 'dragon', emoji: '🐲', name: '神龙', hidden: true }
+      { id: 'dog', emoji: '🐶', name: '小狗', img: 'dog-normal.png', costumes: ['dog-royal.png', 'dog-magic.png', 'dog-ice.png'] },
+      { id: 'cat', emoji: '🐱', name: '小猫' },
+      { id: 'rabbit', emoji: '🐰', name: '兔子' },
+      { id: 'fox', emoji: '🦊', name: '狐狸' },
+      { id: 'panda', emoji: '🐼', name: '熊猫' },
+      { id: 'unicorn', emoji: '🦄', name: '独角兽', hidden: true }
     ]
   },
   {
-    id: 'flying', name: '飞行世界', icon: '🦅', bg: 'linear-gradient(135deg, #1a3a5c 0%, #2980b9 50%, #6dd5fa 100%)',
-    animals: [
-      { id: 'eagle', emoji: '🦅', name: '雄鹰' },
-      { id: 'parrot', emoji: '🦜', name: '鹦鹉' },
-      { id: 'owl', emoji: '🦉', name: '猫头鹰' },
-      { id: 'bat', emoji: '🦇', name: '蝙蝠' },
-      { id: 'dove', emoji: '🕊️', name: '白鸽' },
-      { id: 'dodo', emoji: '🦤', name: '渡渡鸟', hidden: true }
-    ]
-  },
-  {
-    id: 'ocean', name: '海洋世界', icon: '🐋', bg: 'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)',
+    id: 'ocean', name: '海洋世界', icon: '🐋', folder: 'Marine animals', bg: 'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)',
     animals: [
       { id: 'puffer', emoji: '🐡', name: '河豚' },
       { id: 'squid', emoji: '🦑', name: '鱿鱼' },
@@ -414,25 +466,25 @@ const WORLDS = [
     ]
   },
   {
-    id: 'insect', name: '昆虫世界', icon: '🦋', bg: 'linear-gradient(135deg, #2c3e50 0%, #4a6741 50%, #a8cc8c 100%)',
+    id: 'flying', name: '飞行世界', icon: '🦅', folder: 'Birds', bg: 'linear-gradient(135deg, #1a3a5c 0%, #2980b9 50%, #6dd5fa 100%)',
     animals: [
-      { id: 'bee', emoji: '🐝', name: '蜜蜂' },
-      { id: 'butterfly', emoji: '🦋', name: '蝴蝶' },
-      { id: 'caterpillar', emoji: '🐛', name: '毛毛虫' },
-      { id: 'ladybug', emoji: '🐞', name: '瓢虫' },
-      { id: 'spider', emoji: '🕷️', name: '蜘蛛' },
-      { id: 'scorpion', emoji: '🦂', name: '蝎子王', hidden: true }
+      { id: 'eagle', emoji: '🦅', name: '雄鹰' },
+      { id: 'parrot', emoji: '🦜', name: '鹦鹉' },
+      { id: 'owl', emoji: '🦉', name: '猫头鹰' },
+      { id: 'bat', emoji: '🦇', name: '蝙蝠' },
+      { id: 'dove', emoji: '🕊️', name: '白鸽' },
+      { id: 'dodo', emoji: '🦤', name: '渡渡鸟', hidden: true }
     ]
   },
   {
-    id: 'mammal', name: '哺乳世界', icon: '🐼', bg: 'linear-gradient(135deg, #4a2c17 0%, #8b5e3c 50%, #d4a574 100%)',
+    id: 'reptile', name: '爬行世界', icon: '🦎', folder: 'Reptiles', bg: 'linear-gradient(135deg, #1a472a 0%, #2d5a27 50%, #4a7c3f 100%)',
     animals: [
-      { id: 'dog', emoji: '🐶', name: '小狗' },
-      { id: 'cat', emoji: '🐱', name: '小猫' },
-      { id: 'rabbit', emoji: '🐰', name: '兔子' },
-      { id: 'fox', emoji: '🦊', name: '狐狸' },
-      { id: 'panda', emoji: '🐼', name: '熊猫' },
-      { id: 'unicorn', emoji: '🦄', name: '独角兽', hidden: true }
+      { id: 'turtle', emoji: '🐢', name: '小龟' },
+      { id: 'lizard', emoji: '🦎', name: '蜥蜴' },
+      { id: 'croc', emoji: '🐊', name: '鳄鱼' },
+      { id: 'snake', emoji: '🐍', name: '蟒蛇' },
+      { id: 'dino', emoji: '🦖', name: '恐龙' },
+      { id: 'dragon', emoji: '🐲', name: '神龙', hidden: true }
     ]
   }
 ];
@@ -576,8 +628,13 @@ function saveSave(data) { localStorage.setItem('math-animal-save', JSON.stringif
 // ===== 页面切换 =====
 function showAlbum() {
   document.getElementById('entry-page').style.display = 'none';
+  document.getElementById('guide-page').style.display = 'none';
   document.getElementById('album-page').style.display = 'block';
   renderAlbum();
+}
+function showGuide() {
+  document.getElementById('entry-page').style.display = 'none';
+  document.getElementById('guide-page').style.display = 'block';
 }
 
 // ===== 开始游戏 =====
@@ -640,8 +697,17 @@ function renderGame() {
     slot.className = 'animal-slot';
     slot.dataset.cat = cat;
     slot.dataset.idx = idx;
+
+    let animalContent;
+    if (animal.img) {
+      const imgPath = IMG_BASE + currentWorld.folder + '/' + animal.img;
+      animalContent = `<img class="animal-img" id="animal-${idx}" src="${imgPath}" alt="${animal.name}">`;
+    } else {
+      animalContent = `<div class="animal-emoji" id="animal-${idx}">${animal.emoji}</div>`;
+    }
+
     slot.innerHTML = `
-      <div class="animal-emoji" id="animal-${idx}">${animal.emoji}</div>
+      ${animalContent}
       <div class="cry-bubble" id="cry-bubble-${idx}">💧</div>
       <div class="animal-label">${cat}</div>
       <div class="check-mark">✓</div>
@@ -822,20 +888,34 @@ function showCategoryComplete(animalIdx, emojiEl) {
   banner.classList.add('show');
   setTimeout(() => banner.classList.remove('show'), 1500);
 
+  const animal = state.animals[animalIdx];
+
   // 变装
   emojiEl.classList.add('transforming');
-  const costume = COSTUMES[randBetween(0, COSTUMES.length - 1)];
-  setTimeout(() => {
-    if (costume.style) emojiEl.setAttribute('style', costume.style);
-    if (costume.suffix) emojiEl.textContent += costume.suffix;
-  }, 500);
+  let costumeName;
+
+  if (animal.costumes && animal.costumes.length > 0) {
+    const costumeFile = animal.costumes[randBetween(0, animal.costumes.length - 1)];
+    costumeName = costumeFile.replace('.png', '').split('-').pop();
+    const imgPath = IMG_BASE + currentWorld.folder + '/' + costumeFile;
+    setTimeout(() => {
+      emojiEl.src = imgPath;
+      emojiEl.style.transform = 'scale(1.3)';
+    }, 500);
+  } else {
+    const costume = COSTUMES[randBetween(0, COSTUMES.length - 1)];
+    costumeName = costume.name;
+    setTimeout(() => {
+      if (costume.style) emojiEl.setAttribute('style', costume.style);
+      if (costume.suffix) emojiEl.textContent += costume.suffix;
+    }, 500);
+  }
 
   // 存档
   const save = loadSave();
-  const animal = state.animals[animalIdx];
   if (!save.unlocked[animal.id]) save.unlocked[animal.id] = [];
-  if (!save.unlocked[animal.id].includes(costume.name)) {
-    save.unlocked[animal.id].push(costume.name);
+  if (!save.unlocked[animal.id].includes(costumeName)) {
+    save.unlocked[animal.id].push(costumeName);
   }
   if (animal.hidden) save.hiddenEncounters++;
   saveSave(save);
@@ -911,6 +991,7 @@ function showEntry() {
   document.getElementById('entry-page').style.display = 'flex';
   document.getElementById('game-page').style.display = 'none';
   document.getElementById('album-page').style.display = 'none';
+  document.getElementById('guide-page').style.display = 'none';
   document.getElementById('result-page').classList.remove('show');
   document.body.style.background = 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)';
 }
