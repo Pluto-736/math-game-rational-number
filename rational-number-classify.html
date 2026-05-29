@@ -559,11 +559,11 @@ const WORLDS = [
     id: 'mammal', name: '哺乳世界', icon: '🐼', folder: 'Mammals', bg: 'linear-gradient(135deg, #4a2c17 0%, #8b5e3c 50%, #d4a574 100%)',
     animals: [
       { id: 'dog', emoji: '🐶', name: '小狗', img: 'dog-normal.png', costumes: ['dog-royal.png', 'dog-magic.png', 'dog-ice.png'] },
-      { id: 'cat', emoji: '🐱', name: '小猫' },
-      { id: 'rabbit', emoji: '🐰', name: '兔子' },
-      { id: 'fox', emoji: '🦊', name: '狐狸' },
-      { id: 'panda', emoji: '🐼', name: '熊猫' },
-      { id: 'unicorn', emoji: '🦄', name: '独角兽', hidden: true }
+      { id: 'cat', emoji: '🐱', name: '小猫', img: 'cat-normal.png', costumes: ['cat-royal.png', 'cat-magic.png', 'cat-lightning.png'] },
+      { id: 'rabbit', emoji: '🐰', name: '兔子', img: 'rabbit-normal.png', costumes: ['rabbit-loyal.png', 'rabbit-magic.png', 'rabbit-grass.png'] },
+      { id: 'fox', emoji: '🦊', name: '狐狸', img: 'fox-normal.png', costumes: ['fox-loyal.png', 'fox-magic.png', 'fox-fire.png'] },
+      { id: 'panda', emoji: '🐼', name: '熊猫', img: 'panda-normal.png', costumes: ['panda-loyal.png', 'panda-magic.png', 'panda-earth.png'] },
+      { id: 'unicorn', emoji: '🦄', name: '独角兽', hidden: true, img: 'unicorn-normal.png', costumes: ['unicorn-loyal.png', 'unicorn-magic.png', 'unicorn-aurora.png'] }
     ]
   },
   {
@@ -1084,7 +1084,7 @@ const ANIMAL_DESC = {
   seadragon: '海龙王，传说中统治海洋的神秘生物，能掀起滔天巨浪。据说只在最深的海沟中才能一睹真容。'
 };
 
-const COSTUME_NAMES = { royal: '皇族形态', magic: '星空魔法', ice: '冰晶龙骑' };
+const COSTUME_NAMES = { royal: '皇族形态', loyal: '皇族形态', magic: '星空魔法', ice: '冰晶龙骑', lightning: '雷电形态', grass: '翠草精灵', fire: '烈焰形态', earth: '大地形态', aurora: '极光形态' };
 
 // ===== 图鉴 =====
 let carouselState = { items: [], currentIdx: 0, animalData: null, worldData: null };
