@@ -481,9 +481,9 @@ body {
 <!-- 游戏页 -->
 <div id="game-page">
   <div class="game-header">
-    <button class="btn-back" onclick="showEntry()">←</button>
-    <div class="hearts" id="hearts"></div>
     <div><span class="combo" id="combo"></span></div>
+    <div class="hearts" id="hearts"></div>
+    <button class="btn-back" onclick="showEntry()">←</button>
   </div>
   <div class="animals-zone" id="animals-zone"></div>
   <div class="numbers-zone" id="numbers-zone"></div>
@@ -650,8 +650,11 @@ function generateNumbers(categories) {
     '负分数': [randNegFrac]
   };
 
-  categories.forEach(cat => {
-    const count = categories.length === 2 ? randBetween(3, 4) : randBetween(2, 3);
+  categories.forEach((cat, idx) => {
+    const totalTarget = 10;
+    const baseCount = Math.floor(totalTarget / categories.length);
+    const extra = idx < (totalTarget % categories.length) ? 1 : 0;
+    const count = baseCount + extra;
     const generators = pool[cat];
     let attempts = 0;
     let generated = 0;
