@@ -583,12 +583,12 @@ const WORLDS = [
   {
     id: 'flying', name: '飞行世界', icon: '🦅', folder: 'Birds', bg: 'linear-gradient(135deg, #1a3a5c 0%, #2980b9 50%, #6dd5fa 100%)',
     animals: [
-      { id: 'eagle', emoji: '🦅', name: '雄鹰' },
-      { id: 'parrot', emoji: '🦜', name: '鹦鹉' },
-      { id: 'owl', emoji: '🦉', name: '猫头鹰' },
-      { id: 'bat', emoji: '🦇', name: '蝙蝠' },
-      { id: 'dove', emoji: '🕊️', name: '白鸽' },
-      { id: 'dodo', emoji: '🦤', name: '渡渡鸟', hidden: true }
+      { id: 'eagle', emoji: '🦅', name: '雄鹰', img: 'eagle-normal.png', costumes: ['eagle-loyal.png', 'eagle-magic.png', 'eagle-thunder.png'] },
+      { id: 'parrot', emoji: '🦜', name: '鹦鹉', img: 'parrot-normal.png', costumes: ['parrot-loyal.png', 'parrot-magic.png', 'parrot-rainbow.png'] },
+      { id: 'owl', emoji: '🦉', name: '猫头鹰', img: 'owl-normal.png', costumes: ['owl-loyal.png', 'owl-magic.png', 'owl-moonlight.png'] },
+      { id: 'swan', emoji: '🦢', name: '天鹅', img: 'swan-normal.png', costumes: ['swan-loyal.png', 'swan-magic.png', 'swan-ice.png'] },
+      { id: 'dove', emoji: '🕊️', name: '白鸽', img: 'dove-normal.png', costumes: ['dove-loyal.png', 'dove-magic.png', 'dove-holy.png'] },
+      { id: 'dodo', emoji: '🦤', name: '渡渡鸟', hidden: true, img: 'dodo-normal.png', costumes: ['dodo-loyal.png', 'dodo-magic.png', 'dodo-spacetime.png'] }
     ]
   },
   {
@@ -1079,7 +1079,7 @@ const ANIMAL_DESC = {
   eagle: '雄鹰，天空之王，拥有锐利的目光和强健的翅膀。它们能在数千米高空发现地面上的猎物。',
   parrot: '鹦鹉，色彩斑斓的聪明鸟类，能模仿人类说话。它们性格活泼，喜欢和人互动。',
   owl: '猫头鹰，夜晚的守望者，能在黑暗中精准捕猎。它们的头可以旋转270度，是森林中的智者。',
-  bat: '蝙蝠，唯一能真正飞行的哺乳动物。它们用超声波导航，在夜空中自由翱翔。',
+  swan: '天鹅，优雅的水鸟，有着修长的脖颈和洁白的羽毛。它们终身相伴，是忠贞爱情的象征。',
   dove: '白鸽，和平的象征，有着纯白的羽毛和优雅的飞行姿态。它们方向感极强，能从千里之外找到回家的路。',
   dodo: '渡渡鸟，已灭绝的传奇鸟类，曾生活在毛里求斯岛上。虽然不会飞，但它们的故事提醒我们珍惜每一个物种。',
   puffer: '河豚，遇到危险会把自己鼓成一个圆球的可爱鱼类。虽然体内有毒素，但在日本是珍贵的美食。',
@@ -1090,7 +1090,7 @@ const ANIMAL_DESC = {
   seadragon: '海龙王，传说中统治海洋的神秘生物，能掀起滔天巨浪。据说只在最深的海沟中才能一睹真容。'
 };
 
-const COSTUME_NAMES = { royal: '皇族形态', loyal: '皇族形态', magic: '星空魔法', ice: '冰晶龙骑', lightning: '雷电形态', grass: '翠草精灵', fire: '烈焰形态', earth: '大地形态', aurora: '极光形态' };
+const COSTUME_NAMES = { royal: '皇族形态', loyal: '皇族形态', magic: '星空魔法', ice: '冰晶形态', lightning: '雷电形态', grass: '翠草精灵', fire: '烈焰形态', earth: '大地形态', aurora: '极光形态', thunder: '雷暴形态', rainbow: '彩虹形态', moonlight: '月光形态', holy: '圣光形态', spacetime: '时空形态' };
 
 // ===== 图鉴 =====
 let carouselState = { items: [], currentIdx: 0, animalData: null, worldData: null };
