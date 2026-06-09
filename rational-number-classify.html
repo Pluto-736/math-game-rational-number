@@ -572,12 +572,12 @@ const WORLDS = [
   {
     id: 'ocean', name: '海洋世界', icon: '🐋', folder: 'Marine animals', bg: 'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)',
     animals: [
-      { id: 'puffer', emoji: '🐡', name: '河豚' },
-      { id: 'squid', emoji: '🦑', name: '鱿鱼' },
-      { id: 'octopus', emoji: '🐙', name: '章鱼' },
-      { id: 'shark', emoji: '🦈', name: '鲨鱼' },
-      { id: 'whale', emoji: '🐋', name: '蓝鲸' },
-      { id: 'seadragon', emoji: '🐉', name: '海龙王', hidden: true }
+      { id: 'jellyfish', emoji: '🪼', name: '水母', img: 'jellyfish-normal.png', costumes: ['jellyfish-loyal.png', 'jellyfish-magic.png', 'jellyfish-crystal.png'] },
+      { id: 'crab', emoji: '🦀', name: '螃蟹', img: 'crab-normal.png', costumes: ['crab-loyal.png', 'crab-magic.png', 'crab-steel.png'] },
+      { id: 'octopus', emoji: '🐙', name: '章鱼', img: 'octopus-normal.png', costumes: ['octopus-loyal.png', 'octopus-magic.png', 'octopus-color.png'] },
+      { id: 'manta', emoji: '🦈', name: '鳐鱼', img: 'manta-normal.png', costumes: ['manta-loyal.png', 'manta-magic.png', 'manta-stardust.png'] },
+      { id: 'whale', emoji: '🐋', name: '蓝鲸', img: 'whale-normal.png', costumes: ['whale-loyal.png', 'whale-magic.png', 'whale-island.png'] },
+      { id: 'seadragon', emoji: '🐉', name: '海龙王', hidden: true, img: 'seadragon-normal.png', costumes: ['seadragon-loyal.png', 'seadragon-magic.png', 'seadragon-tsunami.png'] }
     ]
   },
   {
@@ -1082,15 +1082,15 @@ const ANIMAL_DESC = {
   swan: '天鹅，优雅的水鸟，有着修长的脖颈和洁白的羽毛。它们终身相伴，是忠贞爱情的象征。',
   dove: '白鸽，和平的象征，有着纯白的羽毛和优雅的飞行姿态。它们方向感极强，能从千里之外找到回家的路。',
   dodo: '渡渡鸟，已灭绝的传奇鸟类，曾生活在毛里求斯岛上。虽然不会飞，但它们的故事提醒我们珍惜每一个物种。',
-  puffer: '河豚，遇到危险会把自己鼓成一个圆球的可爱鱼类。虽然体内有毒素，但在日本是珍贵的美食。',
-  squid: '鱿鱼，海洋中的火箭，靠喷水推进快速移动。它们有三颗心脏和蓝色的血液，是海洋中的奇妙生物。',
+  jellyfish: '水母，海洋中的透明精灵，身体90%以上是水。它们没有心脏和大脑，却已在地球上漂浮了六亿多年。',
+  crab: '螃蟹，横着走路的海底武士，拥有一对强有力的大钳。它们的壳会随成长不断更换，每次脱壳都是一次重生。',
   octopus: '章鱼，拥有八条灵活触手的海洋智者。它们能变色伪装、开瓶盖、走迷宫，智商极高。',
-  shark: '鲨鱼，海洋中的顶级猎手，已在地球上生存了四亿年。它们的牙齿一生中会更换数万颗。',
+  manta: '鳐鱼，海洋中优雅的滑翔者，翼展可达数米。它们温柔无害，像一架水下飞机缓缓划过海底。',
   whale: '蓝鲸，地球上最大的动物，心脏有一辆小汽车那么大。它们的歌声能传播数百公里。',
   seadragon: '海龙王，传说中统治海洋的神秘生物，能掀起滔天巨浪。据说只在最深的海沟中才能一睹真容。'
 };
 
-const COSTUME_NAMES = { royal: '皇族形态', loyal: '皇族形态', magic: '星空魔法', ice: '冰晶形态', lightning: '雷电形态', grass: '翠草精灵', fire: '烈焰形态', earth: '大地形态', aurora: '极光形态', thunder: '雷暴形态', rainbow: '彩虹形态', moonlight: '月光形态', holy: '圣光形态', spacetime: '时空形态' };
+const COSTUME_NAMES = { royal: '皇族形态', loyal: '皇族形态', magic: '星空魔法', ice: '冰晶形态', lightning: '雷电形态', grass: '翠草精灵', fire: '烈焰形态', earth: '大地形态', aurora: '极光形态', thunder: '雷暴形态', rainbow: '彩虹形态', moonlight: '月光形态', holy: '圣光形态', spacetime: '时空形态', crystal: '水晶形态', steel: '钢铁形态', color: '变色形态', stardust: '星尘形态', island: '浮岛形态', tsunami: '海啸形态' };
 
 // ===== 图鉴 =====
 let carouselState = { items: [], currentIdx: 0, animalData: null, worldData: null };
