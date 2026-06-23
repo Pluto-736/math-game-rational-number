@@ -592,14 +592,14 @@ const WORLDS = [
     ]
   },
   {
-    id: 'reptile', name: '爬行世界', icon: '🦎', folder: 'Reptiles', bg: 'linear-gradient(135deg, #1a472a 0%, #2d5a27 50%, #4a7c3f 100%)',
+    id: 'reptile', name: '大块头世界', icon: '🐘', folder: 'Reptiles', bg: 'linear-gradient(135deg, #5c4a2e 0%, #8a7048 50%, #b89b6a 100%)',
     animals: [
-      { id: 'turtle', emoji: '🐢', name: '小龟' },
-      { id: 'lizard', emoji: '🦎', name: '蜥蜴' },
-      { id: 'croc', emoji: '🐊', name: '鳄鱼' },
-      { id: 'snake', emoji: '🐍', name: '蟒蛇' },
-      { id: 'dino', emoji: '🦖', name: '恐龙' },
-      { id: 'dragon', emoji: '🐲', name: '神龙', hidden: true }
+      { id: 'elephant', emoji: '🐘', name: '大象', img: 'elephant-normal.png', costumes: ['elephant-loyal.png', 'elephant-magic.png', 'elephant-fire.png'] },
+      { id: 'hippo', emoji: '🦛', name: '河马', img: 'hippo-normal.png', costumes: ['hippo-loyal.png', 'hippo-magic.png', 'hippo-chef.png'] },
+      { id: 'rhino', emoji: '🦏', name: '犀牛', img: 'rhino-normal.png', costumes: ['rhino-loyal.png', 'rhino-magic.png', 'rhino-armor.png'] },
+      { id: 'croc', emoji: '🐊', name: '鳄鱼', img: 'croc-normal.png', costumes: ['croc-loyal.png', 'croc-magic.png', 'croc-ancient.png'] },
+      { id: 'turtle', emoji: '🐢', name: '陆龟', img: 'turtle-normal.png', costumes: ['turtle-loyal.png', 'turtle-magic.png', 'turtle-mecha.png'] },
+      { id: 'dino', emoji: '🦕', name: '三角龙', hidden: true, img: 'dino-normal.png', costumes: ['dino-loyal.png', 'dino-magic.png', 'dino-guardian.png'] }
     ]
   }
 ];
@@ -1070,12 +1070,12 @@ const ANIMAL_DESC = {
   fox: '赤狐，聪明机警，有着火红的皮毛和蓬松的大尾巴。它们是出色的猎手，在各种环境中都能生存。',
   panda: '大熊猫，中国国宝，圆滚滚的身体配上经典的黑白配色。它们看似笨拙，实则身手敏捷，最爱啃竹子。',
   unicorn: '独角兽，传说中的神秘生物，额头上有一只闪耀的金角。据说只有心地纯洁的人才能见到它。',
-  turtle: '小龟，行动缓慢但坚韧不拔，背着重重的壳也从不放弃。寿命很长，是长寿的象征。',
-  lizard: '蜥蜴，身手敏捷的爬行高手，能在墙壁上自由行走。遇到危险时会断尾逃生，过段时间尾巴还能长回来。',
+  elephant: '大象，陆地上最大的动物，有着大大的耳朵和灵活的长鼻子。它们记忆力惊人，家族成员之间感情深厚，非常温和友善。',
+  hippo: '河马，看似憨厚的水中大块头，却拥有惊人的力量。它们白天泡在水里乘凉，喜欢张开大嘴打哈欠。',
+  rhino: '犀牛，皮糙肉厚的草原坦克，鼻子上长着坚硬的角。它们视力不好，却有灵敏的嗅觉和听觉。',
+  turtle: '陆龟，行动缓慢但坚韧不拔，背着重重的壳从不放弃。寿命很长，是长寿的象征。',
   croc: '鳄鱼，水中的霸主，拥有强大的咬合力。虽然看起来凶猛，但鳄鱼妈妈对宝宝非常温柔。',
-  snake: '蟒蛇，没有四肢却能灵活移动的神奇动物。它们用舌头感知周围环境，是天生的猎手。',
-  dino: '恐龙，远古时代的霸主，曾统治地球上亿年。虽然已经灭绝，但它们的故事永远令人着迷。',
-  dragon: '神龙，传说中最强大的爬行生物，能腾云驾雾、呼风唤雨。极其稀有，千载难逢。',
+  dino: '三角龙，远古时代的温和巨兽，头上有大大的颈盾和三只角。它们以植物为食，是恐龙世界里的和平守护者。',
   eagle: '雄鹰，天空之王，拥有锐利的目光和强健的翅膀。它们能在数千米高空发现地面上的猎物。',
   parrot: '鹦鹉，色彩斑斓的聪明鸟类，能模仿人类说话。它们性格活泼，喜欢和人互动。',
   owl: '猫头鹰，夜晚的守望者，能在黑暗中精准捕猎。它们的头可以旋转270度，是森林中的智者。',
