@@ -113,16 +113,18 @@ html, body {
 
 #playfield { position: absolute; inset: 0; overflow: hidden; }
 
-/* 炮手 */
+/* 炮手（点击它 = 发射） */
 #cannon {
-  position: absolute; left: 50%; top: 54%;
+  position: absolute; left: 50%; bottom: 132px; top: auto;
   width: 56px; height: 56px;
-  transform: translate(-50%,-50%);
+  transform: translateX(-50%);
   z-index: 10;
+  cursor: pointer;
   transition: transform 0.08s;
 }
+#cannon:active { transform: translateX(-50%) scale(0.92); }
 
-/* 怪物 */
+/* 方块 */
 .mob {
   position: absolute;
   min-width: 50px; height: 44px;
@@ -133,10 +135,9 @@ html, body {
   box-shadow: inset -3px -3px 0 rgba(0,0,0,0.3), inset 3px 3px 0 rgba(255,255,255,0.3);
   padding: 0 8px; white-space: nowrap;
   transform: translate(-50%,-50%);
-  cursor: pointer; z-index: 5;
+  z-index: 5;
 }
-.mob.selected { outline: 4px solid var(--gold); outline-offset: 2px; animation: mobsel 0.4s steps(2) infinite; }
-@keyframes mobsel { 0%,100%{ box-shadow: inset -3px -3px 0 rgba(0,0,0,0.3), 0 0 0 4px var(--gold);} 50%{ box-shadow: inset -3px -3px 0 rgba(0,0,0,0.3), 0 0 10px 6px var(--gold);} }
+.mob.landed { border-color:#5a1f00; filter: brightness(0.92); }
 .mob.miss { animation: mobmiss 0.3s steps(2) 2; }
 @keyframes mobmiss { 0%,100%{ transform: translate(-50%,-50%);} 25%{ transform: translate(-62%,-50%) ; background:#ff3030;} 75%{ transform: translate(-38%,-50%); background:#ff3030;} }
 
@@ -157,10 +158,10 @@ html, body {
 }
 @keyframes boom { 0%{ transform: translate(-50%,-50%) scale(0.4); opacity:1;} 100%{ transform: translate(-50%,-50%) scale(1.8); opacity:0;} }
 
-/* 输入显示 */
+/* 输入显示（机器人上方） */
 #inputDisplay {
-  position: absolute; left: 50%; top: 44%;
-  transform: translate(-50%,-50%);
+  position: absolute; left: 50%; bottom: 196px;
+  transform: translateX(-50%);
   font-size: 22px; color: var(--gold);
   text-shadow: 3px 3px 0 var(--ink);
   z-index: 11; min-width: 40px; text-align: center;
@@ -213,11 +214,11 @@ html, body {
   <div id="helpMask" class="modal-mask">
     <div class="modal">
       <h2>玩法说明</h2>
-      <p>怪物从四面八方扑向中央的炮手，身上写着<span class="hl">待化简的式子</span>，比如 -(-5)、|-3|。</p>
-      <p>① 点一个怪 → <span class="hl">选中</span>它。</p>
-      <p>② 用键盘拼出它<span class="hl">化简后的值</span>（点 - 和数字，键会亮起；再点一下取消）。</p>
-      <p>③ 按 <span class="hl">发射</span> 把它打爆！算错就打不掉。</p>
-      <p>怪越来越快，<span class="hl">看你能坚持多久！</span></p>
+      <p>方块从顶部不停落下，身上写着<span class="hl">待化简的式子</span>，比如 -(-5)、|-3|。落到底部会<span class="hl">一层层往上垒</span>。</p>
+      <p>① 用键盘拼出某个方块<span class="hl">化简后的值</span>（点 - 和数字，键会亮起；再点一下取消）。</p>
+      <p>② 点一下<span class="hl">机器人</span>发射。屏幕上有对应数值的方块就被打爆（有多个时打<span class="hl">最下面</span>那个）。</p>
+      <p>③ 没有对应方块就<span class="hl">算错</span>，按键复位并<span class="hl">扣一颗心</span>。</p>
+      <p>方块<span class="hl">垒满屏幕</span>就结束，<span class="hl">看你能坚持多久！</span></p>
       <button class="pbtn green" onclick="UI.hideHelp()">明白啦</button>
     </div>
   </div>
@@ -410,17 +411,19 @@ const CANNON_SVG = '🤖';
 /* ===================== 游戏主体 ===================== */
 const Game = {
   lives:3, score:0, combo:0, maxCombo:0, kills:0,
-  mobs:[], bullets:[], selected:null,
+  mobs:[], bullets:[], falling:null,
   input:{ neg:false, digit:null },
   running:false, raf:0,
   startT:0, elapsed:0,
   spawnAcc:0, lastTs:0,
+  groundY:0, _cannonBound:false,
+  BH:44, GAP:2, TOPLIMIT:34,
 
   start(){
     Audio8.ensure();
     Audio8.startBGM();
     this.lives=3; this.score=0; this.combo=0; this.maxCombo=0; this.kills=0;
-    this.mobs=[]; this.bullets=[]; this.selected=null;
+    this.mobs=[]; this.bullets=[]; this.falling=null;
     this.input={neg:false,digit:null};
     this.startT=performance.now(); this.elapsed=0;
     this.spawnAcc=0; this.lastTs=this.startT;
@@ -428,14 +431,19 @@ const Game = {
     UI.hideHelp();
     UI.show('game');
     const pf=document.getElementById('playfield');
-    // 清掉上一局残留
     pf.querySelectorAll('.mob,.bullet,.boom').forEach(e=>e.remove());
-    document.getElementById('cannon').textContent = CANNON_SVG;
-    document.getElementById('cannon').style.fontSize='48px';
+    this.groundY = pf.clientHeight - 210;
+    const cannon=document.getElementById('cannon');
+    cannon.textContent = CANNON_SVG;
+    cannon.style.fontSize='48px';
+    if(!this._cannonBound){
+      cannon.addEventListener('click', ()=>this.fire());
+      cannon.addEventListener('touchstart', e=>{ e.preventDefault(); this.fire(); }, {passive:false});
+      this._cannonBound=true;
+    }
     this.buildKeypad();
     this.updateInputDisplay();
     this.updateHud();
-    // 先放一个怪
     this.spawn();
     cancelAnimationFrame(this.raf);
     this.raf = requestAnimationFrame(ts=>this.loop(ts));
@@ -447,43 +455,47 @@ const Game = {
   diff(){
     const t = this.elapsed; // 秒
     return {
-      speed: 16 + t*1.1,                          // px/秒，整体更慢、加速更缓
-      interval: Math.min(3200, 1900 + t*45),      // 生成间隔 ms：越往后越长（密度更小）
-      multi: this.kills >= 4                       // 击落4个后出多层
+      speed: 150 + t*7,            // 下落速度 px/秒，比原来快很多，并缓慢加速
+      multi: this.kills >= 4       // 击落4个后出多层
     };
   },
 
-  // ---- 生成怪物：只在炮台水平线「上方」区域进入（下方离炮台太近，反应不过来）----
+  // ---- 生成一个从顶部落下的方块（一次只有一个在下落，天然不重叠）----
   spawn(){
     const pf=document.getElementById('playfield');
-    const W=pf.clientWidth, H=pf.clientHeight;
-    const cy=H*0.54;                 // 炮台水平线
+    const W=pf.clientWidth;
     const m = Expr.make(this.diff().multi);
-    const pad=30;
-    const yMax = cy - 50;            // 怪的最低进入高度：炮台线上方一点
-    let x,y;
-    // 从 上 / 左上侧 / 右上侧 三种边缘进入，y 始终在炮台线上方
-    const edge = Expr.rnd(0,2);
-    if(edge===0){ x=Expr.rnd(pad,W-pad); y=-30; }            // 顶部落下
-    else if(edge===1){ x=-30; y=Expr.rnd(-20,yMax); }        // 左侧上半
-    else { x=W+30; y=Expr.rnd(-20,yMax); }                   // 右侧上半
     const el=document.createElement('div');
     el.className='mob';
     el.textContent=m.display;
-    el.style.left=x+'px'; el.style.top=y+'px';
+    el.style.top='-30px';
     pf.appendChild(el);
-    const mob={ el, x, y, value:m.value, display:m.display };
-    el.addEventListener('click', e=>{ e.stopPropagation(); this.selectMob(mob); });
-    el.addEventListener('touchstart', e=>{ e.stopPropagation(); e.preventDefault(); this.selectMob(mob); }, {passive:false});
-    this.mobs.push(mob);
+    const w = el.offsetWidth || 56;
+    const pad = w/2 + 6;
+    const x = Expr.rnd(Math.round(pad), Math.round(W-pad));
+    el.style.left=x+'px'; el.style.top='-30px';
+    this.falling = { el, x, y:-30, w, value:m.value, display:m.display, landed:false };
   },
 
-  selectMob(mob){
-    if(!this.running) return;
-    this.mobs.forEach(m=>m.el.classList.remove('selected'));
-    this.selected=mob;
-    mob.el.classList.add('selected');
-    Audio8.key();
+  // 某方块在当前堆叠下的「落点中心 y」：落到地面或最上方障碍物之上
+  restY(block){
+    let r = this.groundY - this.BH/2;
+    for(const b of this.mobs){
+      if(b===block || !b.landed) continue;
+      if(Math.abs(b.x - block.x) < (b.w + block.w)/2 - 4 && b.y > block.y){
+        r = Math.min(r, b.y - this.BH - this.GAP);
+      }
+    }
+    return r;
+  },
+
+  // 摧毁方块后，让上方悬空的方块受重力下沉填补
+  settle(){
+    const landed = this.mobs.filter(m=>m.landed).sort((a,b)=> b.y - a.y); // 底部先处理
+    for(const m of landed){
+      const ry = this.restY(m);
+      if(ry > m.y + 0.5){ m.y = ry; m.el.style.top = m.y+'px'; }
+    }
   },
 
   // ---- 键盘 ----
@@ -498,11 +510,6 @@ const Game = {
       b.onclick=()=>this.tapKey(k,b);
       kp.appendChild(b);
     });
-    const fire=document.createElement('button');
-    fire.className='key fire';
-    fire.textContent='发射';
-    fire.onclick=()=>this.fire();
-    kp.appendChild(fire);
   },
 
   tapKey(k, btn){
@@ -512,9 +519,8 @@ const Game = {
       btn.classList.toggle('on', this.input.neg);
     } else {
       const d=parseInt(k);
-      // 数字互斥：先清其它数字键高亮
       document.querySelectorAll('#keypad .key').forEach(el=>{
-        if(el.textContent!=='-' && el.textContent!=='发射') el.classList.remove('on');
+        if(el.textContent!=='-') el.classList.remove('on');
       });
       if(this.input.digit===d){ this.input.digit=null; } // 再点取消
       else { this.input.digit=d; btn.classList.add('on'); }
@@ -536,15 +542,43 @@ const Game = {
     this.updateInputDisplay();
   },
 
-  // ---- 发射判定 ----
+  // 当前屏上所有方块（含正在下落的）
+  allBlocks(){
+    const arr = this.mobs.slice();
+    if(this.falling) arr.push(this.falling);
+    return arr;
+  },
+
+  // ---- 发射判定：点机器人触发 ----
   fire(){
     if(!this.running) return;
-    if(this.input.digit===null){ Audio8.fail(); return; }
-    if(!this.selected){ Audio8.fail(); this.flashNoTarget(); return; }
+    if(this.input.digit===null){ Audio8.fail(); this.flashNoTarget(); return; }
     const val = (this.input.neg?-1:1)*this.input.digit;
-    const mob = this.selected;
+    // 屏上有对应数值的方块 → 打最下面那个；否则算错
+    const matches = this.allBlocks().filter(m=>m.value===val);
+    if(matches.length===0){
+      this.miss();   // 复位 + 扣血
+      return;
+    }
+    matches.sort((a,b)=> b.y - a.y);     // y 最大 = 最下面
     Audio8.fire();
-    this.shootBullet(mob, val);
+    this.shootBullet(matches[0], val);
+    this.clearInput();
+  },
+
+  // 算错：按键复位并扣血
+  miss(){
+    Audio8.fail();
+    this.flashNoTarget();
+    this.clearInput();
+    this.combo=0;
+    this.lives--;
+    Audio8.hurt();
+    const cannon=document.getElementById('cannon');
+    cannon.style.filter='brightness(2) sepia(1) hue-rotate(-30deg)';
+    setTimeout(()=>{ cannon.style.filter=''; },200);
+    this.updateHud();
+    if(this.lives<=0) this.gameOver();
   },
 
   flashNoTarget(){
@@ -563,10 +597,8 @@ const Game = {
     b.style.left=cx+'px'; b.style.top=cy+'px';
     pf.appendChild(b);
     this.bullets.push({ el:b, x:cx, y:cy, target:mob, val });
-    // 炮手朝向（简单缩放反馈）
-    cannon.style.transform='translate(-50%,-50%) scale(1.15)';
-    setTimeout(()=>cannon.style.transform='translate(-50%,-50%) scale(1)',90);
-    this.clearInput();
+    cannon.style.transform='translateX(-50%) scale(1.15)';
+    setTimeout(()=>cannon.style.transform='translateX(-50%) scale(1)',90);
   },
 
   boom(x,y){
@@ -578,39 +610,17 @@ const Game = {
     setTimeout(()=>e.remove(),500);
   },
 
-  hitMob(mob, ok){
-    if(ok){
-      this.boom(mob.x, mob.y);
-      Audio8.hit();
-      this.kills++;
-      this.combo++; if(this.combo>this.maxCombo) this.maxCombo=this.combo;
-      this.score += 10 + Math.max(0,(this.combo-1))*2;
-      mob.el.remove();
-      this.mobs = this.mobs.filter(m=>m!==mob);
-      if(this.selected===mob) this.selected=null;
-      this.updateHud();
-    } else {
-      Audio8.fail();
-      this.combo=0;
-      mob.el.classList.add('miss');
-      setTimeout(()=>mob.el.classList.remove('miss'),700);
-      this.updateHud();
-    }
-  },
-
-  loseLife(mob){
+  destroyMob(mob){
+    this.boom(mob.x, mob.y);
+    Audio8.hit();
+    this.kills++;
+    this.combo++; if(this.combo>this.maxCombo) this.maxCombo=this.combo;
+    this.score += 10 + Math.max(0,(this.combo-1))*2;
     mob.el.remove();
-    this.mobs=this.mobs.filter(m=>m!==mob);
-    if(this.selected===mob) this.selected=null;
-    this.lives--;
-    this.combo=0;
-    Audio8.hurt();
-    const cannon=document.getElementById('cannon');
-    cannon.style.transform='translate(-50%,-50%) scale(1.3)';
-    cannon.style.filter='brightness(2) sepia(1) hue-rotate(-30deg)';
-    setTimeout(()=>{ cannon.style.transform='translate(-50%,-50%) scale(1)'; cannon.style.filter=''; },200);
+    if(mob===this.falling){ this.falling=null; this.spawn(); }
+    this.mobs = this.mobs.filter(m=>m!==mob);
+    this.settle();
     this.updateHud();
-    if(this.lives<=0) this.gameOver();
   },
 
   // ---- 主循环 ----
@@ -621,37 +631,38 @@ const Game = {
     this.elapsed=(ts-this.startT)/1000;
     const d=this.diff();
 
-    // 生成
-    this.spawnAcc += dt*1000;
-    if(this.spawnAcc >= d.interval){ this.spawnAcc=0; this.spawn(); }
-
     const pf=document.getElementById('playfield');
-    const cannon=document.getElementById('cannon');
-    const cx=cannon.offsetLeft, cy=cannon.offsetTop;
 
-    // 移动怪物朝中心
-    for(const m of [...this.mobs]){
-      const dx=cx-m.x, dy=cy-m.y;
-      const dist=Math.hypot(dx,dy);
-      if(dist < 32){ this.loseLife(m); continue; }
-      const step=d.speed*dt;
-      m.x += dx/dist*step; m.y += dy/dist*step;
-      m.el.style.left=m.x+'px'; m.el.style.top=m.y+'px';
+    // 下落中的方块
+    if(this.falling){
+      const f=this.falling;
+      f.y += d.speed*dt;
+      const ry=this.restY(f);
+      if(f.y >= ry){
+        f.y = ry;
+        f.el.style.top = f.y+'px';
+        f.landed = true;
+        f.el.classList.add('landed');
+        this.mobs.push(f);
+        this.falling=null;
+        // 垒到顶部 → 结束
+        if(ry - this.BH/2 < this.TOPLIMIT){ this.gameOver(); return; }
+        this.spawn();
+      } else {
+        f.el.style.top = f.y+'px';
+      }
     }
 
-    // 移动炮弹朝目标
+    // 炮弹朝目标飞
     for(const b of [...this.bullets]){
       if(!b.target || !b.target.el.isConnected){
-        // 目标已消失
         b.el.remove(); this.bullets=this.bullets.filter(x=>x!==b); continue;
       }
       const tx=b.target.x, ty=b.target.y;
       const dx=tx-b.x, dy=ty-b.y; const dist=Math.hypot(dx,dy);
-      const bs=520*dt;
-      if(dist < 24){
-        // 到达目标，判定
-        const ok = (b.val === b.target.value);
-        this.hitMob(b.target, ok);
+      const bs=640*dt;
+      if(dist < 26){
+        this.destroyMob(b.target);
         b.el.remove(); this.bullets=this.bullets.filter(x=>x!==b);
         continue;
       }
@@ -682,17 +693,14 @@ const Game = {
     const sec=Math.round(this.elapsed);
     document.getElementById('overStats').innerHTML=
       '坚持时长：<b>'+sec+'</b> 秒<br>'+
-      '击落怪物：<b>'+this.kills+'</b> 个<br>'+
+      '击落方块：<b>'+this.kills+'</b> 个<br>'+
       '最高连击：<b>'+this.maxCombo+'</b><br>'+
       '总得分：<b>'+this.score+'</b>';
     setTimeout(()=>UI.show('over'), 400);
   }
 };
 
-/* 点空白处取消选中 */
-document.getElementById('playfield').addEventListener('click', ()=>{
-  if(Game.selected){ Game.selected.el.classList.remove('selected'); Game.selected=null; }
-});
+
 
 
 
