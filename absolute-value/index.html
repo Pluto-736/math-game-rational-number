@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>化简大作战 · 看你能坚持多久</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+:root {
+  --sky: #5c94fc;
+  --sky2: #3a6ed0;
+  --brick: #c84c0c;
+  --grass: #00a800;
+  --gold: #fcd000;
+  --cream: #fcfcfc;
+  --ink: #0a0a1a;
+  --hp: #e8403a;
+}
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Press Start 2P', 'Microsoft YaHei', monospace;
+  background: var(--ink);
+  color: var(--cream);
+  touch-action: none;
+  user-select: none;
+}
+.pixel { image-rendering: pixelated; image-rendering: crisp-edges; }
+
+#app { position: fixed; inset: 0; }
+
+/* ===== 通用页面 ===== */
+.screen {
+  position: absolute; inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.screen.show { display: flex; }
+
+/* 像素按钮 */
+.pbtn {
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--gold);
+  border: none;
+  padding: 16px 22px;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 #a07800, inset -3px -3px 0 rgba(0,0,0,0.25), inset 3px 3px 0 rgba(255,255,255,0.5);
+  transition: transform 0.05s;
+  line-height: 1.5;
+}
+.pbtn:active { transform: translate(3px,3px); box-shadow: 1px 1px 0 #a07800, inset -3px -3px 0 rgba(0,0,0,0.25); }
+.pbtn.green { background: var(--grass); color: #fff; box-shadow: 4px 4px 0 #005800, inset -3px -3px 0 rgba(0,0,0,0.25), inset 3px 3px 0 rgba(255,255,255,0.35); }
+.pbtn.green:active { box-shadow: 1px 1px 0 #005800, inset -3px -3px 0 rgba(0,0,0,0.25); }
+
+/* ===== 入口页 ===== */
+#entry { background: linear-gradient(180deg, var(--sky) 0%, var(--sky2) 100%); }
+#entry .title {
+  font-size: 30px; color: var(--gold);
+  font-weight: bold;
+  text-align: center; line-height: 1.7; margin-bottom: 8px;
+  letter-spacing: 3px;
+  text-shadow:
+    1px 1px 0 #c89000, 2px 2px 0 #c89000, 3px 3px 0 #a07800,
+    4px 4px 0 #a07800, 5px 5px 0 #806000, 6px 6px 6px rgba(0,0,0,0.5);
+}
+#entry .sub { font-size: 11px; color: var(--cream); text-shadow: 2px 2px 0 var(--ink); margin-bottom: 36px; }
+#entry .pbtn { margin-bottom: 16px; }
+.entry-foot { position: absolute; bottom: 18px; font-size: 9px; color: rgba(255,255,255,0.7); }
+.entry-foot a { color: var(--gold); text-decoration: none; }
+
+/* 说明弹窗 */
+.modal-mask {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.75);
+  display: none; align-items: center; justify-content: center;
+  z-index: 50; padding: 20px;
+}
+.modal-mask.show { display: flex; }
+.modal {
+  background: #1a1a3a;
+  border: 4px solid var(--gold);
+  padding: 22px; max-width: 360px; width: 100%;
+  box-shadow: 6px 6px 0 rgba(0,0,0,0.5);
+}
+.modal h2 { font-size: 14px; color: var(--gold); margin-bottom: 16px; text-align: center; }
+.modal p { font-size: 10px; line-height: 1.9; margin-bottom: 12px; }
+.modal .hl { color: var(--gold); }
+.modal .pbtn { display: block; margin: 18px auto 0; }
+
+/* ===== 游戏页 ===== */
+#game { background: linear-gradient(180deg, var(--sky) 0%, #6ba8ff 60%, var(--grass) 60%, #008800 100%); }
+#hud {
+  position: absolute; top: 0; left: 0; right: 0;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 12px; z-index: 20; font-size: 11px;
+  text-shadow: 2px 2px 0 var(--ink);
+}
+#hud .hearts span { font-size: 18px; margin-right: 2px; filter: drop-shadow(2px 2px 0 rgba(0,0,0,0.4)); }
+#hud .hearts span.lost { opacity: 0.25; filter: grayscale(1); }
+#hud .stat { color: var(--gold); }
+#hud .left { display: flex; align-items: center; gap: 8px; }
+#hud .right { display: flex; align-items: center; gap: 10px; }
+#muteBtn, #lobbyBtn { font-size: 18px; cursor: pointer; background: none; border: none; padding: 0; }
+
+#playfield { position: absolute; inset: 0; overflow: hidden; }
+
+/* 炮手 */
+#cannon {
+  position: absolute; left: 50%; top: 54%;
+  width: 56px; height: 56px;
+  transform: translate(-50%,-50%);
+  z-index: 10;
+  transition: transform 0.08s;
+}
+
+/* 怪物 */
+.mob {
+  position: absolute;
+  min-width: 50px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; color: #fff;
+  background: var(--brick);
+  border: 3px solid #7a2a00;
+  box-shadow: inset -3px -3px 0 rgba(0,0,0,0.3), inset 3px 3px 0 rgba(255,255,255,0.3);
+  padding: 0 8px; white-space: nowrap;
+  transform: translate(-50%,-50%);
+  cursor: pointer; z-index: 5;
+}
+.mob.selected { outline: 4px solid var(--gold); outline-offset: 2px; animation: mobsel 0.4s steps(2) infinite; }
+@keyframes mobsel { 0%,100%{ box-shadow: inset -3px -3px 0 rgba(0,0,0,0.3), 0 0 0 4px var(--gold);} 50%{ box-shadow: inset -3px -3px 0 rgba(0,0,0,0.3), 0 0 10px 6px var(--gold);} }
+.mob.miss { animation: mobmiss 0.3s steps(2) 2; }
+@keyframes mobmiss { 0%,100%{ transform: translate(-50%,-50%);} 25%{ transform: translate(-62%,-50%) ; background:#ff3030;} 75%{ transform: translate(-38%,-50%); background:#ff3030;} }
+
+/* 炮弹 */
+.bullet {
+  position: absolute; width: 22px; height: 22px;
+  background: var(--gold); border: 2px solid #a07800; border-radius: 50%;
+  font-size: 9px; color: var(--ink);
+  display: flex; align-items: center; justify-content: center;
+  transform: translate(-50%,-50%); z-index: 8; font-weight: bold;
+}
+
+/* 爆炸 */
+.boom {
+  position: absolute; transform: translate(-50%,-50%); z-index: 9;
+  font-size: 28px; pointer-events: none;
+  animation: boom 0.5s steps(4) forwards;
+}
+@keyframes boom { 0%{ transform: translate(-50%,-50%) scale(0.4); opacity:1;} 100%{ transform: translate(-50%,-50%) scale(1.8); opacity:0;} }
+
+/* 输入显示 */
+#inputDisplay {
+  position: absolute; left: 50%; top: 44%;
+  transform: translate(-50%,-50%);
+  font-size: 22px; color: var(--gold);
+  text-shadow: 3px 3px 0 var(--ink);
+  z-index: 11; min-width: 40px; text-align: center;
+  background: rgba(10,10,26,0.6); padding: 4px 10px;
+  border: 2px solid var(--gold);
+}
+#inputDisplay:empty { display: none; }
+
+/* 键盘 */
+#keypad {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  display: grid; grid-template-columns: repeat(6, 1fr);
+  gap: 6px; padding: 8px; z-index: 20;
+  background: rgba(10,10,26,0.55);
+}
+.key {
+  font-family: inherit; font-size: 16px;
+  padding: 14px 0; text-align: center; cursor: pointer;
+  color: var(--ink); background: var(--cream);
+  border: none;
+  box-shadow: 3px 3px 0 #888, inset -2px -2px 0 rgba(0,0,0,0.2);
+  transition: transform 0.05s;
+}
+.key:active { transform: translate(2px,2px); }
+.key.on { background: var(--gold); transform: translateY(-6px); box-shadow: 3px 9px 0 #a07800, 0 0 8px var(--gold); color: var(--ink); }
+.key.fire { background: var(--grass); color: #fff; box-shadow: 3px 3px 0 #005800; grid-column: span 2; }
+.key.fire:active { transform: translate(2px,2px); }
+.key.neg { font-weight: bold; }
+
+/* ===== 结算页 ===== */
+#over { background: rgba(8,8,24,0.94); z-index: 60; }
+#over .title { font-size: 22px; color: var(--brick); text-shadow: 3px 3px 0 var(--ink); margin-bottom: 24px; }
+#over .stats { font-size: 12px; line-height: 2.4; text-align: center; margin-bottom: 28px; }
+#over .stats b { color: var(--gold); }
+#over .pbtn { margin-bottom: 14px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- 入口页 -->
+  <div id="entry" class="screen show">
+    <div class="title">化简大作战</div>
+    <div class="sub">看你能坚持多久</div>
+    <button class="pbtn green" onclick="Game.start()">▶ 开始游戏</button>
+    <button class="pbtn" onclick="UI.showHelp()">玩法说明</button>
+    <div class="entry-foot"><a href="../index.html">← 返回游戏厅</a></div>
+  </div>
+
+  <!-- 玩法说明 -->
+  <div id="helpMask" class="modal-mask">
+    <div class="modal">
+      <h2>玩法说明</h2>
+      <p>怪物从四面八方扑向中央的炮手，身上写着<span class="hl">待化简的式子</span>，比如 -(-5)、|-3|。</p>
+      <p>① 点一个怪 → <span class="hl">选中</span>它。</p>
+      <p>② 用键盘拼出它<span class="hl">化简后的值</span>（点 - 和数字，键会亮起；再点一下取消）。</p>
+      <p>③ 按 <span class="hl">发射</span> 把它打爆！算错就打不掉。</p>
+      <p>怪越来越快，<span class="hl">看你能坚持多久！</span></p>
+      <button class="pbtn green" onclick="UI.hideHelp()">明白啦</button>
+    </div>
+  </div>
+
+  <!-- 游戏页 -->
+  <div id="game" class="screen">
+    <div id="hud">
+      <div class="left">
+        <button id="lobbyBtn" onclick="UI.toLobby()">🏠</button>
+        <span class="hearts" id="hearts"></span>
+      </div>
+      <div class="stat" id="scoreLbl">0 分</div>
+      <div class="right">
+        <span class="stat" id="comboLbl"></span>
+        <button id="muteBtn" onclick="Audio8.toggle()">🔊</button>
+      </div>
+    </div>
+    <div id="playfield">
+      <div id="inputDisplay"></div>
+      <div id="cannon"></div>
+    </div>
+    <div id="keypad"></div>
+  </div>
+
+  <!-- 结算页 -->
+  <div id="over" class="screen">
+    <div class="title">游戏结束</div>
+    <div class="stats" id="overStats"></div>
+    <button class="pbtn green" onclick="Game.start()">↺ 再来一次</button>
+    <button class="pbtn" onclick="UI.toEntry()">返回标题</button>
+  </div>
+</div>
+<script>
+/* ===================== 化简引擎 ===================== */
+// 结构树：{op:'lit',v} | {op:'neg'|'pos'|'abs', x:node}
+const Expr = {
+  rnd(min, max){ return Math.floor(Math.random()*(max-min+1))+min; },
+  pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; },
+
+  // 生成一个式子。depth=1 单层；depth=2/3 多层
+  gen(depth){
+    const leaf = { op:'lit', v: this.rnd(1,9) };
+    if(depth <= 1){
+      const op = this.pick(['neg','pos','abs']);
+      return { op, x: leaf };
+    }
+    // 多层：在内层结果外再包 1~2 层。整棵树最多只用一个 abs，
+    // 避免出现 |..|..|| 这类难读的嵌套竖线。
+    let node = leaf;
+    const layers = depth; // 2 或 3
+    let absUsed = false;
+    for(let i=0;i<layers;i++){
+      let choices = absUsed ? ['neg','pos','neg'] : ['neg','pos','abs','neg'];
+      const op = this.pick(choices);
+      if(op==='abs') absUsed = true;
+      node = { op, x: node };
+    }
+    return node;
+  },
+
+  // 递归求值
+  eval(node){
+    if(node.op==='lit') return node.v;
+    const v = this.eval(node.x);
+    if(node.op==='neg') return -v;
+    if(node.op==='pos') return v;
+    if(node.op==='abs') return Math.abs(v);
+    return v;
+  },
+
+  // 生成显示字符串（贴近课本写法：叶子/绝对值外不加多余括号）
+  str(node){
+    if(node.op==='lit') return String(node.v);
+    const child = node.x;
+    const inner = this.str(child);
+    // 内层是数字或绝对值时，竖线/数字本身已是完整单元，负正号直接贴
+    const bare = (child.op==='lit' || child.op==='abs');
+    if(node.op==='neg') return bare ? '-'+inner : '-('+inner+')';
+    if(node.op==='pos') return bare ? '+'+inner : '+('+inner+')';
+    if(node.op==='abs') return '|'+inner+'|';
+    return inner;
+  },
+
+  // 对外：产出 {display, value}，化简结果保证 |value|∈[1,9]
+  make(multi){
+    let depth = multi ? this.rnd(2,3) : 1;
+    let node = this.gen(depth);
+    let v = this.eval(node);
+    // 美化最外层：lit 外若是裸数字不会发生（gen 一定包了 op）
+    let display = this.str(node);
+    // 单层时去掉 pos 外括号让 +(5) 更像题目？保留括号更严谨，维持原样
+    return { display, value: v };
+  }
+};
+
+/* ===================== 8-bit 音频 ===================== */
+const Audio8 = {
+  ctx: null, muted: false, bgmTimer: null, bgmStep: 0,
+  ensure(){
+    if(!this.ctx){
+      try { this.ctx = new (window.AudioContext||window.webkitAudioContext)(); }
+      catch(e){ this.ctx = null; }
+    }
+    if(this.ctx && this.ctx.state==='suspended') this.ctx.resume();
+  },
+  beep(freq, dur, type, vol){
+    if(this.muted || !this.ctx) return;
+    const t = this.ctx.currentTime;
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    o.type = type||'square';
+    o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime((vol||0.15), t);
+    g.gain.exponentialRampToValueAtTime(0.001, t+dur);
+    o.connect(g); g.connect(this.ctx.destination);
+    o.start(t); o.stop(t+dur);
+  },
+  slide(f1,f2,dur,type,vol){
+    if(this.muted || !this.ctx) return;
+    const t=this.ctx.currentTime;
+    const o=this.ctx.createOscillator(); const g=this.ctx.createGain();
+    o.type=type||'square';
+    o.frequency.setValueAtTime(f1,t);
+    o.frequency.exponentialRampToValueAtTime(f2,t+dur);
+    g.gain.setValueAtTime(vol||0.15,t);
+    g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+    o.connect(g); g.connect(this.ctx.destination);
+    o.start(t); o.stop(t+dur);
+  },
+  fire(){ this.slide(880,1400,0.12,'square',0.12); },
+  hit(){ this.slide(300,90,0.22,'square',0.18); this.beep(160,0.18,'triangle',0.15); },
+  fail(){ this.beep(120,0.18,'sawtooth',0.12); },
+  hurt(){ this.slide(400,80,0.4,'sawtooth',0.2); },
+  gameover(){ const s=[392,330,262,196]; s.forEach((f,i)=>setTimeout(()=>this.beep(f,0.3,'square',0.18),i*180)); },
+  key(){ this.beep(660,0.05,'square',0.08); },
+  // 简单循环 BGM（方波琶音）
+  startBGM(){
+    if(this.bgmTimer) return;
+    const notes = [262,330,392,330, 294,349,440,349, 262,330,392,523, 392,330,294,262];
+    this.bgmStep = 0;
+    this.bgmTimer = setInterval(()=>{
+      if(this.muted || !this.ctx){ return; }
+      const f = notes[this.bgmStep % notes.length];
+      this.beep(f, 0.16, 'square', 0.05);
+      // 低音
+      if(this.bgmStep%2===0) this.beep(f/2, 0.18, 'triangle', 0.05);
+      this.bgmStep++;
+    }, 220);
+  },
+  stopBGM(){ if(this.bgmTimer){ clearInterval(this.bgmTimer); this.bgmTimer=null; } },
+  toggle(){
+    this.muted = !this.muted;
+    document.getElementById('muteBtn').textContent = this.muted ? '🔇' : '🔊';
+  }
+};
+
+/* ===================== UI ===================== */
+const UI = {
+  show(id){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));
+    document.getElementById(id).classList.add('show');
+  },
+  showHelp(){ document.getElementById('helpMask').classList.add('show'); },
+  hideHelp(){ document.getElementById('helpMask').classList.remove('show'); },
+  toEntry(){ Game.stop(); Audio8.stopBGM(); UI.show('entry'); },
+  toLobby(){ Game.stop(); Audio8.stopBGM(); window.location.href='../index.html'; }
+};
+
+/* 像素炮手（用 emoji 占位的像素风小人，外加像素帽） */
+const CANNON_SVG = '🤖';
+
+/* ===================== 游戏主体 ===================== */
+const Game = {
+  lives:3, score:0, combo:0, maxCombo:0, kills:0,
+  mobs:[], bullets:[], selected:null,
+  input:{ neg:false, digit:null },
+  running:false, raf:0,
+  startT:0, elapsed:0,
+  spawnAcc:0, lastTs:0,
+
+  start(){
+    Audio8.ensure();
+    Audio8.startBGM();
+    this.lives=3; this.score=0; this.combo=0; this.maxCombo=0; this.kills=0;
+    this.mobs=[]; this.bullets=[]; this.selected=null;
+    this.input={neg:false,digit:null};
+    this.startT=performance.now(); this.elapsed=0;
+    this.spawnAcc=0; this.lastTs=this.startT;
+    this.running=true;
+    UI.hideHelp();
+    UI.show('game');
+    const pf=document.getElementById('playfield');
+    // 清掉上一局残留
+    pf.querySelectorAll('.mob,.bullet,.boom').forEach(e=>e.remove());
+    document.getElementById('cannon').textContent = CANNON_SVG;
+    document.getElementById('cannon').style.fontSize='48px';
+    this.buildKeypad();
+    this.updateInputDisplay();
+    this.updateHud();
+    // 先放一个怪
+    this.spawn();
+    cancelAnimationFrame(this.raf);
+    this.raf = requestAnimationFrame(ts=>this.loop(ts));
+  },
+
+  stop(){ this.running=false; cancelAnimationFrame(this.raf); },
+
+  // ---- 难度参数（随存活时间递增）----
+  diff(){
+    const t = this.elapsed; // 秒
+    return {
+      speed: 16 + t*1.1,                          // px/秒，整体更慢、加速更缓
+      interval: Math.min(3200, 1900 + t*45),      // 生成间隔 ms：越往后越长（密度更小）
+      multi: this.kills >= 4                       // 击落4个后出多层
+    };
+  },
+
+  // ---- 生成怪物：只在炮台水平线「上方」区域进入（下方离炮台太近，反应不过来）----
+  spawn(){
+    const pf=document.getElementById('playfield');
+    const W=pf.clientWidth, H=pf.clientHeight;
+    const cy=H*0.54;                 // 炮台水平线
+    const m = Expr.make(this.diff().multi);
+    const pad=30;
+    const yMax = cy - 50;            // 怪的最低进入高度：炮台线上方一点
+    let x,y;
+    // 从 上 / 左上侧 / 右上侧 三种边缘进入，y 始终在炮台线上方
+    const edge = Expr.rnd(0,2);
+    if(edge===0){ x=Expr.rnd(pad,W-pad); y=-30; }            // 顶部落下
+    else if(edge===1){ x=-30; y=Expr.rnd(-20,yMax); }        // 左侧上半
+    else { x=W+30; y=Expr.rnd(-20,yMax); }                   // 右侧上半
+    const el=document.createElement('div');
+    el.className='mob';
+    el.textContent=m.display;
+    el.style.left=x+'px'; el.style.top=y+'px';
+    pf.appendChild(el);
+    const mob={ el, x, y, value:m.value, display:m.display };
+    el.addEventListener('click', e=>{ e.stopPropagation(); this.selectMob(mob); });
+    el.addEventListener('touchstart', e=>{ e.stopPropagation(); e.preventDefault(); this.selectMob(mob); }, {passive:false});
+    this.mobs.push(mob);
+  },
+
+  selectMob(mob){
+    if(!this.running) return;
+    this.mobs.forEach(m=>m.el.classList.remove('selected'));
+    this.selected=mob;
+    mob.el.classList.add('selected');
+    Audio8.key();
+  },
+
+  // ---- 键盘 ----
+  buildKeypad(){
+    const kp=document.getElementById('keypad');
+    kp.innerHTML='';
+    const keys=['-','1','2','3','4','5','6','7','8','9','0'];
+    keys.forEach(k=>{
+      const b=document.createElement('button');
+      b.className='key'+(k==='-'?' neg':'');
+      b.textContent=k;
+      b.onclick=()=>this.tapKey(k,b);
+      kp.appendChild(b);
+    });
+    const fire=document.createElement('button');
+    fire.className='key fire';
+    fire.textContent='发射';
+    fire.onclick=()=>this.fire();
+    kp.appendChild(fire);
+  },
+
+  tapKey(k, btn){
+    Audio8.key();
+    if(k==='-'){
+      this.input.neg=!this.input.neg;
+      btn.classList.toggle('on', this.input.neg);
+    } else {
+      const d=parseInt(k);
+      // 数字互斥：先清其它数字键高亮
+      document.querySelectorAll('#keypad .key').forEach(el=>{
+        if(el.textContent!=='-' && el.textContent!=='发射') el.classList.remove('on');
+      });
+      if(this.input.digit===d){ this.input.digit=null; } // 再点取消
+      else { this.input.digit=d; btn.classList.add('on'); }
+    }
+    this.updateInputDisplay();
+  },
+
+  updateInputDisplay(){
+    const el=document.getElementById('inputDisplay');
+    if(this.input.digit===null && !this.input.neg){ el.textContent=''; return; }
+    const sign=this.input.neg?'-':'';
+    const d=this.input.digit===null?'':this.input.digit;
+    el.textContent=sign+d;
+  },
+
+  clearInput(){
+    this.input={neg:false,digit:null};
+    document.querySelectorAll('#keypad .key').forEach(el=>el.classList.remove('on'));
+    this.updateInputDisplay();
+  },
+
+  // ---- 发射判定 ----
+  fire(){
+    if(!this.running) return;
+    if(this.input.digit===null){ Audio8.fail(); return; }
+    if(!this.selected){ Audio8.fail(); this.flashNoTarget(); return; }
+    const val = (this.input.neg?-1:1)*this.input.digit;
+    const mob = this.selected;
+    Audio8.fire();
+    this.shootBullet(mob, val);
+  },
+
+  flashNoTarget(){
+    const el=document.getElementById('inputDisplay');
+    el.style.color='#ff4040';
+    setTimeout(()=>el.style.color='', 250);
+  },
+
+  shootBullet(mob, val){
+    const pf=document.getElementById('playfield');
+    const cannon=document.getElementById('cannon');
+    const cx=cannon.offsetLeft, cy=cannon.offsetTop;
+    const b=document.createElement('div');
+    b.className='bullet';
+    b.textContent=(val>0?'+':'')+val;
+    b.style.left=cx+'px'; b.style.top=cy+'px';
+    pf.appendChild(b);
+    this.bullets.push({ el:b, x:cx, y:cy, target:mob, val });
+    // 炮手朝向（简单缩放反馈）
+    cannon.style.transform='translate(-50%,-50%) scale(1.15)';
+    setTimeout(()=>cannon.style.transform='translate(-50%,-50%) scale(1)',90);
+    this.clearInput();
+  },
+
+  boom(x,y){
+    const pf=document.getElementById('playfield');
+    const e=document.createElement('div');
+    e.className='boom'; e.textContent='💥';
+    e.style.left=x+'px'; e.style.top=y+'px';
+    pf.appendChild(e);
+    setTimeout(()=>e.remove(),500);
+  },
+
+  hitMob(mob, ok){
+    if(ok){
+      this.boom(mob.x, mob.y);
+      Audio8.hit();
+      this.kills++;
+      this.combo++; if(this.combo>this.maxCombo) this.maxCombo=this.combo;
+      this.score += 10 + Math.max(0,(this.combo-1))*2;
+      mob.el.remove();
+      this.mobs = this.mobs.filter(m=>m!==mob);
+      if(this.selected===mob) this.selected=null;
+      this.updateHud();
+    } else {
+      Audio8.fail();
+      this.combo=0;
+      mob.el.classList.add('miss');
+      setTimeout(()=>mob.el.classList.remove('miss'),700);
+      this.updateHud();
+    }
+  },
+
+  loseLife(mob){
+    mob.el.remove();
+    this.mobs=this.mobs.filter(m=>m!==mob);
+    if(this.selected===mob) this.selected=null;
+    this.lives--;
+    this.combo=0;
+    Audio8.hurt();
+    const cannon=document.getElementById('cannon');
+    cannon.style.transform='translate(-50%,-50%) scale(1.3)';
+    cannon.style.filter='brightness(2) sepia(1) hue-rotate(-30deg)';
+    setTimeout(()=>{ cannon.style.transform='translate(-50%,-50%) scale(1)'; cannon.style.filter=''; },200);
+    this.updateHud();
+    if(this.lives<=0) this.gameOver();
+  },
+
+  // ---- 主循环 ----
+  loop(ts){
+    if(!this.running) return;
+    const dt=Math.min(50, ts-this.lastTs)/1000; // 秒
+    this.lastTs=ts;
+    this.elapsed=(ts-this.startT)/1000;
+    const d=this.diff();
+
+    // 生成
+    this.spawnAcc += dt*1000;
+    if(this.spawnAcc >= d.interval){ this.spawnAcc=0; this.spawn(); }
+
+    const pf=document.getElementById('playfield');
+    const cannon=document.getElementById('cannon');
+    const cx=cannon.offsetLeft, cy=cannon.offsetTop;
+
+    // 移动怪物朝中心
+    for(const m of [...this.mobs]){
+      const dx=cx-m.x, dy=cy-m.y;
+      const dist=Math.hypot(dx,dy);
+      if(dist < 32){ this.loseLife(m); continue; }
+      const step=d.speed*dt;
+      m.x += dx/dist*step; m.y += dy/dist*step;
+      m.el.style.left=m.x+'px'; m.el.style.top=m.y+'px';
+    }
+
+    // 移动炮弹朝目标
+    for(const b of [...this.bullets]){
+      if(!b.target || !b.target.el.isConnected){
+        // 目标已消失
+        b.el.remove(); this.bullets=this.bullets.filter(x=>x!==b); continue;
+      }
+      const tx=b.target.x, ty=b.target.y;
+      const dx=tx-b.x, dy=ty-b.y; const dist=Math.hypot(dx,dy);
+      const bs=520*dt;
+      if(dist < 24){
+        // 到达目标，判定
+        const ok = (b.val === b.target.value);
+        this.hitMob(b.target, ok);
+        b.el.remove(); this.bullets=this.bullets.filter(x=>x!==b);
+        continue;
+      }
+      b.x += dx/dist*bs; b.y += dy/dist*bs;
+      b.el.style.left=b.x+'px'; b.el.style.top=b.y+'px';
+    }
+
+    this.raf=requestAnimationFrame(t=>this.loop(t));
+  },
+
+  updateHud(){
+    const h=document.getElementById('hearts');
+    h.innerHTML='';
+    for(let i=0;i<3;i++){
+      const s=document.createElement('span');
+      s.textContent='❤';
+      if(i>=this.lives) s.className='lost';
+      h.appendChild(s);
+    }
+    document.getElementById('scoreLbl').textContent=this.score+' 分';
+    document.getElementById('comboLbl').textContent=this.combo>1?(this.combo+' 连击'):'';
+  },
+
+  gameOver(){
+    this.stop();
+    Audio8.stopBGM();
+    Audio8.gameover();
+    const sec=Math.round(this.elapsed);
+    document.getElementById('overStats').innerHTML=
+      '坚持时长：<b>'+sec+'</b> 秒<br>'+
+      '击落怪物：<b>'+this.kills+'</b> 个<br>'+
+      '最高连击：<b>'+this.maxCombo+'</b><br>'+
+      '总得分：<b>'+this.score+'</b>';
+    setTimeout(()=>UI.show('over'), 400);
+  }
+};
+
+/* 点空白处取消选中 */
+document.getElementById('playfield').addEventListener('click', ()=>{
+  if(Game.selected){ Game.selected.el.classList.remove('selected'); Game.selected=null; }
+});
+
+
+
+
+</script>
+</body>
+</html>
