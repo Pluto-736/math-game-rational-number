@@ -301,14 +301,32 @@ const Expr = {
     return inner;
   },
 
+  // 单层：从固定的「带绝对值或括号」形态里选，保证一定要化简一步，
+  // 绝不出现裸的 -5 / +5（它们本身已是最简，等于白送）
+  makeSingle(){
+    const n = this.rnd(1,9);
+    const forms = [
+      { display:'|'+n+'|',    value:n  },   // |5|  → 5
+      { display:'|-'+n+'|',   value:n  },   // |-5| → 5
+      { display:'-(+'+n+')',  value:-n },   // -(+5)→ -5
+      { display:'+(-'+n+')',  value:-n },   // +(-5)→ -5
+      { display:'-('+n+')',   value:-n },   // -(5) → -5
+      { display:'+('+n+')',   value:n  }    // +(5) → 5
+    ];
+    return this.pick(forms);
+  },
+
   // 对外：产出 {display, value}，化简结果保证 |value|∈[1,9]
   make(multi){
-    let depth = multi ? this.rnd(2,3) : 1;
-    let node = this.gen(depth);
-    let v = this.eval(node);
-    // 美化最外层：lit 外若是裸数字不会发生（gen 一定包了 op）
-    let display = this.str(node);
-    // 单层时去掉 pos 外括号让 +(5) 更像题目？保留括号更严谨，维持原样
+    if(!multi) return this.makeSingle();
+    // 多层：随机生成后兜底，若显示形式恰好等于答案（无需化简）则重生
+    let node, v, display, tries=0;
+    do {
+      node = this.gen(this.rnd(2,3));
+      v = this.eval(node);
+      display = this.str(node);
+      tries++;
+    } while(display === String(v) && tries < 20);
     return { display, value: v };
   }
 };
