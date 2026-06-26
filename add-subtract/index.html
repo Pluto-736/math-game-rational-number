@@ -84,12 +84,13 @@ html,body{
   align-items:center; padding:12px 16px; z-index:20; font-size:15px; text-shadow:1px 1px 2px #000; }
 #hud .hearts span{ font-size:20px; margin-right:2px; } #hud .hearts span.lost{ opacity:.25; }
 #hud .mid{ font-weight:bold; color:var(--gold); } #hud .right{ display:flex; gap:12px; align-items:center; }
-#lobbyBtn{ background:none; border:none; font-size:20px; cursor:pointer; }
+#hud .left{ display:flex; gap:10px; align-items:center; }
+#lobbyBtn, #muteBtn{ background:none; border:none; font-size:20px; cursor:pointer; }
 #levelLbl{ font-size:13px; opacity:.85; }
 
 /* 式子卡片 */
 #cardWrap{ position:absolute; left:0; right:0; top:42%; display:flex; justify-content:center;
-  z-index:10; pointer-events:none; }
+  z-index:10; pointer-events:none; transition:top .25s; }
 #card{ background:var(--cream); color:var(--ink); border-radius:18px;
   padding:26px 34px; font-size:44px; font-weight:900; min-width:160px; text-align:center;
   box-shadow:0 8px 24px rgba(0,0,0,.5); transition:none; }
@@ -98,8 +99,14 @@ html,body{
 @keyframes flyNeg{ to{ transform:translateX(-60vw) rotate(-20deg); opacity:0; } }
 @keyframes flyPos{ to{ transform:translateX(60vw) rotate(20deg); opacity:0; } }
 @keyframes flyZero{ to{ transform:translateY(-50vh) scale(.4); opacity:0; } }
+
+/* 第3关：算得数模式——隐藏红蓝分区，暖调柔和背景，算式上移 */
+#game.calc #negZone, #game.calc #posZone{ display:none; }
+#game.calc{ background:linear-gradient(165deg,#3a2e1a 0%,#5a4326 45%,#7a5a30 100%); }
+#game.calc #cardWrap{ top:30%; }
 #hintBar{ position:absolute; left:0; right:0; top:34%; text-align:center; z-index:11;
   font-size:15px; color:var(--gold); height:20px; }
+#game.calc #hintBar{ top:20%; }
 
 /* 零按钮 */
 #zeroBtn{ position:absolute; left:50%; transform:translateX(-50%); top:14%;
@@ -117,6 +124,20 @@ html,body{
 #numpad .nkey.ok{ background:var(--gold); grid-column:span 2; }
 #numInput{ grid-column:span 6; text-align:center; font-size:30px; font-weight:900;
   color:var(--gold); padding:6px; min-height:42px; }
+
+/* 第3关答错提示（需点继续，不自动消失） */
+#calcWrong{ position:absolute; inset:0; z-index:50; display:none;
+  align-items:center; justify-content:center; background:rgba(8,10,24,.82); }
+#calcWrong.show{ display:flex; }
+#calcWrong .cw-box{ background:var(--cream); color:var(--ink); border-radius:20px;
+  padding:30px 34px; text-align:center; box-shadow:0 12px 40px rgba(0,0,0,.6);
+  border:4px solid #e0413c; min-width:240px; animation:cwPop .25s ease; }
+@keyframes cwPop{ from{ transform:scale(.8); opacity:0; } to{ transform:scale(1); opacity:1; } }
+#calcWrong .cw-x{ font-size:24px; font-weight:900; color:#e0413c; margin-bottom:14px; }
+#calcWrong .cw-eq{ font-size:30px; font-weight:900; margin-bottom:8px; }
+#calcWrong .cw-ans{ font-size:18px; margin-bottom:22px; }
+#calcWrong .cw-ans b{ font-size:38px; color:#e0413c; display:inline-block; margin-left:4px; }
+#calcWrong .btn{ margin:0; }
 
 /* 结算页 */
 #over{ background:rgba(8,10,24,.95); z-index:60; }
@@ -153,7 +174,7 @@ html,body{
     <div id="negZone" class="half">−<span class="lbl">负</span></div>
     <div id="posZone" class="half">＋<span class="lbl">正</span></div>
     <div id="hud">
-      <div class="left"><button id="lobbyBtn" onclick="UI.toLobby()">🏠</button></div>
+      <div class="left"><button id="lobbyBtn" onclick="UI.toLobby()">🏠</button><button id="muteBtn" onclick="SFX.toggleMute()">🔊</button></div>
       <div class="mid" id="scoreLbl">0 分</div>
       <div class="right"><span id="comboLbl"></span><span class="hearts" id="hearts"></span></div>
     </div>
@@ -162,6 +183,14 @@ html,body{
     <div id="hintBar"></div>
     <div id="cardWrap"><div id="card">-8 + 5</div></div>
     <div id="numpad"></div>
+    <div id="calcWrong">
+      <div class="cw-box">
+        <div class="cw-x">✗ 答错了</div>
+        <div class="cw-eq" id="cwEq"></div>
+        <div class="cw-ans">正确答案是 <b id="cwVal"></b></div>
+        <button class="btn" onclick="Game.contAfterWrong()">继续 →</button>
+      </div>
+    </div>
   </div>
 
   <!-- 结算页 -->
@@ -207,13 +236,17 @@ const Quiz = {
       op = Math.random()<0.5 ? '+' : '-';
       let signB = Math.random()<0.5 ? -1 : 1;
       b = signB * this.rnd(1, R);
+      // 第3关：排除"正+正""正-正"（即 a>0 且 b>0 的情形），让每题都涉及负数
+      if(level >= 3 && a > 0 && b > 0){ b = -b; }
       if(wantZero){
         const k = this.rnd(1,R);
         // a op (sb) = 0 的几种：k - (k)、 -k + (k)、 k + (-k)、 -k - (-k)
-        const forms = [
+        let forms = [
           {a:k, op:'-', b:k}, {a:-k, op:'+', b:k},
           {a:k, op:'+', b:-k}, {a:-k, op:'-', b:-k}
         ];
+        // 第3关排除"正-正"那种（k - (k)）
+        if(level >= 3) forms = forms.filter(f=>!(f.a>0 && f.b>0));
         const f = forms[this.rnd(0,forms.length-1)];
         a=f.a; op=f.op; b=f.b;
       }
@@ -239,7 +272,23 @@ const SFX = {
   wrong(){ this.slide(300,90,0.25,'sawtooth',0.16); },
   level(){ [523,659,784].forEach((f,i)=>setTimeout(()=>this.beep(f,0.18,'square',0.12),i*120)); },
   over(){ [392,330,262,196].forEach((f,i)=>setTimeout(()=>this.beep(f,0.3,'square',0.14),i*170)); },
-  tap(){ this.beep(700,0.04,'square',0.06); }
+  tap(){ this.beep(700,0.04,'square',0.06); },
+  // 循环 BGM（方波琶音 + 低音）
+  bgmTimer:null, bgmStep:0,
+  startBGM(){
+    if(this.bgmTimer || !this.ctx) return;
+    const notes=[330,392,494,392, 349,440,523,440, 330,392,494,587, 494,392,349,330];
+    this.bgmStep=0;
+    this.bgmTimer=setInterval(()=>{
+      if(this.muted||!this.ctx) return;
+      const f=notes[this.bgmStep%notes.length];
+      this.beep(f,0.15,'square',0.04);
+      if(this.bgmStep%2===0) this.beep(f/2,0.17,'triangle',0.045);
+      this.bgmStep++;
+    },230);
+  },
+  stopBGM(){ if(this.bgmTimer){ clearInterval(this.bgmTimer); this.bgmTimer=null; } },
+  toggleMute(){ this.muted=!this.muted; const b=document.getElementById('muteBtn'); if(b) b.textContent=this.muted?'🔇':'🔊'; }
 };
 
 /* ============ UI ============ */
@@ -267,17 +316,18 @@ const Game = {
   // 进入指定关卡
   startLevel(lv){
     if(lv > this.unlocked) return;
-    SFX.ensure();
+    SFX.ensure(); SFX.startBGM();
     this.level=lv; this.range=this.LV[lv].range; this.goal=8;
     this.lives=3; this.score=0; this.combo=0; this.maxCombo=0; this.correct=0; this.total=0;
     this.running=true; this.awaitNum=false; this.numStr='';
     UI.help(false); UI.show('game');
-    // 第3关隐藏正负区交互提示，但布局保留；零按钮仅1-2关显示
+    // 第3关：算得数模式，切换背景/隐藏红蓝分区/隐藏零按钮
+    document.getElementById('game').classList.toggle('calc', lv>=3);
     document.getElementById('zeroBtn').style.display = (lv<3)?'block':'none';
     document.getElementById('numpad').classList.remove('show');
     this.buildNumpad(); this.updateHud(); this.next();
   },
-  stop(){ this.running=false; },
+  stop(){ this.running=false; SFX.stopBGM(); },
 
   next(){
     if(!this.running) return;
@@ -337,7 +387,19 @@ const Game = {
     const v=parseInt(this.numStr,10);
     if(v===this.cur.value){ SFX.right(); this.awaitNum=false; document.getElementById('numpad').classList.remove('show'); this.scoreRight(); setTimeout(()=>this.next(),200); }
     else { SFX.wrong(); this.awaitNum=false; document.getElementById('numpad').classList.remove('show');
-      document.getElementById('hintBar').textContent='得数应为 '+this.cur.value; this.scoreWrong(null); }
+      this.showCalcWrong(); }
+  },
+  // 第3关答错：弹出醒目提示，扣分扣命，点"继续"才进入下一题或结算
+  showCalcWrong(){
+    this.total++; this.combo=0; this.lives--; this.updateHud();
+    document.getElementById('cwEq').textContent = this.cur.display + ' =';
+    document.getElementById('cwVal').textContent = this.cur.value;
+    document.getElementById('calcWrong').classList.add('show');
+  },
+  contAfterWrong(){
+    document.getElementById('calcWrong').classList.remove('show');
+    if(this.lives<=0){ this.over(); return; }
+    this.next();
   },
 
   scoreRight(){
