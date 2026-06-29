@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>正负狂飙 · 有理数乘除 · 四则混合</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+:root{
+  --pos:#f0432a; --pos2:#9c1a0a; --neg:#2a6cf0; --neg2:#0a3a9c;
+  --ink:#0b1020; --cream:#f6f8ff; --gold:#ffd23f;
+}
+html,body{
+  height:100%; overflow:hidden;
+  font-family:'Microsoft YaHei',sans-serif;
+  background:var(--ink); color:var(--cream);
+  touch-action:none; user-select:none;
+}
+#app{ position:fixed; inset:0; }
+.screen{ position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; }
+.screen.show{ display:flex; }
+
+/* 按钮 */
+.btn{
+  font-family:inherit; font-size:18px; font-weight:bold;
+  color:var(--ink); background:var(--gold);
+  border:none; border-radius:14px; padding:16px 30px; cursor:pointer;
+  box-shadow:0 5px 0 #b8860b; transition:transform .06s, box-shadow .06s; margin:8px;
+}
+.btn:active{ transform:translateY(4px); box-shadow:0 1px 0 #b8860b; }
+.btn.ghost{ background:rgba(255,255,255,.16); color:#fff; box-shadow:0 5px 0 rgba(0,0,0,.3); }
+
+/* 入口页 */
+#entry{ background:linear-gradient(135deg,#1a1f3a 0%,#2c1338 50%,#3a1320 100%); overflow:hidden; }
+#entry .title{ font-size:48px; font-weight:900; letter-spacing:2px; margin-bottom:8px; text-shadow:3px 3px 0 rgba(0,0,0,.45); position:relative; z-index:2;}
+#entry .title .r{ color:#ff8a6f; } #entry .title .b{ color:#6fa8ff; }
+#entry .sub{ font-size:15px; opacity:.85; margin-bottom:34px; position:relative; z-index:2;}
+#levelMenu{ display:flex; flex-direction:column; gap:14px; width:100%; max-width:340px; margin-bottom:18px; position:relative; z-index:2;}
+.lvCard{ display:flex; align-items:center; gap:14px; background:rgba(255,255,255,.14);
+  border-radius:16px; padding:16px 18px; cursor:pointer; border:2px solid transparent; transition:transform .12s, background .12s; }
+.lvCard:active{ transform:scale(.97); }
+.lvCard:not(.locked):hover{ background:rgba(255,255,255,.24); }
+.lvCard .lvNo{ font-size:28px; font-weight:900; width:48px; height:48px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; border-radius:12px; background:rgba(0,0,0,.28); }
+.lvCard .lvInfo{ flex:1; text-align:left; }
+.lvCard .lvName{ font-size:17px; font-weight:bold; margin-bottom:3px; }
+.lvCard .lvDesc{ font-size:12px; opacity:.82; line-height:1.4; }
+.lvCard .lvTip{ font-size:12px; color:var(--gold); margin-top:3px; }
+.lvCard.locked{ opacity:.45; cursor:not-allowed; }
+.lvCard.locked .lvNo{ font-size:0; } .lvCard.locked .lvNo::after{ content:'🔒'; font-size:20px; }
+.entry-foot{ position:absolute; bottom:16px; font-size:13px; opacity:.7; z-index:2;}
+.entry-foot a{ color:var(--gold); text-decoration:none; }
+
+/* 说明弹窗 */
+.mask{ position:absolute; inset:0; background:rgba(0,0,0,.8); display:none; align-items:center; justify-content:center; z-index:80; padding:22px; }
+.mask.show{ display:flex; }
+.modal{ background:#1a2142; border:3px solid var(--gold); border-radius:18px; padding:24px; max-width:390px; width:100%; max-height:86vh; overflow:auto; }
+.modal h2{ font-size:20px; color:var(--gold); margin-bottom:14px; text-align:center; }
+.modal p{ font-size:14px; line-height:1.85; margin-bottom:10px; }
+.modal .hl{ color:var(--gold); } .modal .pr{ color:#ff8a6f; } .modal .nb{ color:#6fa8ff; }
+
+/* HUD */
+#hud{ position:absolute; top:0; left:0; right:0; display:flex; justify-content:space-between;
+  align-items:center; padding:10px 14px; z-index:40; font-size:15px; text-shadow:1px 1px 2px #000; }
+#hud .left,#hud .right{ display:flex; gap:10px; align-items:center; }
+#hud .mid{ font-weight:bold; color:var(--gold); }
+#hud .hearts span{ font-size:19px; margin-right:1px; } #hud .hearts span.lost{ opacity:.25; }
+#iconBtn,#muteBtn{ background:none; border:none; font-size:20px; cursor:pointer; color:#fff; }
+#progLbl{ position:absolute; top:42px; left:0; right:0; text-align:center; z-index:40; font-size:13px; opacity:.9; text-shadow:1px 1px 2px #000;}
+
+/* 游戏页通用 */
+#game{ display:none; } #game.show{ display:block; }
+#stage{ position:absolute; inset:0; overflow:hidden; transition:background .5s; }
+
+/* === 跑酷三车道（第1关） === */
+.lane-line{ position:absolute; top:0; bottom:0; width:2px; background:rgba(255,255,255,.18); z-index:2; }
+#player{ position:absolute; width:52px; height:52px; z-index:15; display:flex; align-items:center; justify-content:center;
+  font-size:38px; transition:left .12s cubic-bezier(.3,1.4,.6,1); }
+#player .car{ display:inline-block; }
+#player .aura{ position:absolute; width:64px; height:64px; border-radius:50%; z-index:-1; opacity:.55; filter:blur(3px); }
+#player.pos .aura{ background:var(--pos); } #player.neg .aura{ background:var(--neg); }
+#polTag{ position:absolute; z-index:16; font-size:18px; font-weight:900; padding:3px 12px; border-radius:11px; transform:translateX(-50%); transition:left .12s, background .15s; box-shadow:0 2px 6px rgba(0,0,0,.4); }
+#polTag.pos{ background:var(--pos); color:#fff; } #polTag.neg{ background:var(--neg); color:#fff; }
+#l1banner{ position:absolute; top:66px; left:0; right:0; z-index:38; text-align:center; display:none; }
+#l1banner.show{ display:block; }
+#l1banner .chip{ display:inline-block; font-size:18px; font-weight:900; padding:7px 18px; border-radius:14px; box-shadow:0 3px 0 rgba(0,0,0,.35); }
+#l1banner .chip.pos{ background:var(--pos); color:#fff; } #l1banner .chip.neg{ background:var(--neg); color:#fff; }
+
+.item{ position:absolute; display:flex; align-items:center; justify-content:center; transform:translate(-50%,-50%); z-index:8; }
+.item.factor{ width:50px; height:50px; border-radius:12px; font-size:21px; font-weight:900;
+  background:var(--cream); color:var(--ink); box-shadow:0 4px 10px rgba(0,0,0,.4); }
+.item.factor.neg{ background:#cfe0ff; color:var(--neg2); }
+.item.factor.pos{ background:#ffd9d0; color:var(--pos2); }
+.item.bomb{ font-size:40px; }
+.item.gate{ left:50% !important; width:100%; height:58px; border-radius:0; font-size:22px; font-weight:900;
+  color:#fff; box-shadow:0 0 24px rgba(0,0,0,.5); letter-spacing:1px; }
+.item.gate.pos{ background:linear-gradient(90deg,var(--pos),var(--pos2)); }
+.item.gate.neg{ background:linear-gradient(90deg,var(--neg),var(--neg2)); }
+.item.eaten{ animation:pop .25s forwards; } @keyframes pop{ to{ transform:translate(-50%,-50%) scale(1.8); opacity:0; } }
+.flashRed{ animation:fr .35s; } @keyframes fr{ 0%,100%{ filter:none;} 50%{ filter:brightness(2) saturate(2);} }
+
+/* === 第2关：冲门算得数 === */
+#l2wrap{ position:absolute; inset:0; display:none; flex-direction:column; align-items:center; }
+#l2wrap.show{ display:flex; }
+#l2gate{ position:absolute; top:14%; left:0; right:0; text-align:center; }
+#l2gate .lbl{ font-size:14px; opacity:.85; margin-bottom:10px; }
+#l2eq{ display:inline-block; background:var(--cream); color:var(--ink); border-radius:16px;
+  padding:18px 26px; font-size:34px; font-weight:900; box-shadow:0 8px 24px rgba(0,0,0,.5); }
+#l2bar{ position:absolute; top:42%; left:8%; right:8%; height:14px; background:rgba(255,255,255,.18); border-radius:8px; overflow:hidden; }
+#l2barFill{ height:100%; width:100%; background:linear-gradient(90deg,#4be36b,var(--gold)); transition:width .1s linear; }
+#l2car{ position:absolute; top:46%; font-size:40px; transition:left .1s linear; transform:scaleX(-1); }
+
+/* === 第3关：拆弹 === */
+#l3wrap{ position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:flex-start; }
+#l3wrap.show{ display:flex; }
+#bomb{ margin-top:16%; background:#20283f; border:4px solid #57607e; border-radius:22px; padding:24px 20px 20px; max-width:92vw; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,.5); }
+#bomb .bombTop{ font-size:34px; margin-bottom:6px; }
+#fuseBar{ height:10px; background:rgba(255,255,255,.15); border-radius:6px; overflow:hidden; margin:10px 4px 16px; }
+#fuseFill{ height:100%; width:100%; background:linear-gradient(90deg,var(--pos),var(--gold)); transition:width .12s linear; }
+#expr{ font-size:30px; font-weight:900; line-height:1.7; word-break:break-word; }
+#expr .num{ color:var(--cream); } #expr .neg{ color:#9fc2ff; }
+#expr .paren{ color:#888; }
+#expr .op{ display:inline-block; min-width:34px; padding:2px 6px; margin:0 2px; border-radius:8px;
+  background:var(--gold); color:var(--ink); cursor:pointer; box-shadow:0 3px 0 #b8860b; }
+#expr .op:active{ transform:translateY(2px); box-shadow:0 1px 0 #b8860b; }
+#l3hint{ font-size:13px; color:var(--gold); height:18px; margin-top:14px; }
+
+/* 数字键盘 */
+#numpad{ position:absolute; left:0; right:0; bottom:0; z-index:50;
+  background:rgba(11,16,32,.94); padding:10px; display:none; grid-template-columns:repeat(6,1fr); gap:6px; }
+#numpad.show{ display:grid; }
+#numInput{ grid-column:span 6; text-align:center; font-size:30px; font-weight:900; color:var(--gold); padding:4px; min-height:42px; }
+#numInput .q{ opacity:.7; font-size:22px; color:#fff; margin-right:8px; }
+.nkey{ font-family:inherit; font-size:20px; font-weight:bold; padding:16px 0; border:none; border-radius:8px;
+  background:var(--cream); color:var(--ink); cursor:pointer; }
+.nkey:active{ transform:translateY(2px); } .nkey.ok{ background:var(--gold); grid-column:span 2; }
+
+/* 答错弹窗 */
+#wrong{ position:absolute; inset:0; z-index:70; display:none; align-items:center; justify-content:center; background:rgba(8,10,24,.82); }
+#wrong.show{ display:flex; }
+#wrong .box{ background:var(--cream); color:var(--ink); border-radius:20px; padding:28px 32px; text-align:center;
+  border:4px solid #e0413c; min-width:240px; animation:cwPop .25s ease; }
+@keyframes cwPop{ from{ transform:scale(.8); opacity:0;} to{ transform:scale(1); opacity:1;} }
+#wrong .x{ font-size:22px; font-weight:900; color:#e0413c; margin-bottom:12px; }
+#wrong .eq{ font-size:26px; font-weight:900; margin-bottom:6px; }
+#wrong .ans{ font-size:17px; margin-bottom:20px; } #wrong .ans b{ font-size:34px; color:#e0413c; }
+
+/* 结算 */
+#over{ background:rgba(8,10,24,.95); z-index:60; }
+#over .title{ font-size:30px; color:var(--gold); margin-bottom:18px; }
+#over .stats{ font-size:17px; line-height:2.2; text-align:center; margin-bottom:24px; }
+#over .stats b{ color:var(--gold); }
+
+/* 提示气泡 */
+#toast{ position:absolute; top:30%; left:50%; transform:translateX(-50%); z-index:55;
+  font-size:30px; font-weight:900; opacity:0; pointer-events:none; text-shadow:2px 2px 0 #000; }
+#toast.show{ animation:toast .8s forwards; }
+@keyframes toast{ 0%{ opacity:0; transform:translateX(-50%) scale(.6);} 30%{ opacity:1; transform:translateX(-50%) scale(1.1);} 100%{ opacity:0; transform:translateX(-50%) translateY(-30px);} }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- 入口 -->
+  <div id="entry" class="screen show">
+    <div class="title"><span class="r">正</span>负<span class="b">狂飙</span></div>
+    <div class="sub">有理数乘除 · 四则混合</div>
+    <div id="levelMenu"></div>
+    <button class="btn ghost" onclick="UI.help(true)">玩法说明</button>
+    <div class="entry-foot"><a href="../index.html">← 返回游戏厅</a></div>
+  </div>
+
+  <!-- 说明 -->
+  <div id="helpMask" class="mask">
+    <div class="modal">
+      <h2>玩法说明</h2>
+      <p><span class="hl">第1关 · 极性闯关</span>：开车走三车道，吃路上的因数。吃到<span class="nb">负数</span>极性翻转（红↔蓝），吃<span class="pr">正数</span>不变；<span class="hl">💣 是 0</span>，吃到撞车扣命。前方<span class="pr">红门=积为正</span>、<span class="nb">蓝门=积为负</span>，让车的颜色和门一致才能冲过去。</p>
+      <p><span class="hl">第2关 · 极速结算</span>：门上是一道乘除算式（含 ÷），趁车冲到门前，用键盘算出<span class="hl">得数</span>。除以一个数 = 乘它的倒数。算对冲门换新场景，算错或超时扣命。</p>
+      <p><span class="hl">第3关 · 拆弹</span>：式子里每个运算符是一根引线。先点<span class="hl">该最先算</span>的那一步（括号&gt;乘除&gt;加减），再输入<span class="hl">这一步的得数</span>。点错顺序或填错数都会爆炸扣命，全部算完拆弹成功。</p>
+      <p>每关 3 条命，连击拿高分。</p>
+      <button class="btn" style="display:block;margin:16px auto 0" onclick="UI.help(false)">明白啦</button>
+    </div>
+  </div>
+
+  <!-- 游戏 -->
+  <div id="game" class="screen">
+    <div id="stage"></div>
+    <div id="hud">
+      <div class="left"><button id="iconBtn" onclick="UI.toEntry()">🏠</button><button id="muteBtn" onclick="SFX.toggle()">🔊</button></div>
+      <div class="mid" id="scoreLbl">0 分</div>
+      <div class="right"><span id="comboLbl"></span><span class="hearts" id="hearts"></span></div>
+    </div>
+    <div id="progLbl"></div>
+    <div id="toast"></div>
+    <div id="l1banner"></div>
+
+    <!-- 第2关层 -->
+    <div id="l2wrap">
+      <div id="l2gate"><div class="lbl">算出得数，冲过这道门！</div><div id="l2eq"></div></div>
+      <div id="l2bar"><div id="l2barFill"></div></div>
+      <div id="l2car">🏎️</div>
+    </div>
+
+    <!-- 第3关层 -->
+    <div id="l3wrap">
+      <div id="bomb">
+        <div class="bombTop">💣</div>
+        <div id="fuseBar"><div id="fuseFill"></div></div>
+        <div id="expr"></div>
+        <div id="l3hint">点出该最先算的运算符</div>
+      </div>
+    </div>
+
+    <!-- 数字键盘 -->
+    <div id="numpad"></div>
+
+    <!-- 答错弹窗 -->
+    <div id="wrong"><div class="box">
+      <div class="x">✗ 答错了</div>
+      <div class="eq" id="wrongEq"></div>
+      <div class="ans">正确答案：<b id="wrongVal"></b></div>
+      <button class="btn" onclick="Flow.contWrong()">继续 →</button>
+    </div></div>
+  </div>
+
+  <!-- 结算 -->
+  <div id="over" class="screen">
+    <div class="title" id="overTitle">游戏结束</div>
+    <div class="stats" id="overStats"></div>
+    <button class="btn" onclick="Flow.retry()">↺ 再玩本关</button>
+    <button class="btn ghost" onclick="UI.toEntry()">选关卡</button>
+  </div>
+</div>
+
+<script>
+/* ============ 工具 ============ */
+const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const wrapNeg=n=> n<0 ? '('+n+')' : String(n);   // 负数带括号
+
+/* ============ 出题引擎（已用 node 验证） ============ */
+const Quiz = {
+  // 第1关一行三道因数：保证含 ≥1 正、≥1 负，给玩家真实选择
+  factorRow(){
+    let cells=[ rnd(1,9), -rnd(1,9), (Math.random()<0.5?1:-1)*rnd(1,9) ];
+    // 洗牌
+    for(let i=cells.length-1;i>0;i--){ const j=rnd(0,i); [cells[i],cells[j]]=[cells[j],cells[i]]; }
+    return cells;
+  },
+
+  // 第2关：乘除算式，结果整数。约束：相邻因数不同时为正（每步都有符号判断）、|结果|≤36
+  mulDiv(numFactors){
+    const R=9;
+    for(let tries=0;tries<400;tries++){
+      let cur=rnd(2,R); if(Math.random()<0.5) cur=-cur;
+      const parts=[cur], ops=[];
+      for(let i=1;i<numFactors;i++){
+        const prevPos = parts[i-1] > 0;
+        const sign = prevPos ? -1 : (Math.random()<0.5?1:-1);  // 前一个为正→这个必为负
+        const divs=[]; for(let d=2; d<=R; d++){ if(cur%d===0) divs.push(d); }
+        const wantDiv = divs.length && (Math.abs(cur)>10 || Math.random()<0.45);
+        if(wantDiv){
+          let d=pick(divs)*sign; ops.push('÷'); parts.push(d); cur/=d;
+        } else {
+          let f=rnd(2, Math.abs(cur)>6?4:R)*sign; ops.push('×'); parts.push(f); cur*=f;
+        }
+      }
+      if(!Number.isInteger(cur) || Math.abs(cur)>36) continue;
+      let display=String(parts[0]);
+      for(let i=0;i<ops.length;i++) display+=' '+ops[i]+' '+wrapNeg(parts[i+1]);
+      return { display, value: cur };
+    }
+    return { display:'-6 × (-2)', value:12 };
+  },
+
+  // 第3关：token 数组。元素 {t:'num',v}|{t:'op',v}|{t:'lp'}|{t:'rp'}
+  evalSafe(a,op,b){ return op==='+'?a+b: op==='-'?a-b: op==='×'?a*b: a/b; },
+  nextOpIndex(toks){
+    let depth=0, best=-1, bd=-1, bp=-1;
+    for(let i=0;i<toks.length;i++){
+      const tk=toks[i];
+      if(tk.t==='lp'){ depth++; continue; }
+      if(tk.t==='rp'){ depth--; continue; }
+      if(tk.t==='op'){
+        const p=(tk.v==='×'||tk.v==='÷')?2:1;
+        if(depth>bd || (depth===bd && p>bp)){ best=i; bd=depth; bp=p; }
+      }
+    }
+    return best;
+  },
+  applyAt(toks,i){
+    const a=toks[i-1], op=toks[i], b=toks[i+1];
+    const r={t:'num', v:this.evalSafe(a.v,op.v,b.v)};
+    let out=toks.slice(0,i-1).concat([r], toks.slice(i+2));
+    const ri=out.indexOf(r);
+    if(out[ri-1]&&out[ri-1].t==='lp' && out[ri+1]&&out[ri+1].t==='rp')
+      out=out.slice(0,ri-1).concat([r], out.slice(ri+2));
+    return out;
+  },
+  mixed(){
+    for(let tries=0;tries<400;tries++){
+      const nOps=pick([3,3,4]);
+      const nums=[], ops=[];
+      for(let i=0;i<=nOps;i++){ let v=rnd(1,9); if(Math.random()<0.4) v=-v; nums.push(v); }
+      for(let i=0;i<nOps;i++) ops.push(pick(['+','-','×','÷']));
+      // 至少一个乘除（避免纯加减太水）；禁止连加（如 +1+1 没意思）
+      if(!ops.some(o=>o==='×'||o==='÷')) continue;
+      let consecPlus=false;
+      for(let i=0;i<ops.length-1;i++){ if(ops[i]==='+'&&ops[i+1]==='+'){ consecPlus=true; break; } }
+      if(consecPlus) continue;
+      let toks=[{t:'num',v:nums[0]}];
+      for(let i=0;i<nOps;i++){ toks.push({t:'op',v:ops[i]}); toks.push({t:'num',v:nums[i+1]}); }
+      if(Math.random()<0.7){
+        const opIdx=[]; toks.forEach((tk,idx)=>{ if(tk.t==='op') opIdx.push(idx); });
+        const j=pick(opIdx);
+        toks=toks.slice(0,j-1).concat([{t:'lp'}], toks.slice(j-1,j+2), [{t:'rp'}], toks.slice(j+2));
+      }
+      // 校验整除 + 范围
+      try{
+        let t=toks.map(x=>({...x})), ok=true, g=0;
+        while(t.filter(x=>x.t==='op').length){
+          const i=this.nextOpIndex(t); if(i<0){ ok=false; break; }
+          const op=t[i].v,a=t[i-1].v,b=t[i+1].v;
+          if(op==='÷'&&(b===0||a%b!==0)){ ok=false; break; }
+          if(Math.abs(this.evalSafe(a,op,b))>200){ ok=false; break; }
+          t=this.applyAt(t,i); if(++g>50){ ok=false; break; }
+        }
+        if(!ok) continue;
+        const ns=t.filter(x=>x.t==='num');
+        if(ns.length!==1 || Math.abs(ns[0].v)>99) continue;
+        return { toks, value: ns[0].v };
+      }catch(e){ continue; }
+    }
+    return this.mixed.fallback || (this.mixed.fallback={ toks:[{t:'num',v:2},{t:'op',v:'×'},{t:'num',v:3},{t:'op',v:'+',},{t:'num',v:1}], value:7 });
+  }
+};
+
+/* ============ 场景（每过一道门切换） ============ */
+const SCENES = [
+  { bg:'linear-gradient(180deg,#0f2027,#203a43,#2c5364)' },
+  { bg:'linear-gradient(180deg,#ffecd2,#fcb69f,#e08f6b)' },
+  { bg:'linear-gradient(180deg,#2193b0,#6dd5ed,#1a6f8a)' },
+  { bg:'linear-gradient(180deg,#0b0b3b,#1a1a5c,#2a1a6c)' },
+  { bg:'linear-gradient(180deg,#134e5e,#71b280,#3a7d5a)' },
+  { bg:'linear-gradient(180deg,#42275a,#734b6d,#a23b3b)' }
+];
+
+/* ============ 8-bit 音效 ============ */
+const SFX = {
+  ctx:null, muted:false, bgmTimer:null, bgmStep:0,
+  ensure(){ if(!this.ctx){ try{ this.ctx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ this.ctx=null; } } if(this.ctx&&this.ctx.state==='suspended') this.ctx.resume(); },
+  beep(f,d,t,v){ if(this.muted||!this.ctx) return; const c=this.ctx,n=c.currentTime,o=c.createOscillator(),g=c.createGain();
+    o.type=t||'square'; o.frequency.setValueAtTime(f,n); g.gain.setValueAtTime(v||0.12,n); g.gain.exponentialRampToValueAtTime(0.001,n+d);
+    o.connect(g); g.connect(c.destination); o.start(n); o.stop(n+d); },
+  slide(f1,f2,d,t,v){ if(this.muted||!this.ctx) return; const c=this.ctx,n=c.currentTime,o=c.createOscillator(),g=c.createGain();
+    o.type=t||'square'; o.frequency.setValueAtTime(f1,n); o.frequency.exponentialRampToValueAtTime(f2,n+d); g.gain.setValueAtTime(v||0.12,n); g.gain.exponentialRampToValueAtTime(0.001,n+d);
+    o.connect(g); g.connect(c.destination); o.start(n); o.stop(n+d); },
+  eat(){ this.beep(880,0.06,'square',0.08); },
+  flip(){ this.slide(400,820,0.14,'square',0.12); },
+  right(){ this.slide(660,1100,0.13,'square',0.13); },
+  wrong(){ this.slide(300,90,0.25,'sawtooth',0.16); },
+  boom(){ this.slide(200,50,0.4,'sawtooth',0.2); this.beep(120,0.3,'triangle',0.15); },
+  level(){ [523,659,784].forEach((f,i)=>setTimeout(()=>this.beep(f,0.18,'square',0.12),i*120)); },
+  over(){ [392,330,262,196].forEach((f,i)=>setTimeout(()=>this.beep(f,0.3,'square',0.14),i*170)); },
+  tap(){ this.beep(700,0.04,'square',0.05); },
+  startBGM(){ if(this.bgmTimer||!this.ctx) return;
+    const notes=[330,392,494,392, 349,440,523,440, 330,392,494,587, 494,392,349,330];
+    this.bgmStep=0;
+    this.bgmTimer=setInterval(()=>{ if(this.muted||!this.ctx) return;
+      const f=notes[this.bgmStep%notes.length]; this.beep(f,0.15,'square',0.04);
+      if(this.bgmStep%2===0) this.beep(f/2,0.17,'triangle',0.045); this.bgmStep++; },230); },
+  stopBGM(){ if(this.bgmTimer){ clearInterval(this.bgmTimer); this.bgmTimer=null; } },
+  toggle(){ this.muted=!this.muted; const b=document.getElementById('muteBtn'); if(b) b.textContent=this.muted?'🔇':'🔊'; }
+};
+
+/* ============ UI ============ */
+const UI = {
+  show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show')); document.getElementById(id).classList.add('show'); },
+  help(on){ document.getElementById('helpMask').classList.toggle('show', on); },
+  toEntry(){ Flow.stop(); SFX.stopBGM(); this.renderMenu(); this.show('entry'); },
+  toast(txt,color){ const t=document.getElementById('toast'); t.textContent=txt; t.style.color=color||'#fff'; t.classList.remove('show'); void t.offsetWidth; t.classList.add('show'); },
+  LV:[ null,
+    {name:'极性闯关', desc:'吃因数攒极性，冲对应色门', tip:'判正负 · 奇负偶正'},
+    {name:'极速结算', desc:'冲门前算出乘除算式的得数', tip:'乘除 · 含除法'},
+    {name:'拆弹', desc:'按顺序拆解四则混合式子', tip:'运算顺序 · 混合运算'}
+  ],
+  unlocked: Math.max(1, +(localStorage.getItem('zfkb_unlocked')||1)),
+  renderMenu(){
+    const m=document.getElementById('levelMenu'); m.innerHTML='';
+    for(let lv=1; lv<=3; lv++){
+      const locked=lv>this.unlocked;
+      const c=document.createElement('div'); c.className='lvCard'+(locked?' locked':'');
+      c.innerHTML='<div class="lvNo">'+lv+'</div><div class="lvInfo"><div class="lvName">第'+lv+'关 · '+this.LV[lv].name+'</div>'+
+        '<div class="lvDesc">'+this.LV[lv].desc+'</div>'+(locked?'<div class="lvTip">🔒 通关上一关解锁</div>':'<div class="lvTip">'+this.LV[lv].tip+'</div>')+'</div>';
+      if(!locked) c.onclick=()=>Flow.startLevel(lv);
+      m.appendChild(c);
+    }
+  }
+};
+
+/* ============ 公共：分数/命/键盘/结算 ============ */
+const Flow = {
+  level:1, lives:3, score:0, combo:0, maxCombo:0, cleared:0, goal:8, scene:0,
+  numCtx:null,            // 当前键盘用途：'l2' | 'l3'
+  numStr:'', onNum:null,  // onNum(value) 提交回调
+
+  startLevel(lv){
+    if(lv>UI.unlocked) return;
+    SFX.ensure(); SFX.startBGM();
+    this.level=lv; this.lives=3; this.score=0; this.combo=0; this.maxCombo=0; this.cleared=0; this.scene=0;
+    this.goal = lv===3 ? 6 : 8;
+    UI.help(false); UI.show('game');
+    this.applyScene(0);
+    document.getElementById('stage').innerHTML='';
+    document.getElementById('l1banner').classList.remove('show');
+    document.getElementById('numpad').classList.remove('show');
+    document.getElementById('wrong').classList.remove('show');
+    document.getElementById('l2wrap').classList.remove('show');
+    document.getElementById('l3wrap').classList.remove('show');
+    this.buildNumpad(); this.updateHud();
+    if(lv===1) Runner.start();
+    else if(lv===2) L2.start();
+    else L3.start();
+  },
+  stop(){ Runner.stop(); L2.stop(); L3.stop(); },
+  retry(){ this.startLevel(this.level); },
+
+  applyScene(i){ this.scene=i%SCENES.length; document.getElementById('stage').style.background=SCENES[this.scene].bg; },
+  nextScene(){ this.applyScene(this.scene+1); },
+
+  /* 计分 */
+  scoreRight(pts){ this.combo++; if(this.combo>this.maxCombo) this.maxCombo=this.combo;
+    this.score += (pts||10) + Math.max(0,this.combo-1)*2; this.cleared++; this.updateHud();
+    if(this.cleared>=this.goal){ this.win(); return true; } return false; },
+  loseLife(){ this.combo=0; this.lives--; SFX.wrong(); this.updateHud();
+    if(this.lives<=0){ this.over(); return true; } return false; },
+
+  updateHud(){
+    const h=document.getElementById('hearts'); h.innerHTML='';
+    for(let i=0;i<3;i++){ const s=document.createElement('span'); s.textContent='❤'; if(i>=this.lives) s.className='lost'; h.appendChild(s); }
+    document.getElementById('scoreLbl').textContent=this.score+' 分';
+    document.getElementById('comboLbl').textContent=this.combo>1?(this.combo+' 连击'):'';
+    const unit = this.level===3?'颗':'门';
+    document.getElementById('progLbl').textContent='第'+this.level+'关 · '+UI.LV[this.level].name+'　'+Math.min(this.cleared,this.goal)+'/'+this.goal+' '+unit;
+  },
+
+  /* 键盘（第2、3关共用） */
+  buildNumpad(){
+    const np=document.getElementById('numpad'); np.innerHTML='';
+    const disp=document.createElement('div'); disp.id='numInput'; np.appendChild(disp);
+    ['-','1','2','3','4','5','6','7','8','9','0'].forEach(k=>{
+      const b=document.createElement('button'); b.className='nkey'; b.textContent=k; b.onclick=()=>this.numKey(k); np.appendChild(b);
+    });
+    const del=document.createElement('button'); del.className='nkey'; del.textContent='⌫'; del.onclick=()=>this.numKey('del'); np.appendChild(del);
+    const ok=document.createElement('button'); ok.className='nkey ok'; ok.textContent='✓'; ok.onclick=()=>this.numSubmit(); np.appendChild(ok);
+  },
+  askNumber(label, cb){
+    this.numStr=''; this.onNum=cb;
+    const ni=document.getElementById('numInput'); ni.innerHTML='<span class="q">'+label+'</span>';
+    document.getElementById('numpad').classList.add('show');
+  },
+  hideNumber(){ document.getElementById('numpad').classList.remove('show'); this.onNum=null; },
+  numKey(k){
+    if(!this.onNum) return; SFX.tap();
+    if(k==='del') this.numStr=this.numStr.slice(0,-1);
+    else if(k==='-') this.numStr = this.numStr.startsWith('-')?this.numStr.slice(1):'-'+this.numStr;
+    else { if(this.numStr.replace('-','').length<3) this.numStr+=k; }
+    this.renderNum();
+  },
+  renderNum(){ const ni=document.getElementById('numInput'); const q=ni.querySelector('.q'); const lbl=q?q.outerHTML:''; ni.innerHTML=lbl+(this.numStr||''); },
+  numSubmit(){ if(!this.onNum) return; if(this.numStr===''||this.numStr==='-'){ SFX.wrong(); return; }
+    const v=parseInt(this.numStr,10); const cb=this.onNum; cb(v); },
+
+  win(){
+    this.stop(); SFX.level();
+    const best=+(localStorage.getItem('zfkb_best')||0); if(this.score>best) localStorage.setItem('zfkb_best',this.score);
+    let newly=false;
+    if(this.level<3 && UI.unlocked<this.level+1){ UI.unlocked=this.level+1; localStorage.setItem('zfkb_unlocked',UI.unlocked); newly=true; }
+    const nextTxt = this.level<3 ? (newly?'🎉 解锁第'+(this.level+1)+'关：'+UI.LV[this.level+1].name+'！':'再接再厉！') : '你已通关全部三关，太强了！';
+    document.getElementById('overTitle').textContent='🎉 过关';
+    document.getElementById('overStats').innerHTML='<b>第'+this.level+'关 · 通关！</b><br>得分 <b>'+this.score+'</b>　最高连击 <b>'+this.maxCombo+'</b><br><br><span style="color:var(--gold)">'+nextTxt+'</span>';
+    setTimeout(()=>UI.show('over'),500);
+  },
+  over(){
+    this.stop(); SFX.over();
+    const best=+(localStorage.getItem('zfkb_best')||0); if(this.score>best) localStorage.setItem('zfkb_best',this.score);
+    document.getElementById('overTitle').textContent='游戏结束';
+    document.getElementById('overStats').innerHTML='第'+this.level+'关 · '+UI.LV[this.level].name+'<br>通过 <b>'+this.cleared+'</b>/'+this.goal+'　得分 <b>'+this.score+'</b><br>历史最高 <b>'+(localStorage.getItem('zfkb_best')||0)+'</b><br><br><span style="opacity:.8">再试一次！</span>';
+    setTimeout(()=>UI.show('over'),500);
+  },
+
+  /* 答错弹窗（第2、3关） */
+  showWrong(eq,val,after){ this._after=after; document.getElementById('wrongEq').textContent=eq;
+    document.getElementById('wrongVal').textContent=val; document.getElementById('wrong').classList.add('show'); },
+  contWrong(){ document.getElementById('wrong').classList.remove('show'); const a=this._after; this._after=null; if(a) a(); }
+};
+
+/* ============ 第1关：吃因数跑酷 ============ */
+const Runner = {
+  raf:0, running:false, lastTs:0, lane:1, polarity:1, items:[], spawnAcc:0,
+  segNeed:1, segRowsLeft:0, gateSpawned:false, _lastNeed:0, speed:0, playerY:0,
+  laneX:[0,0,0],
+
+  start(){
+    const stage=document.getElementById('stage'); stage.innerHTML='';
+    const W=stage.clientWidth, H=stage.clientHeight;
+    this.laneX=[W*0.2, W*0.5, W*0.8];
+    [W/3, W*2/3].forEach(x=>{ const l=document.createElement('div'); l.className='lane-line'; l.style.left=x+'px'; stage.appendChild(l); });
+    this.playerY=H-120;
+    // 玩家
+    const p=document.createElement('div'); p.id='player'; p.className='pos';
+    p.innerHTML='<div class="aura"></div><span class="car">🏎️</span>'; stage.appendChild(p);
+    const tag=document.createElement('div'); tag.id='polTag'; tag.className='pos'; tag.textContent='正'; stage.appendChild(tag);
+    this.lane=1; this.polarity=1; this.items=[]; this.spawnAcc=0; this._lastNeed=0;
+    this.speed=170; this.running=true;
+    this.placePlayer();
+    this.beginSegment();
+    this.lastTs=performance.now();
+    cancelAnimationFrame(this.raf); this.raf=requestAnimationFrame(t=>this.loop(t));
+  },
+  stop(){ this.running=false; cancelAnimationFrame(this.raf);
+    const b=document.getElementById('l1banner'); if(b) b.classList.remove('show'); },
+
+  // 新一段：先定好这道门要正还是负，挂出横幅，让学生边吃边盘算
+  beginSegment(){
+    this.segNeed = this._lastNeed!==0 && Math.random()<0.6 ? -this._lastNeed : (Math.random()<0.5?1:-1);
+    this._lastNeed = this.segNeed;
+    this.segRowsLeft = rnd(3,4);
+    this.gateSpawned = false;
+    this.polarity = 1; this.placePlayer();
+    const b=document.getElementById('l1banner');
+    b.innerHTML='<span class="chip '+(this.segNeed>0?'pos':'neg')+'">目标：积为 '+(this.segNeed>0?'正':'负')+'</span>';
+    b.classList.add('show');
+  },
+
+  placePlayer(){
+    const p=document.getElementById('player'); const tag=document.getElementById('polTag');
+    if(!p) return;
+    p.style.left=(this.laneX[this.lane]-26)+'px'; p.style.top=(this.playerY-26)+'px';
+    p.className=this.polarity>0?'pos':'neg';
+    tag.style.left=this.laneX[this.lane]+'px'; tag.style.top=(this.playerY-58)+'px';
+    tag.className=this.polarity>0?'pos':'neg'; tag.textContent=this.polarity>0?'正':'负';
+  },
+  move(dir){ if(!this.running) return; this.lane=Math.max(0,Math.min(2,this.lane+dir)); SFX.tap(); this.placePlayer(); },
+
+  spawnRow(){
+    const stage=document.getElementById('stage');
+    const cells=Quiz.factorRow();
+    // 偶尔把一道换成炸弹（0）
+    let bombLane=-1;
+    if(Math.random()<0.24) bombLane=rnd(0,2);
+    for(let i=0;i<3;i++){
+      const el=document.createElement('div');
+      if(i===bombLane){ el.className='item bomb'; el.textContent='💣';
+        const it={el,lane:i,y:-30,type:'bomb'}; stage.appendChild(el); this.items.push(it); el.style.left=this.laneX[i]+'px'; }
+      else { const v=cells[i]; el.className='item factor '+(v<0?'neg':'pos'); el.textContent=v>0?('×'+v):('×('+v+')');
+        const it={el,lane:i,y:-30,type:'factor',value:v}; stage.appendChild(el); this.items.push(it); el.style.left=this.laneX[i]+'px'; }
+    }
+  },
+  spawnGate(){
+    const stage=document.getElementById('stage');
+    const need=this.segNeed;
+    const el=document.createElement('div'); el.className='item gate '+(need>0?'pos':'neg');
+    el.textContent=(need>0?'积为 正 · 冲！':'积为 负 · 冲！');
+    const it={el,lane:-1,y:-40,type:'gate',need}; stage.appendChild(el); this.items.push(it);
+  },
+
+  loop(ts){
+    if(!this.running) return;
+    const dt=Math.min(50,ts-this.lastTs)/1000; this.lastTs=ts;
+    this.speed = 170 + this.cleared()*10;
+    // 生成节奏：先放若干行因数，再放这一段的门
+    this.spawnAcc += dt;
+    const interval = Math.max(0.62, 1.0 - this.cleared()*0.04);
+    if(this.spawnAcc>=interval){
+      this.spawnAcc=0;
+      if(this.segRowsLeft>0){ this.spawnRow(); this.segRowsLeft--; }
+      else if(!this.gateSpawned){ this.spawnGate(); this.gateSpawned=true; }
+    }
+    // 移动 & 碰撞
+    for(const it of [...this.items]){
+      it.y += this.speed*dt; it.el.style.top=it.y+'px';
+      if(it.passed) { if(it.y>this.playerY+80){ it.el.remove(); this.items=this.items.filter(x=>x!==it);} continue; }
+      if(it.y>=this.playerY){
+        it.passed=true;
+        if(it.type==='gate'){ this.hitGate(it); }
+        else if(it.lane===this.lane){
+          if(it.type==='bomb'){ this.crash(); it.el.remove(); this.items=this.items.filter(x=>x!==it); }
+          else { this.eat(it); }
+        }
+      }
+    }
+    this.raf=requestAnimationFrame(t=>this.loop(t));
+  },
+  cleared(){ return Flow.cleared; },
+
+  eat(it){
+    SFX.eat();
+    if(it.value<0){ this.polarity*=-1; SFX.flip(); }
+    it.el.classList.add('eaten'); setTimeout(()=>{ it.el.remove(); },250);
+    this.items=this.items.filter(x=>x!==it);
+    this.placePlayer();
+  },
+  crash(){
+    SFX.boom(); const p=document.getElementById('player'); if(p){ p.classList.add('flashRed'); setTimeout(()=>p.classList.remove('flashRed'),350); }
+    if(Flow.loseLife()) this.stop();
+  },
+  hitGate(it){
+    const ok = (it.need>0) === (this.polarity>0);
+    it.el.classList.add('flashRed');
+    if(ok){
+      SFX.right(); UI.toast('过门 +', '#4be36b'); Flow.nextScene();
+      if(Flow.scoreRight(10)){ this.stop(); return; }
+    } else {
+      UI.toast('颜色不符!', '#ff6f6f');
+      if(Flow.loseLife()){ this.stop(); return; }
+    }
+    this.beginSegment();
+  }
+};
+
+/* ============ 第2关：冲门算得数 ============ */
+const L2 = {
+  raf:0, running:false, lastTs:0, t:0, dur:0, cur:null, answered:false,
+
+  start(){
+    document.getElementById('l2wrap').classList.add('show');
+    this.running=true; this.next();
+  },
+  stop(){ this.running=false; cancelAnimationFrame(this.raf); document.getElementById('l2wrap').classList.remove('show'); },
+
+  next(){
+    if(!this.running) return;
+    Flow.hideNumber();
+    this.cur=Quiz.mulDiv(pick([2,3,3]));
+    this.answered=false;
+    this.dur = Math.max(5.5, 9 - Flow.cleared*0.4);   // 倒计时秒数随进度变短
+    this.t=this.dur;
+    document.getElementById('l2eq').textContent=this.cur.display+' = ?';
+    document.getElementById('l2barFill').style.width='100%';
+    const stage=document.getElementById('stage'); const car=document.getElementById('l2car');
+    car.style.left='6%';
+    Flow.askNumber(this.cur.display+' =', v=>this.submit(v));
+    this.lastTs=performance.now();
+    cancelAnimationFrame(this.raf); this.raf=requestAnimationFrame(t=>this.loop(t));
+  },
+  loop(ts){
+    if(!this.running) return;
+    const dt=(ts-this.lastTs)/1000; this.lastTs=ts;
+    if(!this.answered){
+      this.t-=dt; const frac=Math.max(0,this.t/this.dur);
+      document.getElementById('l2barFill').style.width=(frac*100)+'%';
+      document.getElementById('l2car').style.left=(6+(1-frac)*78)+'%';
+      if(this.t<=0){ this.timeout(); return; }
+    }
+    this.raf=requestAnimationFrame(t=>this.loop(t));
+  },
+  submit(v){
+    if(this.answered) return;
+    if(v===this.cur.value){
+      this.answered=true; SFX.right(); Flow.hideNumber();
+      document.getElementById('l2car').style.left='92%';
+      UI.toast('冲门 +','#4be36b'); Flow.nextScene();
+      if(Flow.scoreRight(10)){ this.stop(); return; }
+      setTimeout(()=>this.next(),420);
+    } else {
+      this.answered=true; Flow.hideNumber();
+      Flow.showWrong(this.cur.display+' =', this.cur.value, ()=>{
+        if(Flow.loseLife()){ this.stop(); return; }
+        this.next();
+      });
+    }
+  },
+  timeout(){
+    if(this.answered) return; this.answered=true; Flow.hideNumber();
+    Flow.showWrong(this.cur.display+' =', this.cur.value, ()=>{
+      if(Flow.loseLife()){ this.stop(); return; }
+      this.next();
+    });
+  }
+};
+
+/* ============ 第3关：拆弹 ============ */
+const L3 = {
+  running:false, toks:[], fuseTimer:null, t:0, dur:0, pendingOp:-1,
+
+  start(){ document.getElementById('l3wrap').classList.add('show'); this.running=true; this.next(); },
+  stop(){ this.running=false; if(this.fuseTimer){ clearInterval(this.fuseTimer); this.fuseTimer=null; } document.getElementById('l3wrap').classList.remove('show'); Flow.hideNumber(); },
+
+  next(){
+    if(!this.running) return;
+    Flow.hideNumber();
+    const q=Quiz.mixed(); this.toks=q.toks.map(x=>({...x}));
+    this.pendingOp=-1;
+    this.dur=Math.max(10, 20 - Flow.cleared*1.2); this.t=this.dur;
+    document.getElementById('l3hint').textContent='点出该最先算的运算符';
+    this.render(); this.startFuse();
+  },
+  startFuse(){
+    if(this.fuseTimer) clearInterval(this.fuseTimer);
+    document.getElementById('fuseFill').style.width='100%';
+    this.fuseTimer=setInterval(()=>{
+      this.t-=0.1; const frac=Math.max(0,this.t/this.dur);
+      document.getElementById('fuseFill').style.width=(frac*100)+'%';
+      if(this.t<=0){ clearInterval(this.fuseTimer); this.fuseTimer=null; this.explode('时间到！'); }
+    },100);
+  },
+
+  render(){
+    const ex=document.getElementById('expr'); ex.innerHTML='';
+    this.toks.forEach((tk,idx)=>{
+      let span=document.createElement('span');
+      if(tk.t==='num'){ span.className=tk.v<0?'neg':'num'; span.textContent= tk.v<0?('('+tk.v+')'):tk.v; }
+      else if(tk.t==='lp'){ span.className='paren'; span.textContent='('; }
+      else if(tk.t==='rp'){ span.className='paren'; span.textContent=')'; }
+      else { span.className='op'; span.textContent=' '+tk.v+' '; span.onclick=()=>this.tapOp(idx); }
+      ex.appendChild(span);
+    });
+  },
+
+  tapOp(idx){
+    if(!this.running || this.pendingOp>=0) return;
+    const correct=Quiz.nextOpIndex(this.toks);
+    if(idx!==correct){ this.explode('顺序错了！应先算另一处'); return; }
+    SFX.tap(); this.pendingOp=idx;
+    const a=this.toks[idx-1].v, op=this.toks[idx].v, b=this.toks[idx+1].v;
+    const stepEq = wrapNeg(a)+' '+op+' '+wrapNeg(b);
+    document.getElementById('l3hint').textContent='这一步：'+stepEq+' = ?';
+    Flow.askNumber(stepEq+' =', v=>this.submitStep(v));
+  },
+  submitStep(v){
+    const idx=this.pendingOp;
+    const a=this.toks[idx-1].v, op=this.toks[idx].v, b=this.toks[idx+1].v;
+    const real=Quiz.evalSafe(a,op,b);
+    if(v!==real){ Flow.hideNumber(); this.explode('得数错了！'+wrapNeg(a)+op+wrapNeg(b)+'='+real); return; }
+    SFX.eat(); Flow.hideNumber();
+    this.toks=Quiz.applyAt(this.toks, idx); this.pendingOp=-1;
+    if(this.toks.filter(x=>x.t==='op').length===0){ this.defused(); return; }
+    document.getElementById('l3hint').textContent='点出该最先算的运算符';
+    this.render();
+  },
+  defused(){
+    if(this.fuseTimer){ clearInterval(this.fuseTimer); this.fuseTimer=null; }
+    SFX.right(); const v=this.toks.find(x=>x.t==='num').v;
+    UI.toast('拆弹成功! ='+v,'#4be36b');
+    if(Flow.scoreRight(14)){ this.stop(); return; }
+    setTimeout(()=>this.next(),650);
+  },
+  explode(msg){
+    if(this.fuseTimer){ clearInterval(this.fuseTimer); this.fuseTimer=null; }
+    this.pendingOp=-1; Flow.hideNumber(); SFX.boom();
+    const bomb=document.getElementById('bomb'); bomb.classList.add('flashRed'); setTimeout(()=>bomb.classList.remove('flashRed'),350);
+    UI.toast('💥 '+(msg||'爆炸'),'#ff6f6f');
+    if(Flow.loseLife()){ this.stop(); return; }
+    // 同一颗弹重新开始倒计时（保留当前式子，给学生再试）
+    this.t=this.dur; this.startFuse();
+    document.getElementById('l3hint').textContent='再想想：点该最先算的运算符';
+  }
+};
+
+/* ============ 输入绑定 ============ */
+document.addEventListener('keydown', e=>{
+  if(Flow.level===1 && Runner.running){
+    if(e.key==='ArrowLeft') Runner.move(-1);
+    else if(e.key==='ArrowRight') Runner.move(1);
+  }
+  if(Flow.onNum){
+    if(e.key>='0'&&e.key<='9') Flow.numKey(e.key);
+    else if(e.key==='-') Flow.numKey('-');
+    else if(e.key==='Backspace') Flow.numKey('del');
+    else if(e.key==='Enter') Flow.numSubmit();
+  }
+});
+(function(){
+  let sx=0,sy=0,tracking=false;
+  const stage=document.getElementById('stage');
+  stage.addEventListener('touchstart',e=>{ if(Flow.level!==1) return; const t=e.touches[0]; sx=t.clientX; sy=t.clientY; tracking=true; },{passive:true});
+  stage.addEventListener('touchend',e=>{ if(!tracking||Flow.level!==1) return; tracking=false;
+    const t=e.changedTouches[0]; const dx=t.clientX-sx;
+    if(Math.abs(dx)<24){ // 轻点：按屏幕左右半边切道
+      Runner.move(t.clientX < window.innerWidth/2 ? -1 : 1); return; }
+    Runner.move(dx<0?-1:1);
+  },{passive:true});
+})();
+
+/* 初始 */
+UI.renderMenu();
+</script>
+</body>
+</html>
