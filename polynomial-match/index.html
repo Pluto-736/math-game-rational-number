@@ -171,6 +171,17 @@ function makeNumPow(base,exp){
   const html=(neg?'('+base+')':String(base))+sup(exp);
   return {coef:Math.pow(base,exp),vars:[],deg:0,key:'#const',html,isNumPow:true};
 }
+// 含 π 的项：π 是常数，只当系数，次数只看字母（2πx 次数1、πab 次数2、单独 π/2π 次数0）
+// n 为 π 前的数字倍数；vars 为字母部分（可空表示纯常数 π 项）
+function makePi(n,vars){
+  vars=vars.filter(v=>v[1]>0).sort((a,b)=>a[0]<b[0]?-1:1);
+  const deg=vars.reduce((s,v)=>s+v[1],0);
+  const key=vars.map(v=>v[0]+v[1]).join('')||'#const';
+  let cTxt;
+  if(n===1)cTxt='π';else if(n===-1)cTxt='-π';else cTxt=n+'π';
+  const vTxt=vars.map(v=>v[0]+sup(v[1])).join('');
+  return {coef:n+'π',vars,deg,key,html:cTxt+vTxt,isPi:true};
+}
 const SFX={ctx:null,muted:false,bgm:null,step:0,
   ensure(){if(!this.ctx){try{this.ctx=new(window.AudioContext||window.webkitAudioContext)()}catch(e){this.ctx=null}}if(this.ctx&&this.ctx.state==='suspended')this.ctx.resume()},
   beep(f,d,t='sine',v=.12){if(this.muted||!this.ctx)return;const c=this.ctx,n=c.currentTime,o=c.createOscillator(),g=c.createGain();o.type=t;o.frequency.setValueAtTime(f,n);g.gain.setValueAtTime(v,n);g.gain.exponentialRampToValueAtTime(.001,n+d);o.connect(g);g.connect(c.destination);o.start(n);o.stop(n+d)},
@@ -222,14 +233,19 @@ const L1={tiles:[],sel:null,busy:false,
       [['x',1],['y',1]],[['a',1],['b',1]],[['x',2],['y',1]],
       [['m',1]],[['n',2]],[]  // [] 表示常数项
     ];
-    const chosen=shuffle(families.slice()).slice(0,8); // 8 组同类项，各 2 个 = 16 格，刚好填满 4×4
+    // π 常数作为候选之一参与抽取（与数字常数同类，可能出现也可能不出现，不强制）
+    // 候选里只保留 π 作为常数类，去掉数字常数[]，避免两者同 key 混堆
+    const fams=families.filter(v=>v.length>0).map(v=>({vars:v,pi:false}));
+    fams.push({vars:[],pi:true}); // π 常数组
+    const chosen=shuffle(fams).slice(0,8); // 8 组各 2 个 = 16 格，刚好填满 4×4
     const coefs=[2,3,4,5,-2,-3,-4,1,-1,6,-5];
+    const piNs=[1,2,3,-1,-2];
     let tiles=[];
-    chosen.forEach(vars=>{
+    chosen.forEach(fam=>{
       const used=[];
       for(let i=0;i<2;i++){
-        let c;do{c=pick(coefs)}while(used.includes(c)&&used.length<coefs.length);used.push(c);
-        tiles.push(makeMono(c,vars.map(v=>[v[0],v[1]])));
+        if(fam.pi){let n;do{n=pick(piNs)}while(used.includes(n)&&used.length<piNs.length);used.push(n);tiles.push(makePi(n,[]));}
+        else{let c;do{c=pick(coefs)}while(used.includes(c)&&used.length<coefs.length);used.push(c);tiles.push(makeMono(c,fam.vars.map(v=>[v[0],v[1]])));}
       }
     });
     return shuffle(tiles);
@@ -283,6 +299,10 @@ const L2={tiles:[],target:0,round:0,goal:5,left:0,busy:false,
     // 数字的若干次方：指数 = 目标次数，看着像 target 次，实际是常数(次数0)，专门设陷阱。每轮最多 2 个
     const npCount=rnd(1,2);
     for(let i=0;i<npCount;i++)tiles.push(makeNumPow(pick([2,3,-2,-3,4,5]),this.target));
+    // 含 π 的项：每轮最多 2 个。一部分是纯 π 常数(次数0陷阱)，一部分带字母(次数只看字母)
+    const piCount=rnd(1,2);
+    const piVars=[ [], [['x',1]], [['r',1]], [['x',2]], [['a',1],['b',1]], [['r',2]] ];
+    for(let i=0;i<piCount;i++)tiles.push(makePi(pick([1,2,-1,3,-2]),pick(piVars).map(v=>[v[0],v[1]])));
     // 其余用其它次数的【非常数】单项式补满到 16，避免常数项太多冲淡数字幂陷阱
     const otherDegs=degs.filter(d=>d!==this.target&&d>0);
     while(tiles.length<TOTAL){const d=pick(otherDegs);tiles.push(makeMono(pick(coefs),pick(byDeg[d]).map(v=>[v[0],v[1]])))}
