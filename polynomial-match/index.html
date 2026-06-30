@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>整式消消乐 · 整式的相关概念</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;font-family:'Microsoft YaHei',sans-serif;color:#5a3d2b;touch-action:none;user-select:none}
+body{background:linear-gradient(160deg,#ffe6f0 0%,#fff3d6 45%,#d8f7ec 100%)}
+:root{--pink:#ff8fb1;--peach:#ffb37a;--mint:#5ad3a8;--sky:#6ec6ff;--grape:#b89cff;--sun:#ffd34d;--ink:#5a3d2b;--cream:#fffdf7}
+#app{position:fixed;inset:0}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;padding:18px}
+.screen.show{display:flex}
+.btn{font:900 17px inherit;border:0;border-radius:16px;padding:14px 26px;margin:7px;background:linear-gradient(#ffd76b,#ff9f43);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.18);box-shadow:0 5px 0 #e07d2a;cursor:pointer}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 #e07d2a}
+.btn.ghost{background:rgba(255,255,255,.6);color:#a05a3a;box-shadow:0 5px 0 rgba(0,0,0,.12)}
+/* ENTRY */
+#entry{overflow:hidden}
+.bubble{position:absolute;border-radius:50%;opacity:.5;animation:float 7s ease-in-out infinite}
+.b1{width:120px;height:120px;background:#ffd0e0;left:-30px;top:8%}
+.b2{width:180px;height:180px;background:#ffe9b8;right:-50px;top:18%;animation-duration:9s}
+.b3{width:90px;height:90px;background:#bff2df;left:12%;bottom:10%;animation-duration:6s}
+.b4{width:140px;height:140px;background:#cfe9ff;right:14%;bottom:6%;animation-duration:8s}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-26px)}}
+.logo{font-size:46px;font-weight:1000;letter-spacing:2px;color:#fff;text-shadow:0 3px 0 #ff8fb1,0 6px 0 #ffb37a,0 8px 16px rgba(0,0,0,.18);z-index:2;text-align:center}
+.logo small{display:block;font-size:15px;letter-spacing:4px;color:#a05a3a;text-shadow:none;margin-top:10px;font-weight:700}
+.menu{width:100%;max-width:380px;display:flex;flex-direction:column;gap:13px;margin-top:26px;z-index:2}
+.lv{display:flex;gap:14px;align-items:center;background:rgba(255,255,255,.72);border:3px solid #fff;border-radius:20px;padding:14px 16px;cursor:pointer;box-shadow:0 6px 16px rgba(255,140,170,.22)}
+.lv:active{transform:scale(.98)}
+.lv.locked{opacity:.5;cursor:not-allowed}
+.lvNo{width:48px;height:48px;flex-shrink:0;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:25px;font-weight:1000;color:#fff}
+.lv:nth-child(1) .lvNo{background:linear-gradient(#ff9fbb,#ff6f93)}
+.lv:nth-child(2) .lvNo{background:linear-gradient(#74d0ff,#3aa6ff)}
+.lv:nth-child(3) .lvNo{background:linear-gradient(#9be6c4,#3fc795)}
+.lv.locked .lvNo{font-size:0}
+.lv.locked .lvNo:after{content:'🔒';font-size:20px}
+.lvName{font-size:17px;font-weight:900;margin-bottom:3px;color:#7a4a30}
+.lvDesc{font-size:12px;line-height:1.45;opacity:.8}
+.lvTip{font-size:12px;color:#e07d2a;margin-top:4px;font-weight:700}
+.entry-foot{position:absolute;bottom:14px;font-size:13px;z-index:2}
+.entry-foot a{color:#a05a3a;text-decoration:none;font-weight:700}
+/* HUD */
+#game{display:none}
+#game.show{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:0}
+#hud{width:100%;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;flex-shrink:0}
+.hudL,.hudR{display:flex;gap:8px;align-items:center}
+.iconBtn{background:rgba(255,255,255,.65);border:0;color:#a05a3a;font-size:18px;border-radius:12px;padding:7px 9px;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.1)}
+.iconBtn:active{transform:translateY(2px)}
+.score{font-weight:1000;color:#e07d2a;font-size:18px}
+.hearts span{font-size:19px;margin-left:1px}
+.hearts .lost{opacity:.25;filter:grayscale(1)}
+#banner{width:100%;max-width:520px;text-align:center;padding:6px 14px 2px}
+.bTitle{font-size:19px;font-weight:1000;color:#7a4a30}
+.bInstr{font-size:15px;color:#c0577f;font-weight:700;margin-top:3px;min-height:21px}
+.bProg{font-size:12px;color:#a05a3a;opacity:.85;margin-top:2px}
+/* BOARD */
+#board{flex:1;width:100%;max-width:520px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:12px 14px;align-content:center;overflow:auto}
+.tile{position:relative;aspect-ratio:1/1;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:1000;color:#fff;cursor:pointer;box-shadow:0 5px 0 rgba(0,0,0,.16),inset 0 2px 6px rgba(255,255,255,.4);transition:transform .12s}
+.tile:active{transform:scale(.94)}
+.tile small{font-size:.55em;vertical-align:super;position:relative;top:-.4em;line-height:0}
+.tile.t0{background:linear-gradient(150deg,#ff9fbb,#ff6f93)}
+.tile.t1{background:linear-gradient(150deg,#ffc885,#ff9a3d)}
+.tile.t2{background:linear-gradient(150deg,#7ee0bb,#3fc795)}
+.tile.t3{background:linear-gradient(150deg,#86cdff,#3aa6ff)}
+.tile.t4{background:linear-gradient(150deg,#c4adff,#9b7bff)}
+.tile.t5{background:linear-gradient(150deg,#ffd96b,#ffb627)}
+.tile.sel{transform:scale(1.06);outline:5px solid #fff;box-shadow:0 0 0 7px #ffd34d,0 6px 0 rgba(0,0,0,.16)}
+.tile.gone{animation:pop .34s ease forwards;pointer-events:none}
+@keyframes pop{0%{transform:scale(1)}45%{transform:scale(1.22)}100%{transform:scale(0);opacity:0}}
+.tile.bad{animation:nope .4s}
+@keyframes nope{20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.tile.hole{visibility:hidden}
+/* footer controls for L3 */
+#tray{width:100%;max-width:520px;flex-shrink:0;padding:8px 14px 14px;display:none}
+#tray.show{display:block}
+.trayBox{min-height:54px;border-radius:16px;border:3px dashed #ffb37a;background:rgba(255,255,255,.55);display:flex;flex-wrap:wrap;gap:7px;align-items:center;justify-content:center;padding:8px;font-size:22px;font-weight:1000;color:#7a4a30}
+.trayChip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:11px;background:#fff;box-shadow:0 2px 0 rgba(0,0,0,.12)}
+.trayChip small{font-size:.55em;vertical-align:super;position:relative;top:-.4em}
+.trayPlus{color:#c0577f;font-size:20px}
+.trayBtns{display:flex;gap:10px;margin-top:8px}
+.trayBtns .btn{flex:1;margin:0}
+/* TOAST + masks */
+#toast{position:absolute;top:30%;left:50%;transform:translateX(-50%);z-index:85;max-width:88%;text-align:center;font-size:18px;font-weight:1000;color:#fff;background:rgba(192,87,127,.95);border-radius:16px;padding:13px 20px;opacity:0;pointer-events:none}
+#toast.ok{background:rgba(63,199,149,.96)}
+#toast.show{animation:toast 1.5s ease forwards}
+@keyframes toast{0%{opacity:0;transform:translateX(-50%) scale(.8)}16%,78%{opacity:1;transform:translateX(-50%) scale(1)}100%{opacity:0;transform:translateX(-50%) translateY(-20px)}}
+.mask{position:absolute;inset:0;background:rgba(90,61,43,.55);display:none;align-items:center;justify-content:center;z-index:90;padding:22px}
+.mask.show{display:flex}
+.modal{max-width:420px;width:100%;max-height:84vh;overflow:auto;background:var(--cream);border:4px solid #ffb37a;border-radius:24px;padding:24px}
+.modal h2{text-align:center;color:#e07d2a;margin-bottom:10px}
+.modal p{font-size:14px;line-height:1.8;margin:9px 0;color:#6b4a35}
+.modal .hl{color:#c0577f;font-weight:900}
+/* OVER */
+#over{display:none}
+#over.show{display:flex}
+.overCard{background:var(--cream);border:4px solid #ffd34d;border-radius:26px;padding:28px 30px;text-align:center;max-width:380px;width:100%}
+.overTitle{font-size:28px;color:#e07d2a;font-weight:1000;margin-bottom:14px}
+.stars{font-size:34px;margin-bottom:10px}
+.stats{line-height:2.1;font-size:16px;color:#6b4a35;margin-bottom:18px}
+.stats b{color:#c0577f}
+@media(max-height:660px){.logo{font-size:38px}.tile{font-size:20px}.modal p{font-size:13px}}
+</style>
+</head>
+<body><div id="app">
+<div id="entry" class="screen show">
+  <div class="bubble b1"></div><div class="bubble b2"></div><div class="bubble b3"></div><div class="bubble b4"></div>
+  <div class="logo">整式消消乐<small>整 式 的 相 关 概 念</small></div>
+  <div id="levelMenu" class="menu"></div>
+  <button class="btn ghost" onclick="UI.help(true)">玩法说明</button>
+  <div class="entry-foot"><a href="../index.html">← 返回游戏厅</a></div>
+</div>
+
+<div id="helpMask" class="mask"><div class="modal">
+  <h2>玩法说明</h2>
+  <p><span class="hl">第1关 · 同类项消消</span>：棋盘上铺满单项式方块。点两个<span class="hl">同类项</span>（所含字母相同、相同字母指数也相同）把它们一起消掉，全部消完就过关。</p>
+  <p><span class="hl">第2关 · 按次数清场</span>：看顶部指令，把所有<span class="hl">次数</span>符合要求的方块点掉。点错会扣一颗心哦。</p>
+  <p><span class="hl">第3关 · 凑多项式</span>：按目标挑选方块放进篮子，凑成<span class="hl">指定项数或次数</span>的多项式，再提交验收。</p>
+  <button class="btn" style="display:block;margin:16px auto 0" onclick="UI.help(false)">明白啦</button>
+</div></div>
+
+<div id="game" class="screen">
+  <div id="hud">
+    <div class="hudL"><button class="iconBtn" onclick="UI.toEntry()">🏠</button><button id="muteBtn" class="iconBtn" onclick="SFX.toggle()">🔊</button></div>
+    <div id="score" class="score">0 分</div>
+    <div class="hudR"><span id="hearts" class="hearts"></span></div>
+  </div>
+  <div id="banner"><div id="bTitle" class="bTitle"></div><div id="bInstr" class="bInstr"></div><div id="bProg" class="bProg"></div></div>
+  <div id="board"></div>
+  <div id="tray"><div id="trayBox" class="trayBox"></div><div class="trayBtns"><button class="btn ghost" onclick="L3.clear()">清空</button><button class="btn" onclick="L3.submit()">提交验收</button></div></div>
+  <div id="toast"></div>
+</div>
+
+<div id="over" class="screen"><div class="overCard">
+  <div id="stars" class="stars"></div>
+  <div id="overTitle" class="overTitle">过关！</div>
+  <div id="overStats" class="stats"></div>
+  <button class="btn" onclick="Flow.next()">下一关 →</button>
+  <button class="btn ghost" onclick="Flow.retry()">↺ 再玩</button>
+  <button class="btn ghost" onclick="UI.toEntry()">选关卡</button>
+</div></div>
+</div>
+<script>
+const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=rnd(0,i);[a[i],a[j]]=[a[j],a[i]]}return a};
+const sup=e=>e===1?'':'<small>'+e+'</small>';
+
+/* ===== 单项式数据模型 =====
+   m = {coef, vars:[['x',2],['y',1]], deg, key, html}
+   key = 字母部分签名(用于同类项判断); deg = 次数 */
+function makeMono(coef,vars){
+  vars=vars.filter(v=>v[1]>0).sort((a,b)=>a[0]<b[0]?-1:1);
+  const deg=vars.reduce((s,v)=>s+v[1],0);
+  const key=vars.map(v=>v[0]+v[1]).join('')||'#const';
+  // 系数部分文字
+  let cTxt;
+  if(vars.length===0){cTxt=String(coef);}      // 常数项
+  else if(coef===1)cTxt='';
+  else if(coef===-1)cTxt='-';
+  else cTxt=String(coef);
+  const vTxt=vars.map(v=>v[0]+sup(v[1])).join('');
+  return {coef,vars,deg,key,html:cTxt+vTxt};
+}
+// 数字的若干次方：本质是常数项，次数为 0（第2关用作迷惑学生的干扰项）
+function makeNumPow(base,exp){
+  const neg=base<0;
+  const html=(neg?'('+base+')':String(base))+sup(exp);
+  return {coef:Math.pow(base,exp),vars:[],deg:0,key:'#const',html,isNumPow:true};
+}
+const SFX={ctx:null,muted:false,bgm:null,step:0,
+  ensure(){if(!this.ctx){try{this.ctx=new(window.AudioContext||window.webkitAudioContext)()}catch(e){this.ctx=null}}if(this.ctx&&this.ctx.state==='suspended')this.ctx.resume()},
+  beep(f,d,t='sine',v=.12){if(this.muted||!this.ctx)return;const c=this.ctx,n=c.currentTime,o=c.createOscillator(),g=c.createGain();o.type=t;o.frequency.setValueAtTime(f,n);g.gain.setValueAtTime(v,n);g.gain.exponentialRampToValueAtTime(.001,n+d);o.connect(g);g.connect(c.destination);o.start(n);o.stop(n+d)},
+  slide(a,b,d,t='sine',v=.13){if(this.muted||!this.ctx)return;const c=this.ctx,n=c.currentTime,o=c.createOscillator(),g=c.createGain();o.type=t;o.frequency.setValueAtTime(a,n);o.frequency.exponentialRampToValueAtTime(b,n+d);g.gain.setValueAtTime(v,n);g.gain.exponentialRampToValueAtTime(.001,n+d);o.connect(g);g.connect(c.destination);o.start(n);o.stop(n+d)},
+  tap(){this.beep(660,.05,'sine',.06)},
+  right(){this.slide(620,1040,.14,'sine',.13)},
+  wrong(){this.slide(300,90,.26,'triangle',.16)},
+  win(){[523,659,784,1046].forEach((f,i)=>setTimeout(()=>this.beep(f,.18),i*100))},
+  over(){[440,349,294,233].forEach((f,i)=>setTimeout(()=>this.beep(f,.26,'triangle'),i*140))},
+  startBgm(){if(this.bgm||!this.ctx)return;
+    // 轻快糖果旋律(C大调五声) + 低八度伴奏
+    const mel=[523,587,659,784,659,587,523,587,659,523,440,523,587,659,784,880,784,659,587,523];
+    this.step=0;
+    this.bgm=setInterval(()=>{if(!this.muted){const f=mel[this.step%mel.length];this.beep(f,.22,'triangle',.05);if(this.step%2===0)this.beep(f/2,.3,'sine',.03)}this.step++},300)},
+  stopBgm(){if(this.bgm){clearInterval(this.bgm);this.bgm=null}},
+  toggle(){this.muted=!this.muted;document.getElementById('muteBtn').textContent=this.muted?'🔇':'🔊';if(this.muted)this.stopBgm();else if(document.getElementById('game').classList.contains('show'))this.startBgm()}};
+const UI={
+  LV:[null,
+    {name:'同类项消消',desc:'点两个同类项一起消掉',tip:'字母相同 · 指数也相同'},
+    {name:'按次数清场',desc:'消掉所有指定次数的项',tip:'看清指令 · 别点错'},
+    {name:'凑多项式',desc:'挑方块凑成指定多项式',tip:'数项数 · 看次数'}],
+  unlocked:Math.max(1,+(localStorage.getItem('pm_unlocked')||1)),
+  show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));document.getElementById(id).classList.add('show')},
+  help(on){document.getElementById('helpMask').classList.toggle('show',on)},
+  toEntry(){Flow.stop();this.renderMenu();this.show('entry')},
+  renderMenu(){const m=document.getElementById('levelMenu');m.innerHTML='';for(let lv=1;lv<=3;lv++){const locked=lv>this.unlocked,c=document.createElement('div');c.className='lv'+(locked?' locked':'');c.innerHTML='<div class="lvNo">'+lv+'</div><div><div class="lvName">第'+lv+'关 · '+this.LV[lv].name+'</div><div class="lvDesc">'+this.LV[lv].desc+'</div><div class="lvTip">'+(locked?'通关上一关解锁':this.LV[lv].tip)+'</div></div>';if(!locked)c.onclick=()=>Flow.startLevel(lv);m.appendChild(c)}}
+};
+const Flow={level:1,lives:3,score:0,
+  startLevel(lv){if(lv>UI.unlocked)return;SFX.ensure();SFX.startBgm();this.level=lv;this.lives=3;this.score=0;UI.help(false);UI.show('game');document.getElementById('tray').classList.toggle('show',lv===3);this.updateHud();const L=[null,L1,L2,L3][lv];L.start()},
+  stop(){SFX.stopBgm()},
+  retry(){this.startLevel(this.level)},
+  next(){const lv=this.level<3?this.level+1:1;this.startLevel(lv)},
+  banner(title,instr){document.getElementById('bTitle').textContent=title;document.getElementById('bInstr').innerHTML=instr||''},
+  prog(t){document.getElementById('bProg').textContent=t||''},
+  toast(txt,ok){const t=document.getElementById('toast');t.innerHTML=txt;t.classList.toggle('ok',!!ok);t.classList.remove('show');void t.offsetWidth;t.classList.add('show')},
+  addScore(n){this.score+=n;this.updateHud()},
+  loseLife(){this.lives--;SFX.wrong();this.updateHud();if(this.lives<=0){this.over();return true}return false},
+  updateHud(){const h=document.getElementById('hearts');h.innerHTML='';for(let i=0;i<3;i++){const s=document.createElement('span');s.textContent='❤';if(i>=this.lives)s.className='lost';h.appendChild(s)}document.getElementById('score').textContent=this.score+' 分'},
+  win(){SFX.stopBgm();SFX.win();if(this.level<3&&UI.unlocked<this.level+1){UI.unlocked=this.level+1;localStorage.setItem('pm_unlocked',UI.unlocked)}const star=this.lives;document.getElementById('stars').textContent='⭐'.repeat(star)+'☆'.repeat(3-star);document.getElementById('overTitle').textContent=this.level<3?'第'+this.level+'关 · 过关！':'全部通关！';document.getElementById('overStats').innerHTML='得分 <b>'+this.score+'</b>　剩余 <b>'+this.lives+'</b> ❤';setTimeout(()=>UI.show('over'),520)},
+  over(){SFX.stopBgm();SFX.over();document.getElementById('stars').textContent='💔';document.getElementById('overTitle').textContent='心碎啦';document.getElementById('overStats').innerHTML='第'+this.level+'关 · '+UI.LV[this.level].name+'<br>得分 <b>'+this.score+'</b>';setTimeout(()=>UI.show('over'),520)}
+};
+/* ===== 第1关 · 同类项消消 ===== */
+const L1={tiles:[],sel:null,busy:false,
+  gen(){
+    // 候选字母组合（字母部分）→ 同类项靠这个签名判定
+    const families=[
+      [['x',1]],[['y',1]],[['a',1]],[['b',1]],
+      [['x',2]],[['y',2]],[['a',2]],
+      [['x',1],['y',1]],[['a',1],['b',1]],[['x',2],['y',1]],
+      [['m',1]],[['n',2]],[]  // [] 表示常数项
+    ];
+    const chosen=shuffle(families.slice()).slice(0,8); // 8 组同类项，各 2 个 = 16 格，刚好填满 4×4
+    const coefs=[2,3,4,5,-2,-3,-4,1,-1,6,-5];
+    let tiles=[];
+    chosen.forEach(vars=>{
+      const used=[];
+      for(let i=0;i<2;i++){
+        let c;do{c=pick(coefs)}while(used.includes(c)&&used.length<coefs.length);used.push(c);
+        tiles.push(makeMono(c,vars.map(v=>[v[0],v[1]])));
+      }
+    });
+    return shuffle(tiles);
+  },
+  start(){this.sel=null;this.busy=false;this.tiles=this.gen();Flow.banner('同类项消消','点两个同类项，一起消掉');this.render();this.updateProg()},
+  updateProg(){const left=this.tiles.filter(t=>!t.gone).length;Flow.prog('剩余方块 '+left+' 个 · 全部消完过关')},
+  render(){const b=document.getElementById('board');b.style.gridTemplateColumns='repeat(4,1fr)';b.innerHTML='';this.tiles.forEach((t,i)=>{const d=document.createElement('div');d.className='tile t'+(i%6);d.innerHTML=t.html;d.dataset.i=i;d.onclick=()=>this.tap(i,d);b.appendChild(d)})},
+  tap(i,el){if(this.busy)return;const t=this.tiles[i];if(t.gone)return;SFX.tap();
+    if(this.sel===null){this.sel=i;el.classList.add('sel');return}
+    if(this.sel===i){el.classList.remove('sel');this.sel=null;return}
+    const prev=this.tiles[this.sel],prevEl=document.querySelector('.tile[data-i="'+this.sel+'"]');
+    if(prev.key===t.key){
+      // 同类项，消除
+      this.busy=true;prevEl.classList.remove('sel');
+      [prevEl,el].forEach(x=>x.classList.add('gone'));prev.gone=t.gone=true;
+      SFX.right();Flow.addScore(10);this.sel=null;
+      setTimeout(()=>{[prevEl,el].forEach(x=>x.classList.add('hole'));this.busy=false;this.updateProg();if(this.tiles.every(x=>x.gone))Flow.win()},340);
+    }else{
+      // 不是同类项
+      prevEl.classList.remove('sel');el.classList.add('bad');this.sel=null;
+      setTimeout(()=>el.classList.remove('bad'),420);
+      Flow.toast('不是同类项：字母或指数不同',false);
+      if(Flow.loseLife())return;
+    }
+  }
+};
+/* ===== 第2关 · 按次数清场 ===== */
+const L2={tiles:[],target:0,round:0,goal:5,left:0,busy:false,
+  monoPool(){
+    const out=[];
+    const defs=[
+      [['x',1]],[['y',1]],[['a',1]],[['b',1]],[['m',1]],          // 次数1
+      [['x',2]],[['a',2]],[['x',1],['y',1]],[['a',1],['b',1]],    // 次数2
+      [['x',3]],[['x',2],['y',1]],[['a',2],['b',1]],[['x',1],['y',1],['a',1]], // 次数3
+      []  // 常数项 次数0
+    ];
+    return defs;
+  },
+  gen(){
+    // 保证至少两种不同次数都有 >=1 个，目标次数有 2~4 个
+    const coefs=[2,3,4,5,-2,-3,-4,1,-1,6];
+    const defs=this.monoPool();
+    const byDeg={};
+    defs.forEach(v=>{const d=v.reduce((s,x)=>s+x[1],0);(byDeg[d]=byDeg[d]||[]).push(v)});
+    const degs=Object.keys(byDeg).map(Number);
+    this.target=pick(degs.filter(d=>d>0)); // 目标次数避开0更直观
+    const TOTAL=16; // 固定 16 格，填满 4×4
+    let tiles=[];
+    const tgtCount=rnd(3,4);
+    for(let i=0;i<tgtCount;i++)tiles.push(makeMono(pick(coefs),pick(byDeg[this.target]).map(v=>[v[0],v[1]])));
+    // 数字的若干次方：指数 = 目标次数，看着像 target 次，实际是常数(次数0)，专门设陷阱。每轮最多 2 个
+    const npCount=rnd(1,2);
+    for(let i=0;i<npCount;i++)tiles.push(makeNumPow(pick([2,3,-2,-3,4,5]),this.target));
+    // 其余用其它次数的【非常数】单项式补满到 16，避免常数项太多冲淡数字幂陷阱
+    const otherDegs=degs.filter(d=>d!==this.target&&d>0);
+    while(tiles.length<TOTAL){const d=pick(otherDegs);tiles.push(makeMono(pick(coefs),pick(byDeg[d]).map(v=>[v[0],v[1]])))}
+    return shuffle(tiles);
+  },
+  start(){this.round=0;Flow.banner('按次数清场','');this.newRound()},
+  newRound(){this.busy=false;this.round++;this.tiles=this.gen();this.left=this.tiles.filter(t=>t.deg===this.target).length;
+    Flow.banner('按次数清场','消掉所有 <span style="color:#fff;background:#c0577f;border-radius:8px;padding:1px 9px">次数 = '+this.target+'</span> 的项');
+    Flow.prog('第 '+this.round+'/'+this.goal+' 轮 · 需消 '+this.left+' 个');this.render()},
+  render(){const b=document.getElementById('board');b.style.gridTemplateColumns='repeat(4,1fr)';b.innerHTML='';this.tiles.forEach((t,i)=>{const d=document.createElement('div');d.className='tile t'+(i%6);d.innerHTML=t.html;d.dataset.i=i;d.onclick=()=>this.tap(i,d);b.appendChild(d)})},
+  tap(i,el){if(this.busy)return;const t=this.tiles[i];if(t.gone)return;SFX.tap();
+    if(t.deg===this.target){
+      el.classList.add('gone');t.gone=true;SFX.right();Flow.addScore(8);this.left--;
+      Flow.prog('第 '+this.round+'/'+this.goal+' 轮 · 还剩 '+this.left+' 个');
+      setTimeout(()=>el.classList.add('hole'),340);
+      if(this.left<=0){this.busy=true;Flow.toast('这一轮清空啦！',true);setTimeout(()=>{if(this.round>=this.goal)Flow.win();else this.newRound()},700)}
+    }else{
+      el.classList.add('bad');setTimeout(()=>el.classList.remove('bad'),420);
+      Flow.toast('它的次数是 '+t.deg+'，不符合',false);
+      if(Flow.loseLife())return;
+    }
+  }
+};
+/* ===== 第3关 · 凑多项式 ===== */
+const L3={tiles:[],sel:[],goal:null,round:0,total:4,busy:false,
+  bank(){
+    // 一批字母部分互不相同的项，避免出现需要合并的同类项干扰判断
+    return [
+      makeMono(pick([2,3,-2,5]),[['x',2]]),
+      makeMono(pick([3,-4,6]),[['x',1]]),
+      makeMono(pick([2,4,-3]),[['y',1]]),
+      makeMono(pick([5,-5,7]),[]),                  // 常数项
+      makeMono(pick([2,-2,3]),[['x',1],['y',1]]),
+      makeMono(pick([4,-3,2]),[['a',2]]),
+      makeMono(pick([3,5,-4]),[['a',1],['b',1]]),
+      makeMono(pick([2,-2,6]),[['x',3]]),
+      makeMono(pick([3,-3,4]),[['b',1]]),
+      makeMono(pick([2,4,-5]),[['x',2],['y',1]]),
+      makeMono(pick([3,-2,5]),[['y',2]]),
+      makeMono(pick([4,-4,2]),[['m',1]]),
+    ];
+  },
+  start(){this.round=0;
+    // 4 题：第 1 题是纯“X项式”，其余 3 题都是“X次X项式”
+    const both=[];for(let i=0;i<3;i++)both.push({type:'both',n:rnd(2,4),d:pick([2,3])});
+    this.schedule=[{type:'terms',n:rnd(2,4)},...shuffle(both)];
+    this.newRound()},
+  newRound(){this.busy=false;this.sel=[];this.tiles=shuffle(this.bank());
+    this.goal=this.schedule[this.round];this.round++;
+    if(this.goal.type==='terms'){const n=this.goal.n;Flow.banner('凑多项式','凑一个 <span style="color:#fff;background:#3fc795;border-radius:8px;padding:1px 9px">'+['','一','二','三','四'][n]+'项式</span>（'+n+' 项）')}
+    else{const{n,d}=this.goal;const cn=['','一','二','三','四'];Flow.banner('凑多项式','凑一个 <span style="color:#fff;background:#3aa6ff;border-radius:8px;padding:1px 9px">'+cn[d]+'次'+cn[n]+'项式</span>（次数 '+d+' · 共 '+n+' 项）')}
+    Flow.prog('第 '+this.round+'/'+this.total+' 题 · 点方块放入篮子');this.render();this.drawTray()},
+  render(){const b=document.getElementById('board');b.style.gridTemplateColumns='repeat(4,1fr)';b.innerHTML='';this.tiles.forEach((t,i)=>{const d=document.createElement('div');d.className='tile t'+(i%6);d.innerHTML=t.html;d.dataset.i=i;d.onclick=()=>this.tap(i,d);b.appendChild(d)})},
+  tap(i,el){if(this.busy)return;const t=this.tiles[i];SFX.tap();const pos=this.sel.indexOf(i);
+    if(pos>=0){this.sel.splice(pos,1);el.classList.remove('sel')}
+    else{this.sel.push(i);el.classList.add('sel')}
+    this.drawTray()},
+  drawTray(){const box=document.getElementById('trayBox');if(!this.sel.length){box.innerHTML='<span style="opacity:.5;font-size:15px;font-weight:700">点上方方块，放进来组成多项式</span>';return}
+    box.innerHTML=this.sel.map((i,k)=>{const c=this.tiles[i].coef;const h='<span class="trayChip">'+this.tiles[i].html+'</span>';return (k>0&&c>=0?'<span class="trayPlus">+</span>':k>0?'<span class="trayPlus"></span>':'')+h}).join('')},
+  clear(){this.sel.forEach(i=>{const e=document.querySelector('.tile[data-i="'+i+'"]');if(e)e.classList.remove('sel')});this.sel=[];this.drawTray()},
+  submit(){if(this.busy)return;const items=this.sel.map(i=>this.tiles[i]);
+    if(items.length===0){Flow.toast('篮子是空的哦',false);return}
+    // 同类项检查
+    const keys=items.map(t=>t.key);
+    if(new Set(keys).size!==keys.length){Flow.toast('里面有同类项，应先合并，不能算多个项',false);if(Flow.loseLife())return;return}
+    let ok=false,why='';
+    const maxDeg=items.length?Math.max(...items.map(t=>t.deg)):0;
+    if(this.goal.type==='terms'){
+      if(items.length===this.goal.n)ok=true;else why='这是 '+items.length+' 项，目标是 '+this.goal.n+' 项';
+    }else{ // both：次数和项数都要对
+      if(items.length!==this.goal.n)why='项数不对：这是 '+items.length+' 项，要 '+this.goal.n+' 项';
+      else if(maxDeg!==this.goal.d)why='次数不对：这个多项式次数是 '+maxDeg+'（看最高次的项），要 '+this.goal.d+' 次';
+      else ok=true;
+    }
+    if(ok){this.busy=true;SFX.right();Flow.addScore(15);Flow.toast('验收通过！',true);
+      this.sel.forEach(i=>{const e=document.querySelector('.tile[data-i="'+i+'"]');if(e){e.classList.remove('sel');e.classList.add('gone')}});
+      setTimeout(()=>{if(this.round>=this.total)Flow.win();else this.newRound()},800);
+    }else{Flow.toast(why,false);if(Flow.loseLife())return;}
+  }
+};
+UI.renderMenu();
+</script>
+</body>
+</html>
