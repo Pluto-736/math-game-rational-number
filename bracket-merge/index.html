@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>开锁特工 · 去括号与合并同类项</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;font-family:'Microsoft YaHei',sans-serif;color:#eef2ff;touch-action:none;user-select:none}
+body{background:linear-gradient(160deg,#0b1220 0%,#16233f 55%,#0a1120 100%)}
+:root{--gold:#f0c05a;--goldDk:#c9932e;--teal:#3ecfb2;--red:#ff5d6c;--ink:#eef2ff;--panel:rgba(255,255,255,.06);--panelB:rgba(240,192,90,.32)}
+#app{position:fixed;inset:0}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;padding:18px}
+.screen.show{display:flex}
+.btn{font:900 16px inherit;border:0;border-radius:14px;padding:13px 24px;margin:6px;background:linear-gradient(#f7d27a,var(--gold));color:#3a2606;box-shadow:0 5px 0 var(--goldDk);cursor:pointer}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--goldDk)}
+.btn.ghost{background:rgba(255,255,255,.08);color:var(--ink);box-shadow:0 5px 0 rgba(0,0,0,.35)}
+.btn[disabled]{opacity:.35;pointer-events:none}
+/* ENTRY */
+#entry{overflow:hidden}
+.dial{position:absolute;border:3px solid rgba(240,192,90,.15);border-radius:50%}
+.d1{width:340px;height:340px;top:-90px;left:-90px}
+.d2{width:220px;height:220px;bottom:-60px;right:-60px}
+.logo{font-size:44px;font-weight:1000;letter-spacing:2px;color:var(--gold);text-shadow:0 3px 0 #7a5518,0 6px 14px rgba(0,0,0,.5);z-index:2;text-align:center}
+.logo small{display:block;font-size:14px;letter-spacing:5px;color:#b9c3e0;text-shadow:none;margin-top:10px;font-weight:700}
+.menu{width:100%;max-width:400px;display:flex;flex-direction:column;gap:13px;margin-top:26px;z-index:2}
+.lv{display:flex;gap:14px;align-items:center;background:var(--panel);border:2px solid var(--panelB);border-radius:20px;padding:14px 16px;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,.35)}
+.lv:active{transform:scale(.98)}
+.lv.locked{opacity:.45;cursor:not-allowed}
+.lvNo{width:46px;height:46px;flex-shrink:0;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:23px;font-weight:1000;color:#3a2606;background:linear-gradient(#f7d27a,var(--gold))}
+.lv.locked .lvNo{font-size:0;background:rgba(255,255,255,.12)}
+.lv.locked .lvNo:after{content:'🔒';font-size:19px}
+.lvName{font-size:16px;font-weight:900;margin-bottom:3px;color:var(--gold)}
+.lvDesc{font-size:12.5px;line-height:1.45;opacity:.85}
+.lvTip{font-size:12px;color:var(--teal);margin-top:4px;font-weight:700}
+.entry-foot{position:absolute;bottom:14px;font-size:13px;z-index:2}
+.entry-foot a{color:#9fb0d8;text-decoration:none;font-weight:700}
+/* HELP / REVEAL modal */
+.mask{position:absolute;inset:0;background:rgba(4,8,18,.72);display:none;align-items:center;justify-content:center;z-index:90;padding:20px}
+.mask.show{display:flex}
+.modal{max-width:440px;width:100%;max-height:86vh;overflow:auto;background:#111c33;border:3px solid var(--panelB);border-radius:22px;padding:22px}
+.modal h2{text-align:center;color:var(--gold);margin-bottom:10px}
+.modal p{font-size:14px;line-height:1.85;margin:9px 0;color:#cbd4ee}
+.modal .hl{color:var(--teal);font-weight:900}
+.revStep{background:rgba(255,255,255,.05);border-radius:12px;padding:10px 12px;margin:8px 0;font-size:14px;line-height:1.7}
+.revStep b{color:var(--gold)}
+.revExpr{font-size:17px;font-weight:900;text-align:center;margin:6px 0}
+.revFinal{text-align:center;font-size:20px;font-weight:1000;color:var(--teal);margin-top:10px}
+/* GAME */
+#game{display:none}
+#game.show{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:0;width:100%}
+#hud{width:100%;max-width:520px;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;flex-shrink:0}
+.hudL,.hudR{display:flex;gap:8px;align-items:center}
+.iconBtn{background:var(--panel);border:0;color:var(--ink);font-size:17px;border-radius:11px;padding:7px 9px;cursor:pointer}
+.iconBtn:active{transform:translateY(2px)}
+.hudMid{font-size:13px;font-weight:800;color:#b9c3e0;text-align:center}
+.battery{display:flex;align-items:center;gap:2px;padding:4px 6px 4px 8px;background:rgba(255,255,255,.06);border-radius:10px;border:2px solid rgba(255,255,255,.15)}
+.batteryBody{display:flex;gap:3px}
+.batteryCell{width:12px;height:16px;border-radius:2px;background:var(--teal);box-shadow:0 0 6px rgba(62,207,178,.7);transition:background .2s,opacity .2s}
+.batteryCell.off{background:rgba(255,255,255,.12);box-shadow:none}
+.batteryTip{width:3px;height:8px;border-radius:0 2px 2px 0;background:rgba(255,255,255,.3);margin-left:1px}
+.battery.low .batteryCell:not(.off){background:var(--red);box-shadow:0 0 8px rgba(255,93,108,.8);animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.35}}
+#plateWrap{width:100%;max-width:520px;padding:6px 16px;perspective:800px}
+#vault{position:relative;display:flex;align-items:center;gap:12px;background:linear-gradient(150deg,#1b2942,#0e1830 55%,#1b2942);border:3px solid var(--panelB);border-radius:18px;padding:9px 16px;box-shadow:0 8px 20px rgba(0,0,0,.45),inset 0 0 30px rgba(0,0,0,.4);transform-origin:left center;transition:transform .5s,box-shadow .5s,filter .5s}
+#vault.unlocked{animation:vaultOpen .85s cubic-bezier(.3,.7,.3,1) forwards}
+@keyframes vaultOpen{0%{transform:rotateY(0)}30%{transform:rotateY(0) scale(1.03);box-shadow:0 0 26px rgba(62,207,178,.6),inset 0 0 30px rgba(0,0,0,.4)}100%{transform:perspective(800px) rotateY(-30deg) translateX(-4px);box-shadow:14px 12px 32px rgba(0,0,0,.6),0 0 34px rgba(62,207,178,.5);filter:brightness(1.15)}}
+.bolt{position:absolute;width:8px;height:8px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#9aa4c4,#39415f 70%);box-shadow:0 1px 2px rgba(0,0,0,.7)}
+.bolt.b1{top:8px;left:9px}.bolt.b2{top:8px;right:9px}.bolt.b3{bottom:8px;left:9px}.bolt.b4{bottom:8px;right:9px}
+#dial{flex-shrink:0;width:42px;height:42px;border-radius:50%;background:radial-gradient(circle at 38% 32%,#98a2c2,#3b435f 66%,#232a44);border:2px solid rgba(255,255,255,.2);box-shadow:0 2px 5px rgba(0,0,0,.6),inset 0 0 6px rgba(0,0,0,.55);position:relative;transition:transform .55s cubic-bezier(.34,1.3,.5,1)}
+#dial:before{content:'';position:absolute;top:3px;left:50%;margin-left:-2px;width:4px;height:13px;border-radius:2px;background:var(--gold);box-shadow:0 0 6px rgba(240,192,90,1)}
+#dial:after{content:'';position:absolute;inset:9px;border-radius:50%;border:2px dotted rgba(255,255,255,.16)}
+#dial.turning{animation:dialGlow .55s ease}
+@keyframes dialGlow{40%{box-shadow:0 0 0 5px rgba(240,192,90,.5),0 0 18px rgba(240,192,90,.9),inset 0 0 6px rgba(0,0,0,.55)}}
+#plate{position:relative;flex:1;min-width:0;background:linear-gradient(160deg,#0d1526,#070f1d 60%,#0d1526);border:2px solid rgba(240,192,90,.18);border-radius:12px;padding:12px 18px;text-align:center;font-size:21px;font-weight:900;letter-spacing:.5px;box-shadow:inset 0 0 22px rgba(240,192,90,.06),inset 0 2px 6px rgba(0,0,0,.6)}
+#stepBar{display:flex;gap:14px;justify-content:center;align-items:flex-start;margin:12px 0 2px;flex-wrap:wrap}
+.pin{display:flex;flex-direction:column;align-items:center;gap:6px;max-width:100px}
+.pinSlot{position:relative;width:28px;height:32px;border-radius:8px;background:linear-gradient(#0a1322,#18243c);border:2px solid rgba(255,255,255,.12);box-shadow:inset 0 2px 6px rgba(0,0,0,.6)}
+.pinSlot:before{content:'';position:absolute;left:4px;right:4px;top:9px;height:2px;background:rgba(240,192,90,.22);border-radius:2px}
+.pinBody{position:absolute;left:50%;transform:translateX(-50%);bottom:2px;width:14px;height:20px;border-radius:5px;background:linear-gradient(#7d879e,#454f6b);box-shadow:0 1px 2px rgba(0,0,0,.5);transition:bottom .4s cubic-bezier(.34,1.56,.64,1),background .3s,box-shadow .3s}
+.pin.cur .pinBody{background:linear-gradient(#f7d27a,var(--gold));animation:pinPulse 1.1s ease-in-out infinite}
+.pin.done .pinBody{bottom:12px;background:linear-gradient(#6fe6cc,var(--teal));box-shadow:0 0 9px rgba(62,207,178,.85)}
+@keyframes pinPulse{50%{transform:translate(-50%,-3px)}}
+.pinLabel{font-size:11.5px;font-weight:800;color:#8a96bf;text-align:center;line-height:1.25}
+.pin.cur .pinLabel{color:var(--gold)}
+.pin.done .pinLabel{color:var(--teal)}
+#instr{width:100%;max-width:520px;text-align:center;font-size:13.5px;color:#9fb0d8;padding:2px 18px 6px;min-height:34px}
+#rowWrap{flex:1;width:100%;max-width:520px;overflow:auto;padding:6px 14px}
+#row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-content:flex-start}
+#resultWrap{display:flex;flex-direction:column;align-items:center;margin-top:12px;padding-top:10px;border-top:2px dashed rgba(240,192,90,.25)}
+.resultLabel{font-size:12px;font-weight:800;color:var(--teal);margin-bottom:8px}
+#resultRow{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.card{position:relative;min-width:78px;min-height:70px;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:20px;font-weight:1000;padding:9px 11px 8px;box-shadow:0 5px 0 rgba(0,0,0,.4),0 8px 14px rgba(0,0,0,.3);transition:transform .12s,opacity .2s;overflow:hidden}
+.card:before{content:'';position:absolute;top:0;left:0;right:0;height:6px;background:linear-gradient(90deg,var(--gold),var(--teal))}
+.card.ref{background:linear-gradient(155deg,#28395f,#182444);border:2px solid rgba(255,255,255,.14);color:#c7d0ef;opacity:.9;cursor:default}
+.card.ref:before{display:none}
+.card.ref .lbl{font-size:19px}
+.card.ref .hint{font-size:10px;font-weight:700;color:#8a96bf;margin-top:3px}
+.card.grp{background:linear-gradient(155deg,#33477a,#1e2c50);color:var(--ink);cursor:pointer;border:2px solid rgba(255,255,255,.12)}
+.card.grp.sel{outline:3px solid var(--gold);box-shadow:0 0 0 5px rgba(240,192,90,.28),0 5px 0 rgba(0,0,0,.4);transform:scale(1.06)}
+.card.grp.used{opacity:.4;cursor:default;filter:grayscale(.4)}
+.card.grp.used:after{content:'✓';position:absolute;bottom:4px;right:7px;font-size:13px;color:var(--teal)}
+.card.blank{background:rgba(255,255,255,.05);border:2.5px dashed rgba(240,192,90,.55);color:var(--gold);cursor:pointer}
+.card.blank:before{display:none}
+.card.blank .lbl{font-size:19px}
+.card.blank .hint{font-size:10.5px;font-weight:700;color:#8a96bf;margin-top:3px}
+.card.filled{background:linear-gradient(155deg,#463a85,#241c4d);border:2.5px solid var(--gold);color:#fff}
+.card.filled .hint{font-size:10px;color:rgba(255,255,255,.55);margin-top:2px}
+.card.filled.locked{border-color:var(--teal)}
+.card.locked{background:linear-gradient(155deg,#1c6b57,#124238);color:#c9ffef;border:2px solid var(--teal);cursor:default}
+.card.locked:before{background:var(--teal)}
+.card.bad{animation:shake .4s}
+@keyframes shake{20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.mergeCtrl{display:flex;gap:10px;width:100%;max-width:520px;padding:4px 14px;flex-shrink:0}
+.mergeCtrl .btn{flex:1;margin:2px 0;padding:9px}
+#confirmWrap{width:100%;max-width:520px;padding:6px 14px 8px;flex-shrink:0}
+#confirmBtn{width:100%;font-size:15px;padding:9px}
+/* KEYPAD */
+#kpMask{position:absolute;inset:0;background:rgba(4,8,18,.55);display:none;align-items:flex-end;justify-content:center;z-index:80}
+#kpMask.show{display:flex}
+#keypad{width:100%;max-width:520px;background:#0f1a32;border-top:3px solid var(--panelB);border-radius:20px 20px 0 0;padding:12px 14px 16px}
+.kpPreview{text-align:center;font-size:24px;font-weight:1000;color:var(--gold);min-height:32px;margin-bottom:8px}
+.kpDigits{display:flex;gap:5px;margin-bottom:8px}
+.kpDigits button{flex:1;font-size:17px;font-weight:900;padding:11px 0;border-radius:10px;border:0;background:rgba(255,255,255,.08);color:#fff}
+.kpDigits button:active{background:rgba(255,255,255,.2)}
+.kpCtrl{display:flex;gap:8px;margin-bottom:10px}
+.kpCtrl button{flex:1;font-size:16px;font-weight:1000;padding:10px 0;border-radius:10px;border:2px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:#fff}
+.kpCtrl button.on{background:var(--gold);color:#3a2606;border-color:var(--gold)}
+.kpBtns{display:flex;gap:10px}
+.kpBtns .btn{flex:1;margin:0}
+/* TOAST */
+#toast{position:absolute;top:20%;left:50%;transform:translateX(-50%);z-index:95;max-width:88%;text-align:center;font-size:16px;font-weight:900;color:#fff;background:rgba(255,93,108,.95);border-radius:14px;padding:12px 20px;opacity:0;pointer-events:none}
+#toast.ok{background:rgba(62,207,178,.95)}
+#toast.show{animation:toast 1.5s ease forwards}
+@keyframes toast{0%{opacity:0;transform:translateX(-50%) scale(.8)}16%,78%{opacity:1;transform:translateX(-50%) scale(1)}100%{opacity:0;transform:translateX(-50%) translateY(-20px)}}
+/* OVER */
+#over{display:none}
+#over.show{display:flex}
+.overCard{background:#111c33;border:3px solid var(--gold);border-radius:24px;padding:28px 30px;text-align:center;max-width:380px;width:100%}
+.overTitle{font-size:26px;color:var(--gold);font-weight:1000;margin-bottom:14px}
+.stars{font-size:32px;margin-bottom:10px}
+.stats{line-height:2.1;font-size:15px;color:#cbd4ee;margin-bottom:16px}
+.stats b{color:var(--teal)}
+@media(max-height:660px){.logo{font-size:36px}#plate{font-size:18px}.card{min-width:68px;min-height:60px;font-size:17px}}
+</style>
+</head>
+<body><div id="app">
+
+<div id="entry" class="screen show">
+  <div class="dial d1"></div><div class="dial d2"></div>
+  <div class="logo">🔐 开锁特工<small>去 括 号 与 合 并 同 类 项</small></div>
+  <div id="levelMenu" class="menu"></div>
+  <button class="btn ghost" onclick="UI.help(true)">玩法说明</button>
+  <div class="entry-foot"><a href="../index.html">← 返回游戏厅</a></div>
+</div>
+
+<div id="helpMask" class="mask"><div class="modal">
+  <h2>玩法说明</h2>
+  <p>保险箱正面刻着一道<span class="hl">带括号的整式</span>，把它一步步化简，就是开锁的密码。</p>
+  <p><span class="hl">去括号</span>：括号前是"+"，里面各项照抄；括号前是"−"，里面每一项都要<span class="hl">变号</span>。点空白卡片，用小键盘填上正确的系数和符号。</p>
+  <p><span class="hl">合并同类项</span>：点选字母相同的卡片，点"合并"拼成一张，再填上合并后的系数。</p>
+  <p>每一步填完点<span class="hl">确认</span>，一次性核对。答错扣一颗心；心用完会<span class="hl">重做这道题</span>；如果第二次还是没做对，就直接告诉你正确的步骤和答案。</p>
+  <button class="btn" style="display:block;margin:16px auto 0" onclick="UI.help(false)">明白啦</button>
+</div></div>
+
+<div id="revealMask" class="mask"><div class="modal">
+  <h2>📖 正确解法</h2>
+  <div id="revealBody"></div>
+  <button class="btn" style="display:block;margin:16px auto 0" onclick="Q.afterReveal()">继续</button>
+</div></div>
+
+<div id="game" class="screen">
+  <div id="hud">
+    <div class="hudL"><button class="iconBtn" onclick="UI.toEntry()">🏠</button><button id="muteBtn" class="iconBtn" onclick="SFX.toggle()">🔊</button></div>
+    <div class="hudMid" id="hudMid"></div>
+    <div class="hudR"><div class="battery" id="battery"><div class="batteryBody" id="batteryBody"></div><div class="batteryTip"></div></div></div>
+  </div>
+  <div id="plateWrap"><div id="vault">
+    <span class="bolt b1"></span><span class="bolt b2"></span><span class="bolt b3"></span><span class="bolt b4"></span>
+    <div id="dial"></div>
+    <div id="plate"></div>
+  </div></div>
+  <div id="stepBar"></div>
+  <div id="instr"></div>
+  <div id="rowWrap">
+    <div id="row"></div>
+    <div id="resultWrap" style="display:none">
+      <div class="resultLabel">↓ 合并后的系数</div>
+      <div id="resultRow"></div>
+    </div>
+  </div>
+  <div class="mergeCtrl" id="mergeCtrl" style="display:none">
+    <button class="btn ghost" onclick="Row.regroup()">↺ 重新分组</button>
+    <button class="btn" onclick="Row.merge()">合并选中项</button>
+  </div>
+  <div id="confirmWrap"><button id="confirmBtn" class="btn" disabled onclick="Q.submit()">确认</button></div>
+  <div id="toast"></div>
+</div>
+
+<div id="kpMask"><div id="keypad">
+  <div class="kpPreview" id="kpPreview">？</div>
+  <div class="kpDigits" id="kpDigits"></div>
+  <div class="kpCtrl">
+    <button id="kpPlus" onclick="KP.sign(1)">＋</button>
+    <button id="kpMinus" onclick="KP.sign(-1)">－</button>
+  </div>
+  <div class="kpBtns"><button class="btn ghost" id="kpDel" onclick="KP.del()">⌫ 退格</button><button class="btn" id="kpOk" onclick="KP.ok()">确定</button></div>
+</div></div>
+
+<div id="over" class="screen"><div class="overCard">
+  <div id="stars" class="stars"></div>
+  <div id="overTitle" class="overTitle">开锁成功！</div>
+  <div id="overStats" class="stats"></div>
+  <button class="btn" onclick="LFlow.next()">下一关 →</button>
+  <button class="btn ghost" onclick="LFlow.retry()">↺ 再玩</button>
+  <button class="btn ghost" onclick="UI.toEntry()">选关卡</button>
+</div></div>
+
+</div>
+<script>
+const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=rnd(0,i);[a[i],a[j]]=[a[j],a[i]]}return a};
+const LETTERS=['x','y','a','b','m','n'];
+const pickLetters=n=>shuffle(LETTERS.slice()).slice(0,n);
+const MINUS='−';
+
+/* ===== 表达式文本工具 ===== */
+// idx=0 不带前导"+"（负数只带负号）；idx>0 带 " + "/" − " 前缀
+function seqText(coef,letter,idx){
+  const abs=Math.abs(coef);
+  const core=letter===null?String(abs):(abs===1?letter:abs+letter);
+  if(idx===0)return (coef<0?MINUS:'')+core;
+  return (coef<0?' '+MINUS+' ':' + ')+core;
+}
+// 卡片上单独显示一个值：leading=true（整条算式最前一项）正数不带号；
+// leading=false（非首项）正数要带"+"，因为写在算式里就是要加这一项
+function answerText(coef,letter,leading){
+  const abs=Math.abs(coef);
+  const core=letter===null?String(abs):(abs===1?letter:abs+letter);
+  if(coef<0)return MINUS+core;
+  return leading?core:'+'+core;
+}
+// 兼容旧调用：永远按"首项"规则显示（无符号正数）
+function cardText(coef,letter){return answerText(coef,letter,true)}
+function joinTerms(arr){return arr.map((t,i)=>seqText(t.correct,t.letter,i)).join('')}
+
+/* ===== 出题引擎（三关）— 经 _dev/bracket-merge_engine_test.js 校验 ===== */
+function genL1(){
+  while(true){
+    const n=rnd(2,3);
+    const letters=pickLetters(n+1);
+    const letterA=letters[0];
+    const innerLetters=letters.slice(1);
+    const useConst=Math.random()<0.35;
+    const coefA=rnd(1,9);
+    const s0=Math.random()<0.6?-1:1;
+    const innerTerms=[];
+    for(let i=0;i<n;i++){
+      const isConstSlot=useConst&&i===n-1;
+      const letter=isConstSlot?null:innerLetters[i];
+      const coef=rnd(1,9);
+      const internalSign=i===0?1:(Math.random()<0.5?1:-1);
+      innerTerms.push({letter,coef:coef*internalSign});
+    }
+    const inner=innerTerms.map((t,i)=>seqText(t.coef,t.letter,i)).join('');
+    const exprHtml=seqText(coefA,letterA,0)+(s0<0?' '+MINUS+' ':' + ')+'('+inner+')';
+    const blanks=innerTerms.map(t=>({letter:t.letter,correct:t.coef*s0}));
+    const given=[{letter:letterA,correct:coefA}];
+    return {level:1,exprHtml,finalText:joinTerms([...given,...blanks]),
+      steps:[{kind:'debracket',label:'去括号',given,blanks,plateHtml:exprHtml}]};
+  }
+}
+function genBracket(LX,LY){
+  const firstIsX=Math.random()<0.5;
+  const cFirst=rnd(1,9),cSecond=rnd(1,9);
+  const signSecond=Math.random()<0.5?1:-1;
+  return firstIsX
+    ?{order:[{letter:LX,internal:1,coef:cFirst},{letter:LY,internal:signSecond,coef:cSecond}]}
+    :{order:[{letter:LY,internal:1,coef:cFirst},{letter:LX,internal:signSecond,coef:cSecond}]};
+}
+function bracketText(br){return br.order.map((t,i)=>seqText(t.internal*t.coef,t.letter,i)).join('')}
+function multText(m,br){
+  const sign=m<0?' '+MINUS+' ':' + ';
+  const abs=Math.abs(m);
+  const numPart=abs===1?'':String(abs);
+  return sign+numPart+'('+bracketText(br)+')';
+}
+function genL2(){
+  while(true){
+    const [LX,LY]=pickLetters(2);
+    const coefA=rnd(1,9);
+    const s1=Math.random()<0.5?1:-1,s2=Math.random()<0.5?1:-1;
+    const c1=rnd(1,6),c2=rnd(1,6);
+    const m1=s1*c1,m2=s2*c2;
+    const br1=genBracket(LX,LY),br2=genBracket(LX,LY);
+    const expand=(br,m)=>br.order.map(t=>({letter:t.letter,correct:m*t.internal*t.coef}));
+    const e1=expand(br1,m1),e2=expand(br2,m2);
+    const rowCards=[{letter:LX,correct:coefA},...e1,...e2];
+    const sumX=rowCards.filter(t=>t.letter===LX).reduce((s,t)=>s+t.correct,0);
+    const sumY=rowCards.filter(t=>t.letter===LY).reduce((s,t)=>s+t.correct,0);
+    if(sumX===0||sumY===0)continue;
+    const exprHtml=seqText(coefA,LX,0)+multText(m1,br1)+multText(m2,br2);
+    const step1blanks=[...e1,...e2].map(t=>({letter:t.letter,correct:t.correct}));
+    const groups=[{letter:LX,count:rowCards.filter(t=>t.letter===LX).length,correct:sumX},
+                  {letter:LY,count:rowCards.filter(t=>t.letter===LY).length,correct:sumY}];
+    return {level:2,exprHtml,finalText:joinTerms(groups.map(g=>({letter:g.letter,correct:g.correct}))),
+      steps:[
+        {kind:'debracket',label:'去括号',given:[{letter:LX,correct:coefA}],blanks:step1blanks,plateHtml:exprHtml},
+        {kind:'merge',label:'合并同类项',rowCards,groups,plateHtml:joinTerms(rowCards)}
+      ]};
+  }
+}
+function genL3(){
+  while(true){
+    const secondIsLetter=Math.random()<0.5;
+    const letters=secondIsLetter?pickLetters(2):pickLetters(1);
+    const LX=letters[0];
+    const LY=secondIsLetter?letters[1]:null;
+    const coefA=rnd(1,9);
+    const coefB=rnd(1,9);
+    const s_outer=Math.random()<0.65?-1:1;
+    const s_inner=Math.random()<0.65?-1:1;
+    const coefT1=rnd(1,9);
+    const coefT2=rnd(1,9);
+    const signT2=Math.random()<0.5?1:-1;
+
+    const e_t1=s_inner*1*coefT1;
+    const e_t2=s_inner*signT2*coefT2;
+    const f_B=s_outer*1*coefB;
+    const f_t1=s_outer*e_t1;
+    const f_t2=s_outer*e_t2;
+
+    const sumX=coefA+f_B+f_t1;
+    if(sumX===0||f_t2===0)continue;
+
+    const innerText=seqText(coefT1,LX,0)+seqText(signT2*coefT2,LY,1);
+    const innerBlock=(s_inner<0?' '+MINUS+' ':' + ')+'('+innerText+')';
+    const bStr=seqText(coefB,LX,0);
+    const outerInner=bStr+innerBlock;
+    const outerBlock=(s_outer<0?' '+MINUS+' ':' + ')+'['+outerInner+']';
+    const exprHtml=seqText(coefA,LX,0)+outerBlock;
+
+    const groups=[{letter:LX,count:3,correct:sumX},{letter:LY,count:1,correct:f_t2}];
+    const step2Inner=joinTerms([{letter:LX,correct:coefB},{letter:LX,correct:e_t1},{letter:LY,correct:e_t2}]);
+    const step2PlateHtml=seqText(coefA,LX,0)+(s_outer<0?' '+MINUS+' ':' + ')+'['+step2Inner+']';
+    const step3RowCards=[{letter:LX,correct:coefA},{letter:LX,correct:f_B},{letter:LX,correct:f_t1},{letter:LY,correct:f_t2}];
+    return {level:3,exprHtml,finalText:joinTerms(groups.map(g=>({letter:g.letter,correct:g.correct}))),
+      steps:[
+        {kind:'debracket',label:'去内层括号',
+          given:[{letter:LX,correct:coefA},{letter:LX,correct:coefB}],
+          blanks:[{letter:LX,correct:e_t1},{letter:LY,correct:e_t2}],plateHtml:exprHtml},
+        {kind:'debracket',label:'去外层括号',
+          given:[{letter:LX,correct:coefA}],
+          blanks:[{letter:LX,correct:f_B},{letter:LX,correct:f_t1},{letter:LY,correct:f_t2}],plateHtml:step2PlateHtml},
+        {kind:'merge',label:'合并同类项',
+          rowCards:step3RowCards,
+          groups,plateHtml:joinTerms(step3RowCards)}
+      ]};
+  }
+}
+const GEN=[null,genL1,genL2,genL3];
+function stepResultText(step){
+  if(step.kind==='debracket')return joinTerms([...step.given,...step.blanks]);
+  return joinTerms(step.groups.map(g=>({letter:g.letter,correct:g.correct})));
+}
+
+/* ===== 音效 ===== */
+const SFX={ctx:null,muted:false,bgm:null,step:0,
+  ensure(){if(!this.ctx){try{this.ctx=new(window.AudioContext||window.webkitAudioContext)()}catch(e){this.ctx=null}}if(this.ctx&&this.ctx.state==='suspended')this.ctx.resume()},
+  beep(f,d,t='sine',v=.12){if(this.muted||!this.ctx)return;const c=this.ctx,n=c.currentTime,o=c.createOscillator(),g=c.createGain();o.type=t;o.frequency.setValueAtTime(f,n);g.gain.setValueAtTime(v,n);g.gain.exponentialRampToValueAtTime(.001,n+d);o.connect(g);g.connect(c.destination);o.start(n);o.stop(n+d)},
+  slide(a,b,d,t='sine',v=.13){if(this.muted||!this.ctx)return;const c=this.ctx,n=c.currentTime,o=c.createOscillator(),g=c.createGain();o.type=t;o.frequency.setValueAtTime(a,n);o.frequency.exponentialRampToValueAtTime(b,n+d);g.gain.setValueAtTime(v,n);g.gain.exponentialRampToValueAtTime(.001,n+d);o.connect(g);g.connect(c.destination);o.start(n);o.stop(n+d)},
+  tap(){this.beep(660,.05,'sine',.06)},
+  right(){this.slide(620,1040,.14,'sine',.13)},
+  wrong(){this.slide(300,90,.26,'triangle',.16)},
+  click(){[880,1175].forEach((f,i)=>setTimeout(()=>this.beep(f,.14),i*90))},
+  win(){[523,659,784,1046].forEach((f,i)=>setTimeout(()=>this.beep(f,.18),i*100))},
+  over(){[440,349,294,233].forEach((f,i)=>setTimeout(()=>this.beep(f,.26,'triangle'),i*140))},
+  toggle(){this.muted=!this.muted;document.getElementById('muteBtn').textContent=this.muted?'🔇':'🔊'}};
+
+/* ===== 保险箱转盘 / 开门动画 ===== */
+const Vault={deg:0,
+  reset(){this.deg=0;const v=document.getElementById('vault');if(v)v.classList.remove('unlocked');const d=document.getElementById('dial');if(d){d.classList.remove('turning');d.style.transition='transform .3s';d.style.transform='rotate(0deg)'}},
+  turn(idx){this.deg+=(idx%2===0?300:-240);const d=document.getElementById('dial');if(d){d.style.transition='transform .55s cubic-bezier(.34,1.3,.5,1)';d.style.transform='rotate('+this.deg+'deg)';d.classList.remove('turning');void d.offsetWidth;d.classList.add('turning')}},
+  open(){const v=document.getElementById('vault');if(v)v.classList.add('unlocked');this.deg+=720;const d=document.getElementById('dial');if(d){d.style.transition='transform .85s cubic-bezier(.3,.7,.3,1)';d.style.transform='rotate('+this.deg+'deg)'}}
+};
+
+/* ===== UI（screen 切换 / 关卡菜单） ===== */
+const UI={
+  LV:[null,
+    {name:'单层保险箱',desc:'去括号定符号，一步搞定密码',tip:'括号前的符号 · 决定要不要变号',steps:1,qTotal:5},
+    {name:'双层保险箱',desc:'先去括号、再合并同类项，两步开锁',tip:'系数先乘进去 · 同类项再合并',steps:2,qTotal:4},
+    {name:'嵌套密室',desc:'中括号套小括号，三步拆解才能开锁',tip:'由内到外 · 小心负负得正',steps:3,qTotal:3}],
+  unlocked:Math.max(1,+(localStorage.getItem('bm_unlocked')||1)),
+  show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));document.getElementById(id).classList.add('show')},
+  help(on){document.getElementById('helpMask').classList.toggle('show',on)},
+  toEntry(){this.renderMenu();this.show('entry')},
+  renderMenu(){const m=document.getElementById('levelMenu');m.innerHTML='';for(let lv=1;lv<=3;lv++){const locked=lv>this.unlocked,c=document.createElement('div');c.className='lv'+(locked?' locked':'');c.innerHTML='<div class="lvNo">'+lv+'</div><div><div class="lvName">第'+lv+'关 · '+this.LV[lv].name+'</div><div class="lvDesc">'+this.LV[lv].desc+'</div><div class="lvTip">'+(locked?'通关上一关解锁':this.LV[lv].tip)+'</div></div>';if(!locked)c.onclick=()=>LFlow.startLevel(lv);m.appendChild(c)}}
+};
+
+/* ===== 关卡流程（多题） ===== */
+const LFlow={level:1,qTotal:5,mistakes:0,reveals:0,
+  startLevel(lv){if(lv>UI.unlocked)return;SFX.ensure();this.level=lv;this.qTotal=UI.LV[lv].qTotal;this.mistakes=0;this.reveals=0;UI.help(false);UI.show('game');Q.startLevel(lv)},
+  retry(){this.startLevel(this.level)},
+  next(){const lv=this.level<3?this.level+1:1;this.startLevel(lv)},
+  addMistake(){this.mistakes++},
+  addReveal(){this.reveals++},
+  finish(){
+    if(this.level<3&&UI.unlocked<this.level+1){UI.unlocked=this.level+1;localStorage.setItem('bm_unlocked',UI.unlocked)}
+    let star;
+    if(this.reveals>0)star=1;else if(this.mistakes===0)star=3;else if(this.mistakes<=3)star=2;else star=1;
+    SFX.win();
+    document.getElementById('stars').textContent='⭐'.repeat(star)+'☆'.repeat(3-star);
+    document.getElementById('overTitle').textContent=this.level<3?'第'+this.level+'关 · 开锁成功！':'全部通关！';
+    document.getElementById('overStats').innerHTML='答错 <b>'+this.mistakes+'</b> 次　需要看解法 <b>'+this.reveals+'</b> 次';
+    Vault.open();
+    setTimeout(()=>UI.show('over'),850);
+  }
+};
+
+/* ===== 单题状态机（生命值、步骤、揭晓答案） ===== */
+const Q={puzzle:null,stepIdx:0,lives:3,cycle:0,qIndex:0,
+  startLevel(lv){this.qIndex=0;this.newQuestion()},
+  newQuestion(){this.puzzle=GEN[LFlow.level]();this.stepIdx=0;this.lives=3;this.cycle=0;this.enterStep()},
+  restartSameQuestion(){this.stepIdx=0;this.lives=3;this.cycle=1;this.enterStep()},
+  enterStep(){
+    if(this.stepIdx===0)Vault.reset();
+    const step=this.puzzle.steps[this.stepIdx];
+    document.getElementById('plate').innerHTML=step.plateHtml;
+    this.updateHud();
+    Row.load(step);
+    this.renderStepBar();
+    let hint=step.kind==='debracket'?'看清括号前的符号，把每一项的系数和正负号填进去':'点选同一个字母的卡片，点"合并"，再填上合并后的系数（只剩一项的字母会自动帮你确认）';
+    if(step.label==='去外层括号')hint='外层括号前的符号，会让里面每一项再变一次号（包括刚才算好的哦）';
+    document.getElementById('instr').textContent=hint;
+  },
+  renderStepBar(){
+    const bar=document.getElementById('stepBar');bar.innerHTML='';
+    this.puzzle.steps.forEach((s,i)=>{
+      const state=i===this.stepIdx?'cur':i<this.stepIdx?'done':'todo';
+      const d=document.createElement('div');d.className='pin '+state;
+      d.innerHTML='<div class="pinSlot"><div class="pinBody"></div></div><div class="pinLabel">'+(i+1)+'.'+s.label+'</div>';
+      bar.appendChild(d);
+    });
+  },
+  updateHud(){
+    const body=document.getElementById('batteryBody');body.innerHTML='';
+    for(let i=0;i<3;i++){const s=document.createElement('span');s.className='batteryCell'+(i>=this.lives?' off':'');body.appendChild(s)}
+    document.getElementById('battery').classList.toggle('low',this.lives===1);
+    document.getElementById('hudMid').textContent='第 '+this.level_label()+' 关 · 第 '+(this.qIndex+1)+'/'+LFlow.qTotal+' 题';
+  },
+  level_label(){return LFlow.level},
+  toast(txt,ok){const t=document.getElementById('toast');t.textContent=txt;t.classList.toggle('ok',!!ok);t.classList.remove('show');void t.offsetWidth;t.classList.add('show')},
+  submit(){
+    const step=this.puzzle.steps[this.stepIdx];
+    const ok=Row.checkAll(step);
+    if(ok){
+      SFX.right();Vault.turn(this.stepIdx);this.toast(step.kind==='merge'?'合并正确！':'去括号正确！',true);
+      Row.lockAll();
+      setTimeout(()=>{
+        if(this.stepIdx<this.puzzle.steps.length-1){this.stepIdx++;this.enterStep()}
+        else{this.questionSolved()}
+      },560);
+    }else{
+      this.wrong();
+    }
+  },
+  wrong(msg){
+    SFX.wrong();LFlow.addMistake();
+    this.lives--;this.updateHud();
+    if(this.lives<=0){
+      if(this.cycle===0){
+        this.toast('电量用完，再挑战一次这道题',false);
+        setTimeout(()=>this.restartSameQuestion(),900);
+      }else{
+        LFlow.addReveal();
+        setTimeout(()=>this.showReveal(),500);
+      }
+    }else{
+      this.toast(msg||'密码不对，再想想',false);
+      Row.resetInputs();
+    }
+  },
+  showReveal(){
+    const p=this.puzzle;let html='<div class="revExpr">'+p.exprHtml+'</div>';
+    p.steps.forEach((s,i)=>{html+='<div class="revStep"><b>第'+(i+1)+'步 · '+s.label+'</b>：'+stepResultText(s)+'</div>'});
+    html+='<div class="revFinal">最终密码：'+p.finalText+'</div>';
+    document.getElementById('revealBody').innerHTML=html;
+    document.getElementById('revealMask').classList.add('show');
+  },
+  afterReveal(){
+    document.getElementById('revealMask').classList.remove('show');
+    this.advanceQuestion();
+  },
+  questionSolved(){this.advanceQuestion()},
+  advanceQuestion(){
+    this.qIndex++;
+    if(this.qIndex>=LFlow.qTotal){LFlow.finish()}
+    else{this.newQuestion()}
+  }
+};
+
+/* ===== 卡片行（去括号 / 合并同类项 通用渲染与交互） ===== */
+const Row={cur:[],raw:[],results:[],given:[],kind:'debracket',locked:false,step:null,
+  load(step){
+    this.kind=step.kind;
+    this.locked=false;
+    this.step=step;
+    if(step.kind==='debracket'){
+      // given 里的每一项都是它所在括号/整体的第一项（题板里紧跟"("或整条算式开头），
+      // 按 seqText 的 idx=0 规则本就不带前导"+"，所以统一按 leading 处理
+      this.given=step.given.map(g=>({letter:g.letter,correct:g.correct,leading:true}));
+      this.cur=step.blanks.map(b=>({letter:b.letter,correct:b.correct,value:null,leading:false}));
+      document.getElementById('mergeCtrl').style.display='none';
+    }else{
+      this.raw=step.rowCards.map((c,i)=>({letter:c.letter,correct:c.correct,sel:false,used:false,leading:i===0}));
+      this.results=[];
+      step.rowCards.forEach((c,i)=>{
+        const g=step.groups.find(g=>g.letter===c.letter);
+        if(g&&g.count===1){
+          this.raw[i].used=true;
+          const gi=step.groups.findIndex(x=>x.letter===g.letter);
+          if(!this.results.some(r=>r.letter===g.letter))
+            this.results.push({letter:g.letter,correct:g.correct,value:g.correct,auto:true,leading:gi===0});
+        }
+      });
+      this.sortResults();
+      document.getElementById('mergeCtrl').style.display='flex';
+    }
+    this.render();
+    this.updateConfirm();
+  },
+  render(){
+    const row=document.getElementById('row');row.innerHTML='';
+    const resultWrap=document.getElementById('resultWrap');
+    const mergeCtrl=document.getElementById('mergeCtrl');
+    if(this.kind==='debracket'){
+      resultWrap.style.display='none';
+      mergeCtrl.style.display='none';
+      this.given.forEach(g=>{
+        const d=document.createElement('div');
+        d.className='card ref';
+        d.innerHTML='<div class="lbl">'+answerText(g.correct,g.letter,g.leading)+'</div><div class="hint">题目已知</div>';
+        row.appendChild(d);
+      });
+      this.cur.forEach((c,i)=>{
+        const d=document.createElement('div');
+        if(c.value===null){
+          d.className='card blank';
+          d.innerHTML='<div class="lbl">'+(c.letter===null?'常数':c.letter)+'</div><div class="hint">点击输入</div>';
+          d.onclick=()=>KP.open('cur',i);
+        }else{
+          d.className='card blank filled'+(this.locked?' locked':'');
+          d.innerHTML='<div class="lbl">'+answerText(c.value,c.letter,c.leading)+'</div><div class="hint">'+(this.locked?'已确认':'点击修改')+'</div>';
+          if(!this.locked)d.onclick=()=>KP.open('cur',i);
+        }
+        row.appendChild(d);
+      });
+    }else{
+      resultWrap.style.display='flex';
+      mergeCtrl.style.display=this.locked?'none':'flex';
+      this.raw.forEach((c,i)=>{
+        const d=document.createElement('div');
+        d.className='card grp'+(c.sel?' sel':'')+(c.used?' used':'');
+        d.innerHTML=answerText(c.correct,c.letter,c.leading);
+        if(!c.used&&!this.locked)d.onclick=()=>this.toggleSel(i);
+        row.appendChild(d);
+      });
+      const resultRow=document.getElementById('resultRow');resultRow.innerHTML='';
+      this.results.forEach((r,i)=>{
+        const d=document.createElement('div');
+        if(r.auto){
+          d.className='card locked';
+          d.innerHTML='<div class="lbl">'+answerText(r.value,r.letter,r.leading)+'</div><div class="hint">无需合并</div>';
+        }else if(r.value===null){
+          d.className='card blank';
+          d.innerHTML='<div class="lbl">'+(r.letter===null?'常数':r.letter)+'</div><div class="hint">点击输入</div>';
+          d.onclick=()=>KP.open('results',i);
+        }else{
+          d.className='card blank filled'+(this.locked?' locked':'');
+          d.innerHTML='<div class="lbl">'+answerText(r.value,r.letter,r.leading)+'</div><div class="hint">'+(this.locked?'已确认':'点击修改')+'</div>';
+          if(!this.locked)d.onclick=()=>KP.open('results',i);
+        }
+        resultRow.appendChild(d);
+      });
+    }
+  },
+  toggleSel(i){if(this.locked)return;SFX.tap();this.raw[i].sel=!this.raw[i].sel;this.render()},
+  flashBad(idxs){
+    idxs.forEach(i=>{const el=document.getElementById('row').children[i];if(el)el.classList.add('bad')});
+    setTimeout(()=>{document.querySelectorAll('#row .card.bad').forEach(e=>e.classList.remove('bad'))},420);
+  },
+  merge(){
+    if(this.locked)return;
+    const idxs=this.raw.map((c,i)=>c.sel&&!c.used?i:-1).filter(i=>i>=0);
+    if(idxs.length===0)return;
+    const letters=new Set(idxs.map(i=>this.raw[i].letter));
+    if(letters.size>1){
+      SFX.wrong();
+      this.flashBad(idxs);
+      Q.toast('这些不是同类项，字母要一样才能合并',false);
+      setTimeout(()=>{idxs.forEach(i=>{if(this.raw[i])this.raw[i].sel=false});this.render();},450);
+      return;
+    }
+    const letter=[...letters][0];
+    const allOfLetter=this.raw.map((c,i)=>(c.letter===letter&&!c.used)?i:-1).filter(i=>i>=0);
+    const missing=allOfLetter.filter(i=>!idxs.includes(i));
+    if(missing.length>0){
+      this.flashBad(missing);
+      Q.toast((letter===null?'常数':letter)+'还有卡片没选上，要一次性选完再合并',false);
+      return;
+    }
+    SFX.click();
+    const g=this.step.groups.find(g=>g.letter===letter);
+    const gi=this.step.groups.findIndex(x=>x.letter===letter);
+    idxs.forEach(i=>{this.raw[i].used=true;this.raw[i].sel=false});
+    this.results.push({letter,correct:g.correct,value:null,auto:false,leading:gi===0});
+    this.sortResults();
+    this.render();this.updateConfirm();
+  },
+  sortResults(){
+    const gi=l=>this.step.groups.findIndex(g=>g.letter===l);
+    this.results.sort((a,b)=>gi(a.letter)-gi(b.letter));
+  },
+  regroup(){this.load(this.step)},
+  setValue(where,i,v){
+    if(where==='cur')this.cur[i].value=v;else this.results[i].value=v;
+    this.render();this.updateConfirm();
+  },
+  updateConfirm(){
+    let ready;
+    if(this.kind==='debracket'){
+      ready=!this.locked&&this.cur.every(c=>c.value!==null);
+    }else{
+      ready=!this.locked&&this.raw.every(c=>c.used)&&this.results.every(r=>r.value!==null);
+    }
+    document.getElementById('confirmBtn').disabled=!ready;
+  },
+  checkAll(step){
+    if(step.kind==='debracket'){
+      return this.cur.every(c=>c.value===c.correct);
+    }else{
+      return this.results.every(r=>{
+        if(r.auto)return true;
+        const g=step.groups.find(g=>g.letter===r.letter);
+        return g&&r.value===g.correct;
+      });
+    }
+  },
+  resetInputs(){
+    if(this.kind==='debracket'){
+      // 去括号答错时保留学生的填写，让其点击自认为错的那一项直接修改
+      return;
+    }
+    this.results.forEach(r=>{if(!r.auto)r.value=null});
+    this.render();this.updateConfirm();
+  },
+  lockAll(){this.locked=true;this.render()}
+};
+
+/* ===== 自定义小键盘（细长横排：符号必选，数字可省略默认为1） ===== */
+const KP={target:{where:'cur',i:-1},s:null,digits:'',
+  open(where,i){
+    SFX.tap();
+    this.target={where,i};
+    const item=where==='cur'?Row.cur[i]:Row.results[i];
+    if(item.value!==null){this.s=item.value<0?-1:1;this.digits=String(Math.abs(item.value))}
+    else{this.s=null;this.digits=''}
+    this.render();
+    document.getElementById('kpMask').classList.add('show');
+  },
+  close(){document.getElementById('kpMask').classList.remove('show')},
+  buildDigits(){
+    const g=document.getElementById('kpDigits');g.innerHTML='';
+    for(let n=0;n<=9;n++){const b=document.createElement('button');b.textContent=n;b.onclick=()=>this.digit(n);g.appendChild(b)}
+  },
+  digit(n){if(this.digits.length>=3)return;this.digits=(this.digits==='0'?'':this.digits)+String(n);this.render()},
+  del(){this.digits=this.digits.slice(0,-1);this.render()},
+  sign(s){this.s=s;this.render()},
+  render(){
+    document.getElementById('kpPlus').classList.toggle('on',this.s===1);
+    document.getElementById('kpMinus').classList.toggle('on',this.s===-1);
+    const {where,i}=this.target;
+    const item=i>=0?(where==='cur'?Row.cur[i]:Row.results[i]):null;
+    const letter=item?item.letter:null;
+    let preview;
+    if(this.s===null){
+      const core=this.digits===''?'':(letter===null?this.digits:(this.digits==='1'?letter:this.digits+letter));
+      preview='？'+core;
+    }else{
+      const n=this.digits!==''?parseInt(this.digits,10):1;
+      preview=answerText(this.s*n,letter,item&&item.leading);
+    }
+    document.getElementById('kpPreview').textContent=preview;
+    document.getElementById('kpOk').disabled=(this.s===null);
+  },
+  ok(){
+    if(this.s===null)return;
+    const n=this.digits!==''?parseInt(this.digits,10):1;
+    const v=this.s*n;
+    const {where,i}=this.target;this.close();
+    Row.setValue(where,i,v);
+  }
+};
+
+KP.buildDigits();
+UI.renderMenu();
+</script>
+</body>
+</html>
