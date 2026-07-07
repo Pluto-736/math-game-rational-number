@@ -379,7 +379,31 @@ const SFX={ctx:null,muted:false,bgm:null,step:0,
   click(){[880,1175].forEach((f,i)=>setTimeout(()=>this.beep(f,.14),i*90))},
   win(){[523,659,784,1046].forEach((f,i)=>setTimeout(()=>this.beep(f,.18),i*100))},
   over(){[440,349,294,233].forEach((f,i)=>setTimeout(()=>this.beep(f,.26,'triangle'),i*140))},
-  toggle(){this.muted=!this.muted;document.getElementById('muteBtn').textContent=this.muted?'🔇':'🔊'}};
+  bgmGain:null,
+  bgmSeq:[220,261.63,329.63,261.63, 174.61,220,261.63,220, 196,246.94,293.66,246.94, 164.81,207.65,246.94,207.65],
+  bgmStart(){
+    if(!this.ctx||this.bgm)return;
+    this.step=0;
+    this.bgmGain=this.ctx.createGain();
+    this.bgmGain.gain.value=this.muted?0:.045;
+    this.bgmGain.connect(this.ctx.destination);
+    this.bgm=setInterval(()=>this.bgmTick(),200);
+  },
+  bgmTick(){
+    if(!this.ctx)return;
+    const f=this.bgmSeq[this.step%this.bgmSeq.length];
+    this.bgmNote(f,.18,'triangle',.8);
+    if(this.step%4===0)this.bgmNote(f/2,.5,'sine',.55);
+    this.step++;
+  },
+  bgmNote(f,d,t,v){
+    const c=this.ctx,n=c.currentTime,o=c.createOscillator(),g=c.createGain();
+    o.type=t;o.frequency.setValueAtTime(f,n);
+    g.gain.setValueAtTime(0,n);g.gain.linearRampToValueAtTime(v,n+.02);g.gain.exponentialRampToValueAtTime(.001,n+d);
+    o.connect(g);g.connect(this.bgmGain);o.start(n);o.stop(n+d+.03);
+  },
+  bgmStop(){if(this.bgm){clearInterval(this.bgm);this.bgm=null}},
+  toggle(){this.muted=!this.muted;document.getElementById('muteBtn').textContent=this.muted?'🔇':'🔊';if(this.bgmGain)this.bgmGain.gain.value=this.muted?0:.045}};
 
 /* ===== 保险箱转盘 / 开门动画 ===== */
 const Vault={deg:0,
@@ -403,7 +427,7 @@ const UI={
 
 /* ===== 关卡流程（多题） ===== */
 const LFlow={level:1,qTotal:5,mistakes:0,reveals:0,
-  startLevel(lv){if(lv>UI.unlocked)return;SFX.ensure();this.level=lv;this.qTotal=UI.LV[lv].qTotal;this.mistakes=0;this.reveals=0;UI.help(false);UI.show('game');Q.startLevel(lv)},
+  startLevel(lv){if(lv>UI.unlocked)return;SFX.ensure();SFX.bgmStart();this.level=lv;this.qTotal=UI.LV[lv].qTotal;this.mistakes=0;this.reveals=0;UI.help(false);UI.show('game');Q.startLevel(lv)},
   retry(){this.startLevel(this.level)},
   next(){const lv=this.level<3?this.level+1:1;this.startLevel(lv)},
   addMistake(){this.mistakes++},
