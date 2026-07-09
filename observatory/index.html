@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>天文观测台</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--paper:#f2e6c9;--ink:#274060;--copper:#b0703a;--copper-d:#8a5326;--muted:#8a7a58;--gold:#c8912f}
+html,body{min-height:100%;color:var(--ink);
+  font-family:Georgia,'Times New Roman','Songti SC','STSong',serif;touch-action:manipulation}
+body{min-height:100vh;background:
+  radial-gradient(circle at 20% 12%,rgba(176,112,58,.12),transparent 46%),
+  radial-gradient(circle at 84% 88%,rgba(39,64,96,.12),transparent 48%),
+  repeating-linear-gradient(0deg,rgba(138,83,38,.035) 0 2px,transparent 2px 4px),
+  var(--paper);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:26px 18px}
+.logo{font-size:56px;filter:drop-shadow(0 4px 6px rgba(58,35,15,.3))}
+.title{font-size:30px;font-weight:700;color:var(--ink);letter-spacing:2px;margin:6px 0 3px;text-align:center}
+.rule{width:70px;height:2px;background:var(--copper);margin:4px 0 6px;position:relative}
+.rule::before,.rule::after{content:'✦';position:absolute;top:-9px;color:var(--copper);font-size:11px}
+.rule::before{left:-16px}.rule::after{right:-16px}
+.sub{font-size:13.5px;color:var(--muted);text-align:center;line-height:1.7;max-width:400px;margin-bottom:22px;font-style:italic}
+.cards{display:flex;flex-direction:column;gap:15px;width:100%;max-width:420px}
+.card{display:flex;align-items:center;gap:15px;background:linear-gradient(#efe0bd,#e3d0a6);
+  border:2px solid var(--copper-d);border-radius:16px;padding:17px 18px;text-decoration:none;color:var(--ink);
+  transition:transform .16s,box-shadow .16s;box-shadow:0 5px 0 var(--copper-d),inset 0 1px 2px rgba(255,255,255,.5)}
+.card:hover{transform:translateY(-2px)}
+.card:active{transform:translateY(3px);box-shadow:0 2px 0 var(--copper-d)}
+.card.soon{opacity:.6;filter:grayscale(.3)}
+.card .emo{font-size:38px;flex-shrink:0;width:56px;text-align:center;filter:drop-shadow(0 2px 3px rgba(58,35,15,.3))}
+.card .info{flex:1}
+.card .name{font-size:19px;font-weight:700;color:var(--copper-d);margin-bottom:3px}
+.card .desc{font-size:12.5px;color:var(--ink);line-height:1.5;opacity:.9}
+.card .tag{display:inline-block;font-size:11px;background:rgba(200,145,47,.2);color:#8a5326;
+  padding:2px 9px;border-radius:9px;margin-top:6px;border:1px solid rgba(138,83,38,.3)}
+.foot{margin-top:26px;font-size:12.5px;color:var(--muted)}
+.foot a{color:var(--copper-d);text-decoration:none}
+</style>
+</head>
+<body>
+  <div class="logo">🔭</div>
+  <div class="title">天文观测台</div>
+  <div class="rule"></div>
+  <div class="sub">小小观星者，登上铜制观星台——<br>转动望远镜对准星辰，校准刻度上的度、分、秒。</div>
+
+  <div class="cards">
+    <a class="card" href="aim.html">
+      <div class="emo">🔭</div>
+      <div class="info">
+        <div class="name">望远镜对准</div>
+        <div class="desc">拖动镜筒凭手感转出指定角度，锁定后揭晓实际度数，越接近星辰越高分。</div>
+        <span class="tag">角的概念 · 估角</span>
+      </div>
+    </a>
+    <a class="card" href="convert.html">
+      <div class="emo">🧭</div>
+      <div class="info">
+        <div class="name">刻度校准所</div>
+        <div class="desc">整理观测记录：60 分合成 1 度、拆开 1 度换 60 分，把度分秒换算成规范写法。</div>
+        <span class="tag">度分秒 · 换算</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="foot"><a href="../index.html">← 返回数学游戏厅</a></div>
+</body>
+</html>

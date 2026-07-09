@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>天文观测台 · 刻度校准所</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --paper:#f2e6c9; --paper2:#e7d6ae; --ink:#274060; --ink2:#3b587c;
+  --copper:#b0703a; --copper-d:#8a5326; --copper-l:#d59a5f;
+  --good:#3f7a4d; --bad:#a23b34; --gold:#c8912f; --muted:#8a7a58;
+}
+html,body{height:100%;overflow:hidden;color:var(--ink);user-select:none;touch-action:none;
+  font-family:Georgia,'Times New Roman','Songti SC','STSong',serif}
+body{background:
+  radial-gradient(circle at 22% 14%,rgba(176,112,58,.10),transparent 46%),
+  radial-gradient(circle at 82% 88%,rgba(39,64,96,.10),transparent 48%),
+  repeating-linear-gradient(0deg,rgba(138,83,38,.035) 0 2px,transparent 2px 4px),
+  var(--paper)}
+#app{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center}
+
+.home-btn,.snd-btn{position:absolute;top:calc(10px + env(safe-area-inset-top));z-index:8;
+  border:1.5px solid var(--copper-d);background:linear-gradient(#e8c98f,#c98f52);
+  color:#3a230f;border-radius:9px;padding:6px 11px;font-size:16px;cursor:pointer;
+  box-shadow:0 2px 0 var(--copper-d),inset 0 1px 1px rgba(255,255,255,.4)}
+.home-btn{left:12px}.snd-btn{right:12px}
+.home-btn:active,.snd-btn:active{transform:translateY(2px);box-shadow:0 0 0 var(--copper-d)}
+
+.top{width:100%;max-width:560px;padding:12px 16px 2px;text-align:center;z-index:5}
+.top h1{font-size:20px;letter-spacing:1px;color:var(--ink);font-weight:700}
+.top h1 small{font-size:11px;color:var(--muted);letter-spacing:0;font-weight:400}
+.steps{display:flex;gap:5px;justify-content:center;margin-top:9px}
+.dot{width:9px;height:9px;border-radius:50%;background:rgba(138,83,38,.28);border:1px solid var(--copper-d)}
+.dot.now{background:var(--gold);box-shadow:0 0 6px rgba(200,145,47,.7)}
+.dot.done{background:var(--good)}
+
+/* 任务铜牌 */
+.task{margin:12px auto 0;max-width:460px;z-index:5;
+  background:linear-gradient(#e7c890,#cf9c5e);border:2px solid var(--copper-d);
+  border-radius:13px;padding:11px 16px;text-align:center;color:#3a230f;
+  box-shadow:0 3px 0 var(--copper-d),inset 0 1px 2px rgba(255,255,255,.45)}
+.task .lab{font-size:12px;letter-spacing:2px;color:#6b4522}
+.task .goal{font-size:17px;font-weight:700;line-height:1.4;margin-top:3px}
+.task .goal b{color:var(--ink)}
+.task .goal .big{font-size:23px}
+
+.stageSpace{flex:1;min-height:10px}
+
+/* 三托盘 */
+.trays{display:flex;gap:10px;justify-content:center;align-items:stretch;margin:16px auto 0;
+  max-width:520px;width:100%;padding:0 12px;z-index:5}
+.tray{flex:1;max-width:150px;display:flex;flex-direction:column;align-items:center;
+  background:linear-gradient(#efe0bd,#e0cc9f);border:2px solid var(--copper-d);border-radius:14px;
+  padding:12px 8px 10px;box-shadow:inset 0 2px 4px rgba(138,83,38,.2),0 3px 0 var(--copper-d)}
+.tray .unit{font-size:13px;color:#6b4522;letter-spacing:1px;font-weight:700}
+.tray .val{font-size:40px;font-weight:700;color:var(--ink);line-height:1.1;margin:4px 0}
+.tray .val .sym{font-size:20px;color:var(--copper-d)}
+.tray.hot .val{color:var(--bad)}
+.tray .ops{display:flex;flex-direction:column;gap:6px;width:100%;margin-top:6px}
+.opbtn{border:1.5px solid var(--copper-d);border-radius:9px;padding:8px 4px;font:700 13px Georgia,serif;
+  cursor:pointer;color:#3a230f;background:linear-gradient(#eccf97,#cf9c5e);
+  box-shadow:0 3px 0 var(--copper-d),inset 0 1px 1px rgba(255,255,255,.4);line-height:1.25}
+.opbtn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--copper-d)}
+.opbtn:disabled{opacity:.35;box-shadow:0 3px 0 var(--copper-d);cursor:default}
+.opbtn small{display:block;font-size:10px;font-weight:400;color:#6b4522}
+
+/* 底部面板 */
+.panel{position:relative;z-index:5;width:100%;max-width:560px;display:flex;flex-direction:column;align-items:center;
+  padding:14px 16px calc(12px + env(safe-area-inset-bottom));margin-top:auto}
+.readout{min-height:24px;font-size:13.5px;color:var(--ink2);text-align:center;font-weight:600;line-height:1.5;margin-bottom:9px;padding:0 8px}
+.readout b{color:var(--copper-d)}
+.btns{display:flex;gap:12px;justify-content:center;align-items:center}
+.btn{border:2px solid var(--copper-d);border-radius:12px;padding:12px 24px;
+  font:700 15px Georgia,serif;cursor:pointer;color:#3a230f;
+  background:linear-gradient(#eccf97,#cf9c5e);
+  box-shadow:0 4px 0 var(--copper-d),inset 0 1px 2px rgba(255,255,255,.45)}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--copper-d)}
+.btn.ghost{background:linear-gradient(#efe4c6,#ddc99b);color:var(--ink)}
+.btn:disabled{opacity:.45}
+.foot{font-size:12px;color:var(--muted);margin-top:10px;text-align:center}
+.foot b{color:var(--copper-d)}
+
+.banner{position:fixed;left:50%;top:46%;transform:translate(-50%,-50%) scale(.85);opacity:0;
+  background:rgba(242,230,201,.98);border:2px solid var(--copper-d);border-radius:16px;
+  padding:16px 24px;text-align:center;z-index:14;transition:.28s;pointer-events:none;
+  box-shadow:0 8px 22px rgba(58,35,15,.28)}
+.banner.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.banner.clickable{pointer-events:auto}
+.banner .grade{font-size:20px;font-weight:700;margin-bottom:4px;color:var(--good)}
+.banner .detail{font-size:13.5px;color:var(--ink2);line-height:1.7}
+.banner .detail b{color:var(--copper-d)}
+</style>
+</head>
+<body>
+<div id="app">
+  <button class="home-btn" onclick="location.href='index.html'">🏠</button>
+  <button class="snd-btn" id="sndBtn" onclick="Sound.toggle()">🔊</button>
+  <div class="top">
+    <h1>🧭 刻度校准所 <small>整理度 · 分 · 秒</small></h1>
+    <div class="steps" id="steps"></div>
+  </div>
+
+  <div class="task">
+    <div class="lab">观测记录 · 待整理</div>
+    <div class="goal" id="goalText">把 <span class="big"><b>150′</b></span> 整理成规范的「度 分」写法</div>
+  </div>
+
+  <div class="stageSpace"></div>
+
+  <div class="trays" id="trays">
+    <div class="tray" id="trayD">
+      <div class="unit">度 °</div>
+      <div class="val"><span id="valD">0</span><span class="sym">°</span></div>
+      <div class="ops">
+        <button class="opbtn" id="dDown" onclick="Game.act('d_down')">拆开 ↓<small>1° → 60′</small></button>
+      </div>
+    </div>
+    <div class="tray" id="trayM">
+      <div class="unit">分 ′</div>
+      <div class="val"><span id="valM">0</span><span class="sym">′</span></div>
+      <div class="ops">
+        <button class="opbtn" id="mUp" onclick="Game.act('m_up')">合成 ↑<small>60′ → 1°</small></button>
+        <button class="opbtn" id="mDown" onclick="Game.act('m_down')">拆开 ↓<small>1′ → 60″</small></button>
+      </div>
+    </div>
+    <div class="tray" id="trayS">
+      <div class="unit">秒 ″</div>
+      <div class="val"><span id="valS">0</span><span class="sym">″</span></div>
+      <div class="ops">
+        <button class="opbtn" id="sUp" onclick="Game.act('s_up')">合成 ↑<small>60″ → 1′</small></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="readout" id="readout">满 60 就能合成上一级；不够时把上一级拆开借下来。</div>
+    <div class="btns">
+      <button class="btn ghost" id="resetBtn" onclick="Game.resetHolding()">重置</button>
+      <button class="btn" id="checkBtn" onclick="Game.check()">校准完成</button>
+    </div>
+    <div class="foot">第 <b id="prog">1</b>/<b id="total">8</b> 台 · 得分 <b id="score">0</b></div>
+  </div>
+
+  <div class="banner" id="banner"></div>
+</div>
+
+<script>
+/* ============ 音频：舒缓夜空氛围 BGM + 柔和音效（与 aim.html 同一套） ============ */
+const Sound=(function(){
+  let ctx,master,musicGain,on=true,playing=false,timer=null,idx=0,nextT=0;
+  const BEAT=1.9;
+  const CHORDS=[
+    [220.00,261.63,329.63],[196.00,246.94,293.66],
+    [174.61,220.00,261.63],[196.00,246.94,329.63],
+  ];
+  function init(){
+    if(ctx)return;
+    const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+    ctx=new AC();
+    master=ctx.createGain();master.gain.value=0.9;master.connect(ctx.destination);
+    musicGain=ctx.createGain();musicGain.gain.value=0.10;musicGain.connect(master);
+  }
+  function pad(freq,dur,when,vol){
+    const t=when,o=ctx.createOscillator(),g2=ctx.createGain(),f=ctx.createBiquadFilter();
+    o.type='sine';o.frequency.value=freq;f.type='lowpass';f.frequency.value=900;
+    g2.gain.setValueAtTime(0.0001,t);g2.gain.linearRampToValueAtTime(vol,t+dur*0.35);
+    g2.gain.linearRampToValueAtTime(0.0001,t+dur);
+    o.connect(f);f.connect(g2);g2.connect(musicGain);o.start(t);o.stop(t+dur+0.05);
+  }
+  function schedule(){
+    if(!ctx)return;
+    while(nextT<ctx.currentTime+0.6){
+      const ch=CHORDS[idx%CHORDS.length];
+      ch.forEach((f,k)=>pad(f,BEAT*1.15,nextT,0.16-k*0.03));
+      if(idx%2===0)pad(ch[2]*2,BEAT*0.9,nextT+BEAT*0.4,0.05);
+      nextT+=BEAT;idx++;
+    }
+  }
+  function startMusic(){if(!ctx||playing||!on)return;playing=true;nextT=ctx.currentTime+0.1;timer=setInterval(schedule,120);schedule();}
+  function stopMusic(){playing=false;if(timer){clearInterval(timer);timer=null;}}
+  function tone(freq,dur,type,vol,when,glideTo){
+    const t=when||ctx.currentTime,o=ctx.createOscillator(),g2=ctx.createGain();
+    o.type=type||'sine';o.frequency.setValueAtTime(freq,t);
+    if(glideTo)o.frequency.exponentialRampToValueAtTime(glideTo,t+dur);
+    g2.gain.setValueAtTime(0.0001,t);g2.gain.linearRampToValueAtTime(vol||0.2,t+0.02);
+    g2.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g2);g2.connect(master);o.start(t);o.stop(t+dur+0.03);
+  }
+  const sfx={
+    up(){if(ctx&&on){tone(392,0.09,'sine',0.16);tone(587,0.12,'sine',0.14,ctx.currentTime+0.06);}},   // 合成：升
+    down(){if(ctx&&on){tone(494,0.09,'sine',0.16);tone(330,0.12,'sine',0.14,ctx.currentTime+0.06);}},   // 拆开：降
+    nope(){if(ctx&&on)tone(180,0.12,'triangle',0.12,undefined,150);},                                   // 不可操作
+    great(){if(!ctx||!on)return;const t=ctx.currentTime;[659.25,880,1174.7,1318.5].forEach((f,k)=>tone(f,0.55,'sine',0.16,t+k*0.10));},
+    poor(){if(!ctx||!on)return;const t=ctx.currentTime;tone(330,0.3,'sine',0.14,t,196);},
+    win(){if(!ctx||!on)return;const t=ctx.currentTime;[440,554.37,659.25,880,659.25,880].forEach((f,k)=>tone(f,0.5,'sine',0.16,t+k*0.13));}
+  };
+  function ensure(){init();if(ctx&&ctx.state==='suspended')ctx.resume();if(on)startMusic();}
+  function toggle(){on=!on;if(on)ensure();else stopMusic();const b=document.getElementById('sndBtn');if(b)b.textContent=on?'🔊':'🔇';return on;}
+  ['pointerdown','touchstart','keydown'].forEach(ev=>addEventListener(ev,()=>ensure(),{once:true,passive:true}));
+  return {ensure,toggle,sfx,isOn:()=>on};
+})();
+
+/* ============ B关：度分秒换算 ============ */
+const $=id=>document.getElementById(id);
+const ROUND=8;
+const fmt=(d,m,s)=>{let a=[];if(d)a.push(d+'°');if(m)a.push(m+'′');if(s)a.push(s+'″');return a.length?a.join(''):'0';};
+
+/* 题型：
+   A 单位→标准：给全为分 → 目标标准(度分)
+   B 标准→单位：给标准(度分) → 目标全为分
+   C 带秒→标准：给全为秒 → 目标标准(度分秒)
+*/
+function toStd(totalSec){return {d:Math.floor(totalSec/3600),m:Math.floor((totalSec%3600)/60),s:totalSec%60};}
+function makeLevel(kind){
+  if(kind==='A'){ // 全分 → 标准（度分，无秒）
+    const d=1+Math.floor(Math.random()*4), m=10+Math.floor(Math.random()*49); // 目标 d°m′
+    const totalMin=d*60+m;
+    return{start:{d:0,m:totalMin,s:0}, target:{d,m,s:0}, targetForm:'dm',
+      q:`把 <span class="big"><b>${totalMin}′</b></span> 整理成规范的「度 分」写法`};
+  }
+  if(kind==='B'){ // 标准(度分) → 全分
+    const d=1+Math.floor(Math.random()*4), m=5+Math.floor(Math.random()*54);
+    const totalMin=d*60+m;
+    return{start:{d,m,s:0}, target:{d:0,m:totalMin,s:0}, targetForm:'m',
+      q:`把 <span class="big"><b>${d}°${m}′</b></span> 全部换算成「分」`};
+  }
+  // C 全秒 → 标准（度分秒）
+  const d=1+Math.floor(Math.random()*2), m=Math.floor(Math.random()*60), s=1+Math.floor(Math.random()*59);
+  const totalSec=d*3600+m*60+s;
+  return{start:{d:0,m:0,s:totalSec}, target:{d,m,s}, targetForm:'dms',
+    q:`把 <span class="big"><b>${totalSec}″</b></span> 整理成规范的「度 分 秒」写法`};
+}
+function makePlan(){
+  // 8 关：难度递进，A 起步、混 B、后段加 C
+  const kinds=['A','A','B','A','B','C','B','C'];
+  return kinds.map(makeLevel);
+}
+let PLAN=makePlan();
+
+let lv=0, hold={d:0,m:0,s:0}, cur=null, score=0, moves=0, bannerTimer=null;
+
+function render(){
+  $('valD').textContent=hold.d;$('valM').textContent=hold.m;$('valS').textContent=hold.s;
+  // 满60高亮
+  $('trayM').classList.toggle('hot',hold.m>=60);
+  $('trayS').classList.toggle('hot',hold.s>=60);
+  // 按钮可用性
+  $('dDown').disabled=hold.d<1;
+  $('mUp').disabled=hold.m<60;
+  $('mDown').disabled=hold.m<1;
+  $('sUp').disabled=hold.s<60;
+}
+
+const Game={
+  load(){
+    cur=PLAN[lv];
+    hold={...cur.start};
+    moves=0;
+    $('goalText').innerHTML=cur.q;
+    $('prog').textContent=lv+1;
+    $('checkBtn').textContent='校准完成';
+    $('checkBtn').disabled=false;$('resetBtn').disabled=false;
+    $('banner').classList.remove('show','clickable');
+    $('steps').innerHTML=PLAN.map((_,k)=>`<span class="dot ${k<lv?'done':k===lv?'now':''}"></span>`).join('');
+    $('readout').innerHTML=hintFor(cur.targetForm);
+    render();
+  },
+  act(op){
+    let done=false;
+    if(op==='s_up'&&hold.s>=60){hold.s-=60;hold.m+=1;done=true;}
+    else if(op==='m_up'&&hold.m>=60){hold.m-=60;hold.d+=1;done=true;}
+    else if(op==='d_down'&&hold.d>=1){hold.d-=1;hold.m+=60;done=true;}
+    else if(op==='m_down'&&hold.m>=1){hold.m-=1;hold.s+=60;done=true;}
+    if(!done){Sound.sfx.nope();return;}
+    moves++;
+    (op.endsWith('_up')?Sound.sfx.up:Sound.sfx.down)();
+    render();
+  },
+  resetHolding(){hold={...cur.start};moves=0;render();
+    $('readout').innerHTML=hintFor(cur.targetForm);},
+  check(){
+    const t=cur.target;
+    const ok=hold.d===t.d&&hold.m===t.m&&hold.s===t.s;
+    if(ok){
+      Sound.sfx.great();
+      const pts=10;score+=pts;$('score').textContent=score;
+      $('checkBtn').disabled=true;$('resetBtn').disabled=true;
+      const b=$('banner');
+      b.innerHTML=`<div class="grade">✦ 校准准确</div>`+
+        `<div class="detail">整理为 <b>${fmt(t.d,t.m,t.s)}</b> &nbsp;+${pts} 分<br>`+
+        `<button class="btn" style="margin-top:10px;padding:8px 18px;font-size:14px" onclick="Game.next()">${lv>=ROUND-1?'看结果':'下一台 →'}</button></div>`;
+      b.classList.add('show','clickable');
+    }else{
+      Sound.sfx.poor();
+      $('readout').innerHTML=whyWrong(cur.targetForm);
+    }
+  },
+  next(){
+    if(bannerTimer){clearTimeout(bannerTimer);bannerTimer=null;}
+    lv++;
+    if(lv>=ROUND){this.finish();return;}
+    this.load();
+  },
+  finish(){
+    Sound.sfx.win();
+    const full=ROUND*10,star=score>=full*0.9?3:score>=full*0.6?2:1;
+    const b=$('banner');
+    b.innerHTML=`<div class="grade" style="color:var(--gold)">🧭 校准完成</div>`+
+      `<div class="detail">${'★'.repeat(star)}${'☆'.repeat(3-star)}<br>`+
+      `本轮得分 <b>${score}</b> / ${full}<br>`+
+      `<button class="btn" style="margin-top:10px;padding:8px 18px;font-size:14px" onclick="Game.restart()">再来一轮</button></div>`;
+    b.classList.add('show','clickable');
+    $('checkBtn').disabled=true;$('resetBtn').disabled=true;
+    $('readout').innerHTML='一轮结束，再练一次会更熟练。';
+  },
+  restart(){lv=0;score=0;PLAN=makePlan();$('score').textContent=0;this.load();},
+  start(){$('total').textContent=ROUND;this.load();}
+};
+function hintFor(form){
+  if(form==='m')return '目标是<b>全部化成分</b>：把每 1° 拆开换成 60′，直到度为 0。';
+  if(form==='dms')return '目标是<b>度 分 秒</b>规范写法：秒满 60 合成 1 分，分满 60 合成 1 度（分、秒都要小于 60）。';
+  return '目标是<b>度 分</b>规范写法：分满 60 就合成 1 度，让分小于 60。';
+}
+function whyWrong(form){
+  if(form==='m')return '❌ 还没整理好：要把度<b>全部拆开</b>成分，度托盘应为 0。';
+  if(form==='dms')return '❌ 还没整理好：<b>秒和分都要小于 60</b>，满 60 记得合成上一级。';
+  return '❌ 还没整理好：<b>分要小于 60</b>，满 60 就合成 1 度。';
+}
+Game.start();
+</script>
+</body>
+</html>
