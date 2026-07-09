@@ -122,6 +122,12 @@ body {
 }
 .combo { font-size: 1.2em; color: #ffd700; }
 
+/* 浅色主题（大块头世界·白背景）——把顶栏白字改深色，避免在白底上看不见 */
+body.light-theme .btn-back { background: rgba(0,0,0,0.12); color: #333; }
+body.light-theme .btn-back:hover { background: rgba(0,0,0,0.22); }
+body.light-theme .combo { color: #c77b00; }
+body.light-theme .animal-label { background: rgba(0,0,0,0.06); color: #333; box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
+
 /* 动物区域 */
 .animals-zone {
   display: flex;
@@ -562,7 +568,7 @@ body {
 const IMG_BASE = 'animal world/';
 const WORLDS = [
   {
-    id: 'mammal', name: '哺乳世界', icon: '🐼', folder: 'Mammals', bg: 'linear-gradient(135deg, #4a2c17 0%, #8b5e3c 50%, #d4a574 100%)',
+    id: 'mammal', name: '哺乳世界', icon: '🐼', folder: 'Mammals', bg: 'linear-gradient(135deg, #1e3d1f 0%, #2f6b32 50%, #5a9c4f 100%)',
     animals: [
       { id: 'dog', emoji: '🐶', name: '小狗', img: 'dog-normal.png', costumes: ['dog-royal.png', 'dog-magic.png', 'dog-ice.png'] },
       { id: 'cat', emoji: '🐱', name: '小猫', img: 'cat-normal.png', costumes: ['cat-royal.png', 'cat-magic.png', 'cat-lightning.png'] },
@@ -573,7 +579,7 @@ const WORLDS = [
     ]
   },
   {
-    id: 'ocean', name: '海洋世界', icon: '🐋', folder: 'Marine animals', bg: 'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)',
+    id: 'ocean', name: '海洋世界', icon: '🐋', folder: 'Marine animals', bg: 'linear-gradient(135deg, #041e2e 0%, #0a3d5c 50%, #12688f 100%)',
     animals: [
       { id: 'jellyfish', emoji: '🪼', name: '水母', img: 'jellyfish-normal.png', costumes: ['jellyfish-loyal.png', 'jellyfish-magic.png', 'jellyfish-crystal.png'] },
       { id: 'crab', emoji: '🦀', name: '螃蟹', img: 'crab-normal.png', costumes: ['crab-loyal.png', 'crab-magic.png', 'crab-steel.png'] },
@@ -584,7 +590,7 @@ const WORLDS = [
     ]
   },
   {
-    id: 'flying', name: '飞行世界', icon: '🦅', folder: 'Birds', bg: 'linear-gradient(135deg, #1a3a5c 0%, #2980b9 50%, #6dd5fa 100%)',
+    id: 'flying', name: '飞行世界', icon: '🦅', folder: 'Birds', bg: 'linear-gradient(135deg, #2472c8 0%, #4aa3e8 50%, #a8e0ff 100%)',
     animals: [
       { id: 'eagle', emoji: '🦅', name: '雄鹰', img: 'eagle-normal.png', costumes: ['eagle-loyal.png', 'eagle-magic.png', 'eagle-thunder.png'] },
       { id: 'parrot', emoji: '🦜', name: '鹦鹉', img: 'parrot-normal.png', costumes: ['parrot-loyal.png', 'parrot-magic.png', 'parrot-rainbow.png'] },
@@ -595,7 +601,7 @@ const WORLDS = [
     ]
   },
   {
-    id: 'reptile', name: '大块头世界', icon: '🐘', folder: 'Reptiles', bg: 'linear-gradient(135deg, #5c4a2e 0%, #8a7048 50%, #b89b6a 100%)',
+    id: 'reptile', name: '大块头世界', icon: '🐘', folder: 'Reptiles', light: true, bg: 'linear-gradient(135deg, #fdfdfd 0%, #f0f0f0 50%, #e6e8ea 100%)',
     animals: [
       { id: 'elephant', emoji: '🐘', name: '大象', img: 'elephant-normal.png', costumes: ['elephant-loyal.png', 'elephant-magic.png', 'elephant-fire.png'] },
       { id: 'hippo', emoji: '🦛', name: '河马', img: 'hippo-normal.png', costumes: ['hippo-loyal.png', 'hippo-magic.png', 'hippo-chef.png'] },
@@ -771,6 +777,7 @@ function startGame(worldId) {
   document.getElementById('result-page').classList.remove('show');
   document.getElementById('guide-modal').classList.remove('show');
   document.body.style.background = currentWorld.bg;
+  document.body.classList.toggle('light-theme', !!currentWorld.light);
 
   const save = loadSave();
   save.plays++;
@@ -1240,6 +1247,7 @@ function showEntry() {
   document.getElementById('animal-detail').style.display = 'none';
   document.getElementById('result-page').classList.remove('show');
   document.body.style.background = 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)';
+  document.body.classList.remove('light-theme');
 }
 
 init();
