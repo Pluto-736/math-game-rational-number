@@ -218,7 +218,7 @@ function initThree(){
   renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
   renderer.setPixelRatio(Math.min(devicePixelRatio,2));
   scene=new THREE.Scene();
-  camera=new THREE.PerspectiveCamera(40,1,0.1,100);camera.position.set(0,0,9);
+  camera=new THREE.PerspectiveCamera(40,1,0.1,100);camera.position.set(0,0,18);
   scene.add(new THREE.AmbientLight(0xffffff,0.92));
   const d=new THREE.DirectionalLight(0xffffff,0.5);d.position.set(4,7,5);scene.add(d);
   world=new THREE.Group();scene.add(world);
