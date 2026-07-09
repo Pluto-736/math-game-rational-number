@@ -19,25 +19,47 @@ body{background:linear-gradient(160deg,#0b1220 0%,#16233f 55%,#0a1120 100%)}
 .btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--goldDk)}
 .btn.ghost{background:rgba(255,255,255,.08);color:var(--ink);box-shadow:0 5px 0 rgba(0,0,0,.35)}
 .btn[disabled]{opacity:.35;pointer-events:none}
-/* ENTRY */
-#entry{overflow:hidden}
-.dial{position:absolute;border:3px solid rgba(240,192,90,.15);border-radius:50%}
-.d1{width:340px;height:340px;top:-90px;left:-90px}
-.d2{width:220px;height:220px;bottom:-60px;right:-60px}
-.logo{font-size:44px;font-weight:1000;letter-spacing:2px;color:var(--gold);text-shadow:0 3px 0 #7a5518,0 6px 14px rgba(0,0,0,.5);z-index:2;text-align:center}
-.logo small{display:block;font-size:14px;letter-spacing:5px;color:#b9c3e0;text-shadow:none;margin-top:10px;font-weight:700}
-.menu{width:100%;max-width:400px;display:flex;flex-direction:column;gap:13px;margin-top:26px;z-index:2}
-.lv{display:flex;gap:14px;align-items:center;background:var(--panel);border:2px solid var(--panelB);border-radius:20px;padding:14px 16px;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,.35)}
+/* ENTRY — 特工机密档案（牛皮纸 + 红印章 + 卷宗卡） */
+#entry{overflow:hidden;justify-content:flex-start;padding-top:50px;
+  background:
+    radial-gradient(circle at 18% 12%,rgba(120,80,40,.18),transparent 42%),
+    radial-gradient(circle at 84% 88%,rgba(90,55,25,.20),transparent 46%),
+    repeating-linear-gradient(0deg,rgba(90,60,30,.05) 0 3px,transparent 3px 6px),
+    linear-gradient(160deg,#e8d6ac 0%,#dcc38f 52%,#cba869 100%)}
+/* 散落的档案标签装饰 */
+.fileTab{position:absolute;background:linear-gradient(#c79a5c,#a97c3f);border:2px solid #8a6330;border-radius:6px;box-shadow:0 4px 10px rgba(60,40,15,.3);opacity:.55}
+.ft1{width:130px;height:38px;top:-8px;left:24px;transform:rotate(-7deg)}
+.ft2{width:100px;height:32px;bottom:-6px;right:30px;transform:rotate(6deg)}
+/* 红色机密印章 */
+.stampSeal{position:absolute;top:64px;right:18px;z-index:3;
+  font-family:'KaiTi','STKaiti','Microsoft YaHei',sans-serif;font-weight:900;
+  font-size:22px;letter-spacing:4px;color:rgba(178,42,38,.82);text-align:center;line-height:1.1;
+  padding:10px 12px 8px;border:3px double rgba(178,42,38,.7);border-radius:10px;
+  transform:rotate(-14deg);text-shadow:0 1px 0 rgba(255,255,255,.35);
+  box-shadow:inset 0 0 12px rgba(178,42,38,.18)}
+.stampSeal small{display:block;font-size:8px;letter-spacing:2px;font-weight:700;margin-top:3px}
+.logo{font-size:40px;font-weight:1000;letter-spacing:2px;color:#5a3d1c;
+  text-shadow:0 2px 0 rgba(255,255,255,.4),0 3px 8px rgba(90,60,25,.35);z-index:2;text-align:center}
+.logo small{display:block;font-size:13px;letter-spacing:5px;color:#8a6835;text-shadow:none;margin-top:9px;font-weight:700}
+.caseHint{z-index:2;margin-top:12px;font-size:12.5px;letter-spacing:3px;font-weight:800;color:#9a5a2c;
+  border:1px dashed rgba(138,99,48,.6);border-radius:8px;padding:4px 14px;background:rgba(255,250,235,.35)}
+.menu{width:100%;max-width:400px;display:flex;flex-direction:column;gap:13px;margin-top:22px;z-index:2}
+/* 卷宗卡：浅牛皮纸卡片 + 左侧档案编号 */
+.lv{display:flex;gap:14px;align-items:center;background:linear-gradient(#fbf3df,#efe0be);
+  border:2px solid #b58f57;border-left:7px solid #b22a26;border-radius:10px;padding:14px 16px;cursor:pointer;
+  box-shadow:0 5px 14px rgba(80,52,20,.28),inset 0 1px 2px rgba(255,255,255,.6)}
 .lv:active{transform:scale(.98)}
-.lv.locked{opacity:.45;cursor:not-allowed}
-.lvNo{width:46px;height:46px;flex-shrink:0;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:23px;font-weight:1000;color:#3a2606;background:linear-gradient(#f7d27a,var(--gold))}
-.lv.locked .lvNo{font-size:0;background:rgba(255,255,255,.12)}
+.lv.locked{opacity:.5;cursor:not-allowed;filter:grayscale(.3)}
+.lvNo{width:46px;height:46px;flex-shrink:0;border-radius:9px;display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:1000;color:#fbf3df;background:linear-gradient(#8a6330,#5f4220);
+  border:2px solid #4a3216;box-shadow:inset 0 1px 2px rgba(255,255,255,.25)}
+.lv.locked .lvNo{font-size:0;background:linear-gradient(#9a8a6a,#6f6045)}
 .lv.locked .lvNo:after{content:'🔒';font-size:19px}
-.lvName{font-size:16px;font-weight:900;margin-bottom:3px;color:var(--gold)}
-.lvDesc{font-size:12.5px;line-height:1.45;opacity:.85}
-.lvTip{font-size:12px;color:var(--teal);margin-top:4px;font-weight:700}
+.lvName{font-size:16px;font-weight:900;margin-bottom:3px;color:#7a2a12}
+.lvDesc{font-size:12.5px;line-height:1.45;color:#5a4a2e;opacity:.92}
+.lvTip{font-size:12px;color:#a0621f;margin-top:4px;font-weight:700}
 .entry-foot{position:absolute;bottom:14px;font-size:13px;z-index:2}
-.entry-foot a{color:#9fb0d8;text-decoration:none;font-weight:700}
+.entry-foot a{color:#7a5626;text-decoration:none;font-weight:700}
 /* HELP / REVEAL modal */
 .mask{position:absolute;inset:0;background:rgba(4,8,18,.72);display:none;align-items:center;justify-content:center;z-index:90;padding:20px}
 .mask.show{display:flex}
@@ -150,8 +172,10 @@ body{background:linear-gradient(160deg,#0b1220 0%,#16233f 55%,#0a1120 100%)}
 <body><div id="app">
 
 <div id="entry" class="screen show">
-  <div class="dial d1"></div><div class="dial d2"></div>
-  <div class="logo">🔐 开锁特工<small>去 括 号 与 合 并 同 类 项</small></div>
+  <div class="fileTab ft1"></div><div class="fileTab ft2"></div>
+  <div class="stampSeal">机 密<small>CLASSIFIED</small></div>
+  <div class="logo">🕵️ 开锁特工<small>去 括 号 与 合 并 同 类 项</small></div>
+  <div class="caseHint">机 密 卷 宗 · 待 破 解</div>
   <div id="levelMenu" class="menu"></div>
   <button class="btn ghost" onclick="UI.help(true)">玩法说明</button>
   <div class="entry-foot"><a href="../index.html">← 返回游戏厅</a></div>
@@ -406,9 +430,10 @@ const SFX={ctx:null,muted:false,bgm:null,step:0,
   toggle(){this.muted=!this.muted;document.getElementById('muteBtn').textContent=this.muted?'🔇':'🔊';if(this.bgmGain)this.bgmGain.gain.value=this.muted?0:.045}};
 
 /* ===== 保险箱转盘 / 开门动画 ===== */
-const Vault={deg:0,
-  reset(){this.deg=0;const v=document.getElementById('vault');if(v)v.classList.remove('unlocked');const d=document.getElementById('dial');if(d){d.classList.remove('turning');d.style.transition='transform .3s';d.style.transform='rotate(0deg)'}},
-  turn(idx){this.deg+=(idx%2===0?300:-240);const d=document.getElementById('dial');if(d){d.style.transition='transform .55s cubic-bezier(.34,1.3,.5,1)';d.style.transform='rotate('+this.deg+'deg)';d.classList.remove('turning');void d.offsetWidth;d.classList.add('turning')}},
+const Vault={deg:0,per:120,
+  reset(total){this.deg=0;this.per=360/Math.max(1,total||3);const v=document.getElementById('vault');if(v)v.classList.remove('unlocked');const d=document.getElementById('dial');if(d){d.classList.remove('turning');d.style.transition='transform .3s';d.style.transform='rotate(0deg)'}},
+  step(){this.deg+=this.per;const d=document.getElementById('dial');if(d){d.style.transition='transform .7s cubic-bezier(.34,1.3,.5,1)';d.style.transform='rotate('+this.deg+'deg)';d.classList.remove('turning');void d.offsetWidth;d.classList.add('turning')}},
+  jitter(){const d=document.getElementById('dial');if(!d)return;const base=this.deg,seq=[base-13,base+11,base-7,base+4,base];let i=0;const run=()=>{if(i>=seq.length){d.style.transition='transform .5s cubic-bezier(.34,1.3,.5,1)';return}d.style.transition='transform .07s ease';d.style.transform='rotate('+seq[i]+'deg)';i++;setTimeout(run,70)};run()},
   open(){const v=document.getElementById('vault');if(v)v.classList.add('unlocked');this.deg+=720;const d=document.getElementById('dial');if(d){d.style.transition='transform .85s cubic-bezier(.3,.7,.3,1)';d.style.transform='rotate('+this.deg+'deg)'}}
 };
 
@@ -447,11 +472,10 @@ const LFlow={level:1,qTotal:5,mistakes:0,reveals:0,
 
 /* ===== 单题状态机（生命值、步骤、揭晓答案） ===== */
 const Q={puzzle:null,stepIdx:0,lives:3,cycle:0,qIndex:0,
-  startLevel(lv){this.qIndex=0;this.newQuestion()},
+  startLevel(lv){this.qIndex=0;Vault.reset(LFlow.qTotal);this.newQuestion()},
   newQuestion(){this.puzzle=GEN[LFlow.level]();this.stepIdx=0;this.lives=3;this.cycle=0;this.enterStep()},
   restartSameQuestion(){this.stepIdx=0;this.lives=3;this.cycle=1;this.enterStep()},
   enterStep(){
-    if(this.stepIdx===0)Vault.reset();
     const step=this.puzzle.steps[this.stepIdx];
     document.getElementById('plate').innerHTML=step.plateHtml;
     this.updateHud();
@@ -482,7 +506,7 @@ const Q={puzzle:null,stepIdx:0,lives:3,cycle:0,qIndex:0,
     const step=this.puzzle.steps[this.stepIdx];
     const ok=Row.checkAll(step);
     if(ok){
-      SFX.right();Vault.turn(this.stepIdx);this.toast(step.kind==='merge'?'合并正确！':'去括号正确！',true);
+      SFX.right();this.toast(step.kind==='merge'?'合并正确！':'去括号正确！',true);
       Row.lockAll();
       setTimeout(()=>{
         if(this.stepIdx<this.puzzle.steps.length-1){this.stepIdx++;this.enterStep()}
@@ -493,7 +517,7 @@ const Q={puzzle:null,stepIdx:0,lives:3,cycle:0,qIndex:0,
     }
   },
   wrong(msg){
-    SFX.wrong();LFlow.addMistake();
+    SFX.wrong();Vault.jitter();LFlow.addMistake();
     this.lives--;this.updateHud();
     if(this.lives<=0){
       if(this.cycle===0){
@@ -519,7 +543,7 @@ const Q={puzzle:null,stepIdx:0,lives:3,cycle:0,qIndex:0,
     document.getElementById('revealMask').classList.remove('show');
     this.advanceQuestion();
   },
-  questionSolved(){this.advanceQuestion()},
+  questionSolved(){Vault.step();this.advanceQuestion()},
   advanceQuestion(){
     this.qIndex++;
     if(this.qIndex>=LFlow.qTotal){LFlow.finish()}
