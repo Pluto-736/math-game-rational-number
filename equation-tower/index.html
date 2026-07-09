@@ -58,28 +58,32 @@ body{background:linear-gradient(180deg,#1a0f2e 0%,#241540 45%,#120a24 100%)}
 @keyframes bossHit{0%,100%{transform:translate(0,0)}20%{transform:translate(-8px,3px) rotate(-6deg);filter:drop-shadow(0 4px 6px rgba(0,0,0,.6)) brightness(2) sepia(1) saturate(4) hue-rotate(-30deg)}60%{transform:translate(7px,-2px) rotate(5deg)}}
 @keyframes bossCast{0%,100%{transform:scale(1)}30%{transform:scale(1.18);filter:drop-shadow(0 0 16px var(--pur)) drop-shadow(0 4px 6px rgba(0,0,0,.6))}}
 @keyframes bossDie{0%{transform:scale(1);opacity:1}40%{transform:scale(1.3) rotate(10deg);filter:brightness(3)}100%{transform:scale(.2) rotate(60deg);opacity:0}}
-.bossName{font-size:14px;font-weight:900;color:var(--gold);letter-spacing:2px;margin-top:-2px}
+.bossName{font-size:14px;font-weight:900;color:var(--gold);letter-spacing:2px;margin-top:4px;text-align:center}
+/* 对峙行：怪物 · 护甲盾 · ⚔ · 勇士 · 血条 */
+.fightRow{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:nowrap}
+.foe,.ally{display:flex;flex-direction:column;align-items:center;gap:4px}
+.foe{order:1}.vs{order:2}.ally{order:3}
 .bossBox{position:relative;display:inline-block}
-.shieldStack{position:absolute;inset:-8px 0 -4px;pointer-events:none}
-.shell{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);border-radius:52% 52% 46% 46%/62% 62% 40% 40%;background:linear-gradient(155deg,rgba(190,210,255,.5),rgba(90,120,200,.28) 60%,rgba(60,80,150,.35));border:2px solid rgba(200,220,255,.75);box-shadow:inset 0 5px 12px rgba(255,255,255,.45),inset 0 -4px 10px rgba(30,40,90,.5),0 2px 6px rgba(0,0,0,.4)}
-.shell:after{content:'';position:absolute;top:12%;left:18%;width:34%;height:26%;border-radius:50%;background:rgba(255,255,255,.5);filter:blur(1px)}
-.shell.broken{animation:shellBreak .55s forwards}
-@keyframes shellBreak{0%{opacity:1}25%{filter:brightness(2.4);transform:translate(-50%,-50%) scale(1.1)}100%{opacity:0;transform:translate(-50%,-62%) scale(.5) rotate(8deg)}}
-.floatTxt{position:absolute;left:50%;top:30%;transform:translateX(-50%);font-size:18px;font-weight:1000;color:var(--gold);text-shadow:0 2px 4px #000;pointer-events:none;z-index:100;animation:floatUp .9s forwards}
+.vs{font-size:22px;color:#8a7bbf;flex-shrink:0;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+.heroes{font-size:34px;line-height:1;letter-spacing:-2px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+.heroes.hurt{animation:heroHurt .45s}
+@keyframes heroHurt{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px) rotate(-5deg);filter:drop-shadow(0 2px 3px rgba(0,0,0,.5)) brightness(1.6) sepia(1) saturate(5) hue-rotate(-25deg)}55%{transform:translateX(5px) rotate(4deg)}80%{transform:translateX(-3px)}}
+.shields{display:flex;gap:3px;justify-content:center;min-height:26px}
+.shield{width:20px;height:24px;position:relative;flex-shrink:0;transition:transform .1s}
+.shield svg{width:100%;height:100%;display:block;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+.shield.broken{animation:shieldBreak .5s forwards}
+@keyframes shieldBreak{0%{opacity:1}25%{transform:translateY(-3px) scale(1.15);filter:brightness(2.2)}100%{opacity:0;transform:translateY(10px) rotate(24deg) scale(.5)}}
+.floatTxt{position:absolute;left:22%;top:6%;transform:translateX(-50%);font-size:16px;font-weight:1000;color:var(--gold);text-shadow:0 2px 4px #000;pointer-events:none;z-index:100;animation:floatUp .9s forwards}
 @keyframes floatUp{0%{opacity:0;transform:translate(-50%,6px) scale(.7)}25%{opacity:1}100%{opacity:0;transform:translate(-50%,-32px) scale(1.1)}}
-.statRow{display:flex;justify-content:center;align-items:center;gap:16px;margin-top:7px}
-#hearts .heart{font-size:20px;color:var(--red);text-shadow:0 0 6px rgba(255,85,107,.6);margin:0 1px;transition:.2s}
+#hearts .heart{font-size:18px;color:var(--red);text-shadow:0 0 6px rgba(255,85,107,.6);margin:0 1px;transition:.2s}
 #hearts .heart.dead{color:#3a2f5c;text-shadow:none;transform:scale(.8)}
-#combo{font-size:14px;font-weight:1000;color:var(--gold);min-height:18px;letter-spacing:1px}
-#combo.hot{color:var(--red);animation:comboPulse .5s infinite alternate}
-@keyframes comboPulse{to{transform:scale(1.15)}}
 /* board */
 #board{width:100%;max-width:520px;padding:10px 14px;flex:1;display:flex;flex-direction:column;justify-content:center}
 #board.shake{animation:shk .4s}
 @keyframes shk{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
-.panel{background:linear-gradient(160deg,#241640,#180e2e 60%,#241640);border:3px solid var(--stoneL);border-radius:12px;padding:14px 12px;box-shadow:inset 0 0 24px rgba(0,0,0,.5),0 6px 18px rgba(0,0,0,.5);position:relative}
-.panel:before{content:'';position:absolute;inset:4px;border:1px dashed rgba(139,92,246,.25);border-radius:8px;pointer-events:none}
-.readEq{text-align:center;font-size:20px;font-weight:900;letter-spacing:.5px;color:#d9d0ff;margin:2px 0 10px}
+.panel{background:linear-gradient(160deg,#efe7d0,#e2d6b4 60%,#e9dfc4);border:3px solid var(--gold);border-radius:12px;padding:14px 12px;box-shadow:inset 0 0 20px rgba(184,138,30,.28),0 0 22px rgba(245,197,66,.32),0 6px 18px rgba(0,0,0,.5);position:relative}
+.panel:before{content:'';position:absolute;inset:4px;border:1px dashed rgba(184,138,30,.5);border-radius:8px;pointer-events:none}
+.readEq{text-align:center;font-size:20px;font-weight:900;letter-spacing:.5px;color:#3a2b1a;margin:2px 0 10px}
 .readEq.small{font-size:16px;opacity:.85}
 /* ===== FRACTION (floor 3) ===== */
 .frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 .15em;line-height:1.15em;font-size:.92em;white-space:nowrap}
@@ -88,8 +92,8 @@ body{background:linear-gradient(180deg,#1a0f2e 0%,#241540 45%,#120a24 100%)}
 .fracDen{padding:0 .25em}
 /* move zone with = bridge */
 .mvRow{display:flex;align-items:stretch;gap:6px;min-height:60px}
-.zone{flex:1;display:flex;flex-wrap:wrap;gap:6px;align-content:center;justify-content:center;padding:8px 4px;background:rgba(0,0,0,.25);border:2px dashed rgba(139,92,246,.4);border-radius:8px;min-width:0}
-.zone .empty{opacity:.35;font-size:20px;font-weight:900}
+.zone{flex:1;display:flex;flex-wrap:wrap;gap:6px;align-content:center;justify-content:center;padding:8px 4px;background:rgba(60,40,10,.14);border:2px dashed rgba(184,138,30,.6);border-radius:8px;min-width:0}
+.zone .empty{opacity:.4;font-size:20px;font-weight:900;color:#7a5a1a}
 .bridge{flex-shrink:0;width:40px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:1000;color:var(--gold);text-shadow:0 0 10px rgba(245,197,66,.7);position:relative}
 .bridge:before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:38px;height:38px;border-radius:50%;background:radial-gradient(circle,rgba(245,197,66,.18),transparent 70%)}
 .tileWrap{position:relative;display:inline-flex;align-items:stretch;border-radius:9px;background:linear-gradient(#4a3a7a,#2f2154);box-shadow:0 3px 0 #1a1030}
@@ -105,11 +109,11 @@ body{background:linear-gradient(180deg,#1a0f2e 0%,#241540 45%,#120a24 100%)}
 .tileWrap.hintFlash{animation:hintF .6s 2}
 @keyframes tileBad{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(5px)}}
 @keyframes hintF{50%{box-shadow:0 0 0 3px var(--gold),0 3px 0 #1a1030;transform:translateY(-3px)}}
-.fillLine{text-align:center;font-size:22px;font-weight:900;margin:14px 0 4px;letter-spacing:1px;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px}
-.blank{font:900 20px inherit;min-width:56px;padding:8px 12px;border-radius:8px;border:2px dashed var(--gold);background:rgba(245,197,66,.1);color:var(--gold);cursor:pointer}
+.fillLine{text-align:center;font-size:22px;font-weight:900;margin:14px 0 4px;letter-spacing:1px;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;color:#3a2b1a}
+.blank{font:900 20px inherit;min-width:56px;padding:8px 12px;border-radius:8px;border:2px dashed var(--goldDk);background:rgba(184,138,30,.14);color:#8a5a10;cursor:pointer}
 .blank.filled{border-style:solid;background:linear-gradient(#ffd76b,#e6a92e);color:#4a3200}
 .blank.bad{animation:tileBad .45s;border-color:var(--red)}
-.eqto{color:#9c8fd0;font-size:18px}
+.eqto{color:#7a5a1a;font-size:18px}
 /* actions */
 #actions{width:100%;max-width:520px;padding:8px 14px 16px;flex-shrink:0}
 #hintBar{display:none;background:rgba(55,224,184,.12);border:2px solid var(--teal);border-radius:10px;color:#bff5e8;font-size:13px;font-weight:900;line-height:1.5;padding:9px 12px;margin-bottom:8px;text-align:center}
@@ -139,18 +143,14 @@ body{background:linear-gradient(180deg,#1a0f2e 0%,#241540 45%,#120a24 100%)}
 .kpSigns{display:flex;gap:8px;margin:0 auto 7px;max-width:216px}
 .ksign{flex:1;font:1000 20px inherit;padding:7px;border:2px solid #4a3a7a;border-radius:8px;background:#2c2148;color:#fff;cursor:pointer}
 .ksign.on{background:linear-gradient(#a97bf0,var(--pur));border-color:var(--gold)}
-.kpDigits{display:grid;grid-template-columns:repeat(3,54px);justify-content:center;gap:7px;margin-bottom:8px}
-.kpDigits button{font:1000 19px inherit;padding:8px 0;border:0;border-radius:8px;background:#332358;color:#fff;cursor:pointer;box-shadow:0 3px 0 #1c1236}
+.kpDigits{display:flex;gap:5px;margin-bottom:8px}
+.kpDigits button{flex:1;font:1000 18px inherit;padding:11px 0;border:0;border-radius:8px;background:#332358;color:#fff;cursor:pointer;box-shadow:0 3px 0 #1c1236}
 .kpDigits button:active{transform:translateY(2px);box-shadow:0 1px 0 #1c1236}
-.kpDigits button:last-child{grid-column:2}
 .kpRow{display:flex;gap:6px;justify-content:center;max-width:260px;margin:0 auto}
 .kpRow .btn{flex:1;padding:9px 0;margin:0;font-size:14px}
 /* toast */
 #toast{position:absolute;left:50%;bottom:22%;transform:translateX(-50%) translateY(10px);background:rgba(20,10,40,.95);border:2px solid var(--gold);color:#fff;padding:10px 18px;border-radius:20px;font-size:14px;font-weight:900;z-index:120;opacity:0;pointer-events:none;transition:.25s;max-width:90%;text-align:center}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-#critPop{position:absolute;left:50%;top:34%;transform:translate(-50%,-50%) scale(.4);font-size:44px;font-weight:1000;color:var(--gold);text-shadow:0 0 16px var(--red),0 3px 0 #6b0011;z-index:110;opacity:0;pointer-events:none;letter-spacing:2px}
-#critPop.show{animation:crit .7s}
-@keyframes crit{0%{opacity:0;transform:translate(-50%,-50%) scale(.4) rotate(-12deg)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.2) rotate(6deg)}70%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.1)}}
 @media(max-height:660px){
 .bossFace{font-size:48px}.readEq{font-size:18px}.tileBody{font-size:17px;padding:8px 9px}
 .fillLine{font-size:19px;margin:10px 0 2px}#board{padding:6px 12px}
@@ -177,12 +177,18 @@ body{background:linear-gradient(180deg,#1a0f2e 0%,#241540 45%,#120a24 100%)}
       <button class="iconBtn" id="muteBtn" onclick="SFX.toggle()">🔊</button>
     </div>
     <div class="bossWrap">
-      <div class="bossBox"><div class="bossFace" id="bossFace">👺</div><div class="shieldStack" id="shields"></div></div>
-      <div class="bossName" id="bossName">移项小妖</div>
-      <div class="statRow">
-        <div id="hearts"></div>
-        <div id="combo"></div>
+      <div class="fightRow">
+        <div class="foe">
+          <div class="bossBox"><div class="bossFace" id="bossFace">👺</div></div>
+          <div class="shields" id="shields"></div>
+        </div>
+        <div class="vs">⚔</div>
+        <div class="ally">
+          <div class="heroes">🧙‍♂️🧙‍♀️</div>
+          <div id="hearts"></div>
+        </div>
       </div>
+      <div class="bossName" id="bossName">移项小妖</div>
     </div>
     <div id="board"></div>
     <div id="actions">
@@ -219,7 +225,6 @@ body{background:linear-gradient(180deg,#1a0f2e 0%,#241540 45%,#120a24 100%)}
     </div>
   </div>
   <div id="toast"></div>
-  <div id="critPop">暴击!</div>
 </div>
 <script>
 /* ===== 工具 ===== */
@@ -258,7 +263,6 @@ const SFX={ctx:null,muted:false,bgm:null,step:0,bgmGain:null,
   right(){this.slide(600,1020,.14,'sine',.13)},
   wrong(){this.slide(300,90,.26,'triangle',.16)},
   cast(){this.slide(200,700,.3,'sawtooth',.09)},
-  crit(){[784,1046,1318].forEach((f,i)=>setTimeout(()=>this.beep(f,.16,'square',.09),i*70))},
   win(){[523,659,784,1046].forEach((f,i)=>setTimeout(()=>this.beep(f,.18),i*100))},
   over(){[440,349,294,233].forEach((f,i)=>setTimeout(()=>this.beep(f,.26,'triangle'),i*140))},
   bgmSeq:[392,466.16,587.33,466.16, 349.23,440,523.25,440, 311.13,392,466.16,392, 293.66,349.23,440,349.23],
@@ -472,10 +476,11 @@ function genBoss3(battleIndex){
 
 
 /* ===== 楼层数据 / 解锁 ===== */
+const SHIELD_SVG=`<svg viewBox="0 0 40 48"><defs><linearGradient id="shg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe89a"/><stop offset=".5" stop-color="#e6a92e"/><stop offset="1" stop-color="#a86a12"/></linearGradient></defs><path d="M20 2 L37 8 V24 Q37 40 20 46 Q3 40 3 24 V8 Z" fill="url(#shg)" stroke="#6b4400" stroke-width="2.5"/><path d="M20 2 L37 8 V24 Q37 40 20 46 Q3 40 3 24 V8 Z" fill="none" stroke="#fff3c0" stroke-width="1" opacity=".55"/><path d="M20 9 V39 M8 22 H32" stroke="#7a4e08" stroke-width="2.4" stroke-linecap="round"/></svg>`;
 const FLOORS=[null,
   {name:'移项小妖',boss:['👺','👺','😈'],desc:'移项变号 → 合并 → 系数化一'},
   {name:'括号傀儡',boss:['👹','👹','🐉'],desc:'去括号 → 移项 → 合并 → 系数化一'},
-  {name:'碎分傀儡',boss:['➗','🪞','👹'],desc:'去分母 → 去括号 → 移项 → 合并 → 系数化一'}
+  {name:'碎分傀儡',boss:['👾','👾','🧛'],desc:'去分母 → 去括号 → 移项 → 合并 → 系数化一'}
 ];
 const MAXF=3;
 function unlocked(){return Math.max(1,parseInt(localStorage.getItem('et_unlocked')||'1',10))}
@@ -505,7 +510,7 @@ const UI={
 /* ===== 战斗控制 ===== */
 const B={
   floor:1,qIndex:0,qTotal:3,plan:null,stages:[],si:0,curStage:'',
-  hp:3,combo:0,cycle:0,armorTotal:0,armorDone:0,
+  hp:3,cycle:0,armorTotal:0,armorDone:0,
   fMist:0,fHint:false,fReveal:false,hintUsedBattle:false,
   tiles:[],blanks:{},defracPhase:'lcd',
   quit(){SFX.bgmStop();UI.tower();UI.show('entry')},
@@ -514,8 +519,8 @@ const B={
     this.qIndex++;
     if(this.qIndex>this.qTotal){this.floorDone();return}
     this.plan=this.floor===1?genBoss1():this.floor===2?genBoss2():genBoss3(this.qIndex);
-    this.hp=3;this.combo=0;this.cycle=0;this.hintUsedBattle=false;
-    this.buildStages();this.renderBoss();this.updateHud();this.updateHearts();this.updateArmor();this.updateCombo();
+    this.hp=3;this.cycle=0;this.hintUsedBattle=false;
+    this.buildStages();this.renderBoss();this.updateHud();this.updateHearts();this.updateArmor();
     this.defracPhase='lcd';
     document.getElementById('hintBtn').disabled=false;
     this.si=0;this.enterStage();
@@ -535,9 +540,8 @@ const B={
   },
   updateHud(){document.getElementById('hudMid').textContent=`第 ${this.floor} 层 · 战斗 ${this.qIndex}/${this.qTotal}`},
   updateHearts(){let h='';for(let i=0;i<3;i++)h+=`<span class="heart${i<this.hp?'':' dead'}">❤</span>`;document.getElementById('hearts').innerHTML=h},
-  updateArmor(){let h='';for(let i=0;i<this.armorTotal;i++){const w=112-i*22,ht=Math.round(w*0.72);h+=`<div class="shell${i<this.armorDone?' broken':''}" style="width:${w}px;height:${ht}px;z-index:${20-i}"></div>`}document.getElementById('shields').innerHTML=h},
-  breakPlate(idx){const ss=document.querySelectorAll('#shields .shell');if(ss[idx])ss[idx].classList.add('broken');const w=document.querySelector('.bossWrap');if(w){const f=document.createElement('div');f.className='floatTxt';f.textContent='护甲 −1';w.appendChild(f);setTimeout(()=>f.remove(),900)}},
-  updateCombo(){const el=document.getElementById('combo');el.textContent=this.combo>=2?('连击 ×'+this.combo):'';el.classList.toggle('hot',this.combo>=3)},
+  updateArmor(){let h='';for(let i=0;i<this.armorTotal;i++)h+=`<div class="shield${i<this.armorDone?' broken':''}">${SHIELD_SVG}</div>`;document.getElementById('shields').innerHTML=h},
+  breakPlate(idx){const ss=document.querySelectorAll('#shields .shield');if(ss[idx])ss[idx].classList.add('broken');const w=document.querySelector('.foe');if(w){const f=document.createElement('div');f.className='floatTxt';f.textContent='护甲 −1';w.appendChild(f);setTimeout(()=>f.remove(),900)}},
   /* --- 阶段派发 --- */
   enterStage(){
     const st=this.stages[this.si];
@@ -689,7 +693,7 @@ const B={
   },
   confirmMove(){
     const bad=this.tiles.filter(t=>{const posOk=t.x?t.side==='L':t.side==='R';return !(posOk&&t.c===this.expectC(t))});
-    if(!bad.length){this.correctStep(this.combo>=3);return}
+    if(!bad.length){this.correctStep();return}
     bad.forEach(t=>{const el=document.querySelector('.tileWrap[data-i="'+this.tiles.indexOf(t)+'"]');if(el){el.classList.add('bad');setTimeout(()=>el.classList.remove('bad'),450)}});
     this.wrongStep();
   },
@@ -701,26 +705,26 @@ const B={
     if(this.curStage==='defrac'&&this.defracPhase==='lcd'){
       SFX.right();this.defracPhase='expand';this.renderDefrac();return;
     }
-    this.correctStep(this.curStage==='solve'||this.combo>=3);
+    this.correctStep();
   },
-  correctStep(crit){
-    SFX.right();this.combo++;this.armorDone++;this.updateCombo();this.breakPlate(this.armorDone-1);this.bossHit(crit);
+  correctStep(){
+    SFX.right();this.armorDone++;this.breakPlate(this.armorDone-1);this.bossHit();
     this.si++;
     if(this.si>=this.stages.length){this.bossDefeated();return}
-    setTimeout(()=>this.enterStage(),crit?600:340);
+    setTimeout(()=>this.enterStage(),340);
   },
   wrongStep(){
-    SFX.wrong();this.combo=0;this.updateCombo();this.hp--;this.fMist++;this.updateHearts();
+    SFX.wrong();this.hp--;this.fMist++;this.updateHearts();
     const bd=document.getElementById('board');bd.classList.add('shake');setTimeout(()=>bd.classList.remove('shake'),420);
+    const hs=document.querySelector('.heroes');if(hs){hs.classList.remove('hurt');void hs.offsetWidth;hs.classList.add('hurt')}
     if(this.hp<=0)this.hpZero();
   },
   hpZero(){
-    if(this.cycle===0){this.cycle=1;this.hp=3;this.combo=0;this.updateHearts();this.updateCombo();toast('❤ 重整旗鼓，再来一次！');this.buildStages();this.updateArmor();this.si=0;setTimeout(()=>this.enterStage(),700)}
+    if(this.cycle===0){this.cycle=1;this.hp=3;this.updateHearts();toast('❤ 重整旗鼓，再来一次！');this.buildStages();this.updateArmor();this.si=0;setTimeout(()=>this.enterStage(),700)}
     else{this.fReveal=true;this.showReveal()}
   },
-  bossHit(crit){
+  bossHit(){
     const bf=document.getElementById('bossFace');bf.classList.remove('hit');void bf.offsetWidth;bf.classList.add('hit');
-    if(crit){SFX.crit();const cp=document.getElementById('critPop');cp.classList.remove('show');void cp.offsetWidth;cp.classList.add('show')}
   },
   bossDefeated(){
     SFX.win();const bf=document.getElementById('bossFace');bf.classList.add('dead');toast('⚔ 击破！');
