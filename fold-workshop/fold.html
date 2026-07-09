@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>折叠工坊 · 正方体展开图</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--line:#7fd0ff;--ink:#eaf6ff;--glow:#ffd34d;--good:#4ade80;--bad:#fb5a6a;--muted:#8fb4d6;--edge:#2b5fa0}
+html,body{height:100%;overflow:hidden;font-family:'Microsoft YaHei',Arial,sans-serif;color:var(--ink);user-select:none;touch-action:none}
+body{background:
+  linear-gradient(rgba(120,180,255,.08) 1px,transparent 1px) 0 0/30px 30px,
+  linear-gradient(90deg,rgba(120,180,255,.08) 1px,transparent 1px) 0 0/30px 30px,
+  radial-gradient(circle at 20% 10%,rgba(80,150,240,.22),transparent 42%),
+  linear-gradient(180deg,#0a1c33,#0b2038 60%,#0e2949)}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center}
+.screen.show{display:flex}
+
+/* ---- 开始页 ---- */
+#entry{justify-content:center;padding:22px}
+.logo{font-size:60px;filter:drop-shadow(0 8px 12px rgba(0,0,0,.4));animation:float 2.6s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-9px)}}
+.title{font-size:34px;font-weight:1000;color:var(--glow);letter-spacing:2px;text-shadow:0 3px 0 #a8760a;margin:8px 0 4px}
+.sub{font-size:14px;color:var(--muted);text-align:center;line-height:1.7;max-width:400px;margin-bottom:18px}
+.card{width:100%;max-width:400px;background:rgba(8,22,45,.7);border:2px solid rgba(127,208,255,.28);
+  border-radius:22px;padding:18px;box-shadow:0 12px 30px rgba(0,0,0,.3)}
+.card .row{display:flex;gap:12px;align-items:center;padding:10px;border-radius:14px;background:rgba(255,255,255,.06);margin-bottom:9px}
+.card .row b{color:var(--glow)}
+.card .row span.emo{font-size:26px}
+.card .row .txt{font-size:13.5px;line-height:1.5}
+
+/* ---- 游戏页 ---- */
+#game{padding:0}
+.hud{width:100%;max-width:540px;display:flex;align-items:center;justify-content:space-between;padding:12px 16px 4px;z-index:5}
+.hud .mid{text-align:center;font-weight:900;color:var(--line);font-size:15px}
+.hud .mid small{display:block;color:var(--muted);font-size:11.5px;font-weight:700}
+.icon-btn{border:0;background:rgba(255,255,255,.13);color:var(--ink);border-radius:11px;padding:7px 11px;font-size:16px;cursor:pointer}
+.dots{display:flex;gap:6px}
+.dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.22)}
+.dots i.now{background:var(--glow);box-shadow:0 0 9px var(--glow)}
+.dots i.done{background:var(--good)}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:1}
+.overlay{position:relative;z-index:5;width:100%;display:flex;flex-direction:column;align-items:center;margin-top:auto}
+.tip{min-height:42px;width:100%;max-width:480px;font-size:13.5px;color:#ffe9a8;text-align:center;font-weight:700;line-height:1.55;padding:0 16px}
+.slider{width:100%;max-width:330px;display:flex;align-items:center;gap:10px;padding:2px 12px}
+.slider input{flex:1;accent-color:var(--glow)}
+.slider span{font-size:12px;color:var(--muted)}
+.controls,.controls2{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;padding:5px 12px;align-items:center}
+.controls2 .lab{font-size:13px;color:var(--muted)}
+.btn{border:0;border-radius:14px;padding:12px 22px;font:900 15px inherit;cursor:pointer;color:#06203b;background:linear-gradient(#fff0a0,var(--glow));box-shadow:0 5px 0 #b78300}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 #b78300}
+.btn.ghost{background:rgba(255,255,255,.13);color:var(--ink);box-shadow:0 5px 0 rgba(0,0,0,.3)}
+.btn.good{background:linear-gradient(#c8ffd8,var(--good));box-shadow:0 5px 0 #1c8a44}
+.btn.bad{background:linear-gradient(#ffd0d6,var(--bad));box-shadow:0 5px 0 #b21e2c;color:#fff}
+.btn.j{min-width:116px}
+.btn.small{padding:10px 16px;font-size:14px}
+.foot{width:100%;text-align:center;font-size:12px;color:var(--muted);padding:6px 0 9px}
+.foot a{color:var(--line);text-decoration:none}
+
+/* 判定弹层 */
+.sheet{position:absolute;left:50%;bottom:0;transform:translateX(-50%) translateY(110%);
+  width:100%;max-width:520px;background:rgba(7,20,40,.97);border:2px solid rgba(127,208,255,.35);
+  border-radius:22px 22px 0 0;padding:18px 18px calc(16px + env(safe-area-inset-bottom));
+  z-index:12;transition:transform .32s cubic-bezier(.2,.8,.3,1);box-shadow:0 -8px 30px rgba(0,0,0,.4)}
+.sheet.show{transform:translateX(-50%) translateY(0)}
+.sheet h3{font-size:19px;margin-bottom:6px}
+.sheet .verdict-ok{color:var(--good)} .sheet .verdict-no{color:var(--bad)}
+.sheet .law{font-size:13.5px;color:#cfe8ff;line-height:1.7;background:rgba(255,255,255,.06);
+  border-left:3px solid var(--glow);border-radius:8px;padding:10px 12px;margin:10px 0 14px}
+.sheet .law b{color:var(--glow)}
+
+.err{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:30px;z-index:20;color:#ffd0d6;font-size:14px;line-height:1.8}
+
+/* 结算 */
+#result{justify-content:center;padding:22px}
+.result-box{text-align:center;background:rgba(8,22,45,.8);border:2px solid rgba(127,208,255,.3);border-radius:22px;padding:26px 24px;max-width:360px}
+.result-box .big{font-size:48px}
+.result-box h2{color:var(--glow);margin:8px 0}
+.result-box p{color:#cfe8ff;line-height:1.8;font-size:14px;margin-bottom:6px}
+.stars{font-size:30px;letter-spacing:4px;margin:6px 0 12px}
+</style>
+</head>
+<body>
+
+<!-- ================= 开始页 ================= -->
+<div id="entry" class="screen show">
+  <div class="logo">📐</div>
+  <div class="title">折叠工坊</div>
+  <div class="sub">小小建筑师，来折纸盒！<br>把展开图折起来，看它能不能拼成正方体。</div>
+  <div class="card">
+    <div class="row"><span class="emo">🖐️</span><div class="txt"><b>折一折</b>：拖动滑杆，让图纸在原地慢慢立起来</div></div>
+    <div class="row"><span class="emo">💥</span><div class="txt"><b>看撞车</b>：折不成的图纸，会有两个面撞到同一个位置变红</div></div>
+    <div class="row"><span class="emo">✅</span><div class="txt"><b>做判断</b>：折过之后，判断这张图纸能不能折成正方体</div></div>
+    <button class="btn" style="width:100%;margin-top:8px" onclick="Game.start()">开始折叠</button>
+  </div>
+  <div class="foot"><a href="index.html">← 返回工坊</a></div>
+</div>
+
+<!-- ================= 游戏页 ================= -->
+<div id="game" class="screen">
+  <div class="hud">
+    <div style="display:flex;gap:8px">
+      <button class="icon-btn" onclick="Game.quit()">🏠</button>
+      <button class="icon-btn" id="sndBtn" onclick="Audio8.toggle()">🔊</button>
+    </div>
+    <div class="mid"><span id="lvName">第 1 张</span><small id="lvKind">图纸</small></div>
+    <div class="dots" id="dots"></div>
+  </div>
+  <canvas id="cv"></canvas>
+  <div class="overlay">
+    <div class="tip" id="tip"></div>
+    <div class="slider"><span>摊平</span>
+      <input id="fold" type="range" min="0" max="100" value="0" oninput="Game.setFold(this.value)">
+      <span>合拢</span></div>
+    <div class="controls">
+      <button class="btn ghost small" onclick="Game.autoFold()">▶ 自动折叠</button>
+      <button class="btn ghost small" onclick="Game.resetView()">↺ 摆正</button>
+    </div>
+    <div class="controls2">
+      <span class="lab">这张图纸——</span>
+      <button class="btn j good" onclick="Game.judge(true)">✓ 能折成</button>
+      <button class="btn j bad" onclick="Game.judge(false)">✗ 折不成</button>
+    </div>
+    <div class="foot">得分 <b id="score">0</b> · 第 <b id="prog">1</b>/<b id="total">8</b> 张</div>
+  </div>
+
+  <!-- 判定弹层 -->
+  <div class="sheet" id="sheet">
+    <h3 id="sheetTitle"></h3>
+    <button class="btn" style="width:100%" id="sheetNext" onclick="Game.next()">下一张 →</button>
+  </div>
+  <div class="err" id="err">⚠️ 3D 引擎（Three.js）没能加载。<br>请联网后刷新；正式版会把它放到本地，微信里也能玩。</div>
+</div>
+
+<!-- ================= 结算页 ================= -->
+<div id="result" class="screen">
+  <div class="result-box">
+    <div class="big">🏗️</div>
+    <h2 id="rTitle">工坊验收</h2>
+    <div class="stars" id="rStars"></div>
+    <p id="rText"></p>
+    <button class="btn" style="margin-top:6px" onclick="Game.start()">再折一轮</button>
+    <button class="btn ghost small" style="margin-top:10px" onclick="Game.toEntry()">返回首页</button>
+  </div>
+</div>
+
+<script>
+/* ============ 音频：WebAudio 现场生成的欢快BGM + 音效（无需外部文件，微信可用） ============ */
+const Audio8=(function(){
+  let ctx,master,musicGain,on=true,playing=false,timer=null,step=0,nextT=0;
+  const SPB=0.2; // 每步秒数(八分音符)
+  // C大调五声音阶，保证悦耳
+  const MEL=[392.00,523.25,659.25,523.25,587.33,659.25,783.99,659.25,
+             523.25,659.25,587.33,523.25,440.00,392.00,440.00,523.25];
+  const BASS=[130.81,196.00,174.61,196.00]; // C G F G，每4步一个
+  function init(){
+    if(ctx)return;
+    const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+    ctx=new AC();
+    master=ctx.createGain();master.gain.value=0.9;master.connect(ctx.destination);
+    musicGain=ctx.createGain();musicGain.gain.value=0.16;musicGain.connect(master);
+  }
+  function tone(freq,dur,type,dest,vol,when){
+    const t=when||ctx.currentTime,o=ctx.createOscillator(),g=ctx.createGain();
+    o.type=type||'square';o.frequency.value=freq;
+    g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(vol||0.25,t+0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g);g.connect(dest||master);o.start(t);o.stop(t+dur+0.03);
+  }
+  function schedule(){
+    if(!ctx)return;
+    while(nextT<ctx.currentTime+0.25){
+      const i=step%MEL.length;
+      tone(MEL[i],SPB*0.95,'triangle',musicGain,0.22,nextT);
+      if(step%4===0)tone(BASS[(step/4)%BASS.length],SPB*3.5,'sine',musicGain,0.30,nextT);
+      nextT+=SPB;step++;
+    }
+  }
+  function startMusic(){
+    if(!ctx||playing||!on)return;playing=true;nextT=ctx.currentTime+0.05;
+    timer=setInterval(schedule,60);schedule();
+  }
+  function stopMusic(){playing=false;if(timer){clearInterval(timer);timer=null;}}
+  // —— 音效 ——
+  const sfx={
+    click(){if(ctx&&on)tone(880,0.06,'square',master,0.18);},
+    pop(){if(ctx&&on){tone(660,0.05,'square',master,0.18);tone(990,0.07,'square',master,0.16,ctx.currentTime+0.05);}},
+    correct(){if(!ctx||!on)return;const t=ctx.currentTime;[523.25,659.25,783.99].forEach((f,k)=>tone(f,0.16,'triangle',master,0.28,t+k*0.09));},
+    wrong(){if(!ctx||!on)return;const t=ctx.currentTime;tone(311.13,0.16,'sawtooth',master,0.22,t);tone(233.08,0.22,'sawtooth',master,0.22,t+0.14);},
+    clash(){if(!ctx||!on)return;const t=ctx.currentTime;tone(150,0.18,'square',master,0.30,t);tone(90,0.22,'sawtooth',master,0.26,t+0.02);},
+    snap(){if(!ctx||!on)return;const t=ctx.currentTime;tone(784,0.1,'triangle',master,0.26,t);tone(1046.5,0.14,'triangle',master,0.24,t+0.08);},
+    win(){if(!ctx||!on)return;const t=ctx.currentTime;[523.25,659.25,783.99,1046.5,783.99,1046.5].forEach((f,k)=>tone(f,0.22,'triangle',master,0.30,t+k*0.11));}
+  };
+  function ensure(){init();if(ctx&&ctx.state==='suspended')ctx.resume();if(on)startMusic();}
+  function toggle(){on=!on;if(on){ensure();}else{stopMusic();}
+    const b=document.getElementById('sndBtn');if(b)b.textContent=on?'🔊':'🔇';return on;}
+  // 首次交互解锁音频
+  const unlock=()=>{ensure();};
+  ['pointerdown','touchstart','keydown'].forEach(ev=>addEventListener(ev,unlock,{once:true,passive:true}));
+  return {ensure,toggle,sfx,isOn:()=>on};
+})();
+</script>
+<script src="lib/three.min.js"></script>
+<script>
+/* ===================== 图纸库 ===================== */
+/* grid 用字符网格；'X'=有面 '.'=空。能否折成由折叠算法判定，不写死。
+   分三类：6格且能折 / 6格干扰(折不成) / 5格(面不够，作为"为什么折不成"的教学例，每局至多出现一次)。*/
+const NET_POOL=[
+  // —— 6 格 · 正方体合法展开图（能折成，最终由算法判定）——
+  {name:'十字形',   grid:['.X.','XXX','.X.','.X.']},
+  {name:'T 字形',   grid:['.X..','XXXX','..X.']},
+  {name:'一四一',   grid:['.X..','XXXX','...X']},
+  {name:'折线形',   grid:['X...','XXXX','...X']},
+  {name:'阶梯形',   grid:['XX..','.XX.','..XX']},
+  {name:'错位阶梯', grid:['X..','XX.','.XX','..X']},
+  // —— 6 格 · 干扰图（折不成）——
+  {name:'2×3 田块', grid:['XXX','XXX']},
+  {name:'凸字形',   grid:['.X.','XXX','XX.']},
+  {name:'田带尾',   grid:['XX.','XX.','.XX']},
+  {name:'L 带块',   grid:['.XX','XXX','X..']},
+  // —— 5 格 · 面不够（每局至多出现一次）——
+  {name:'长条弯',   grid:['XX.','.X.','.XX']},
+  {name:'小 T 形',  grid:['XXX','.X.','.X.']},
+];
+
+const LETTERS='ABCDEF';
+const COLORS=['#ffd6a5','#a5d8ff','#b2f2bb','#ffc9de','#d0bfff','#ffec99'];
+const S=1;
+
+/* ---- 立方体滚动模型 ---- */
+function roll(o,d){
+  if(d==='E')return{D:o.W,U:o.E,E:o.D,W:o.U,N:o.N,S:o.S};
+  if(d==='W')return{D:o.E,U:o.W,W:o.D,E:o.U,N:o.N,S:o.S};
+  if(d==='N')return{D:o.S,U:o.N,N:o.D,S:o.U,E:o.E,W:o.W};
+  if(d==='S')return{D:o.N,U:o.S,S:o.D,N:o.U,E:o.E,W:o.W};
+}
+const dirOf=(a,b)=> b.r===a.r-1?'N':b.r===a.r+1?'S':b.c===a.c+1?'E':'W';
+
+function buildNet(def){
+  const cells=[],key={};
+  def.grid.forEach((row,r)=>[...row].forEach((ch,c)=>{
+    if(ch!=='.'){const id=cells.length;cells.push({id,r,c,letter:LETTERS[id]||'?'});key[r+','+c]=id;}
+  }));
+  cells.forEach(cell=>{cell.nb=[];
+    [[-1,0],[1,0],[0,1],[0,-1]].forEach(([dr,dc])=>{const k=(cell.r+dr)+','+(cell.c+dc);
+      if(k in key)cell.nb.push(key[k]);});
+  });
+  const cr=cells.reduce((s,c)=>s+c.r,0)/cells.length, cc=cells.reduce((s,c)=>s+c.c,0)/cells.length;
+  let base=cells[0];
+  cells.forEach(c=>{const better=c.nb.length>base.nb.length ||
+    (c.nb.length===base.nb.length &&
+     (Math.abs(c.r-cr)+Math.abs(c.c-cc))<(Math.abs(base.r-cr)+Math.abs(base.c-cc)));
+    if(better)base=c;});
+  base=base.id;
+  const orient={},parent={},q=[base],seen={[base]:1};
+  orient[base]={D:0,U:1,N:2,S:3,E:4,W:5}; parent[base]=null;
+  while(q.length){const cur=q.shift();
+    cells[cur].nb.forEach(nid=>{if(seen[nid])return;seen[nid]=1;
+      parent[nid]=cur; orient[nid]=roll(orient[cur],dirOf(cells[cur],cells[nid])); q.push(nid);});
+  }
+  cells.forEach(c=>{c.slot=orient[c.id].D;c.parent=parent[c.id];});
+  const valid=cells.length===6 && new Set(cells.map(c=>c.slot)).size===6;
+  // 撞车面：落到已占盒面的后来者
+  const occ={},clash=new Set(),clashPair=[];
+  cells.forEach(c=>{if(occ[c.slot]!==undefined){clash.add(c.id);clash.add(occ[c.slot]);clashPair.push([occ[c.slot],c.id]);}else occ[c.slot]=c.id;});
+  return {cells,base,valid,clash,clashPair,name:def.name};
+}
+
+/* ---- 面纹理 ---- */
+function faceTexture(letter,color,red){
+  const cv=document.createElement('canvas');cv.width=cv.height=200;const g=cv.getContext('2d');
+  g.fillStyle=red?'#fb5a6a':color;g.fillRect(0,0,200,200);
+  g.strokeStyle='rgba(255,255,255,.7)';g.lineWidth=10;g.strokeRect(6,6,188,188);
+  g.fillStyle=red?'#fff':'#12305a';g.font='900 120px "Microsoft YaHei",Arial';
+  g.textAlign='center';g.textBaseline='middle';g.fillText(letter,100,110);
+  return new THREE.CanvasTexture(cv);
+}
+
+/* ===================== Three.js ===================== */
+let renderer,scene,camera,world,foldRoot,mats=[],net,foldDeg=0,auto=null,yaw=0.5,pitch=-0.5;
+function initThree(){
+  const cv=document.getElementById('cv');
+  renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  scene=new THREE.Scene();
+  camera=new THREE.PerspectiveCamera(42,1,0.1,100);camera.position.set(0,0,7.5);
+  scene.add(new THREE.AmbientLight(0xffffff,0.9));
+  const d=new THREE.DirectionalLight(0xffffff,0.55);d.position.set(3,5,6);scene.add(d);
+  world=new THREE.Group();scene.add(world);
+  resize();addEventListener('resize',resize);animate();
+}
+function resize(){renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}
+function buildSceneMesh(){
+  if(foldRoot)world.remove(foldRoot);
+  mats.forEach(m=>m.map&&m.map.dispose());mats=[];
+  foldRoot=new THREE.Group();world.add(foldRoot);
+  const groups={};
+  const order=[net.base],seen={[net.base]:1};
+  for(let i=0;i<order.length;i++){const cur=order[i];
+    net.cells.filter(c=>c.parent===cur).forEach(c=>{if(!seen[c.id]){seen[c.id]=1;order.push(c.id);}});}
+  order.forEach(id=>{
+    const c=net.cells[id];
+    const mat=new THREE.MeshStandardMaterial({map:faceTexture(c.letter,COLORS[id],false),side:THREE.DoubleSide,roughness:.85});
+    mat.userData={id};mats.push(mat);
+    const mesh=new THREE.Mesh(new THREE.PlaneGeometry(S*0.985,S*0.985),mat);
+    const faceGroup=new THREE.Group();faceGroup.add(mesh);
+    const pivot=new THREE.Group();pivot.add(faceGroup);
+    if(c.parent===null){foldRoot.add(pivot);}
+    else{const p=net.cells[c.parent],dir=dirOf(p,c);
+      if(dir==='E'){pivot.position.set(S/2,0,0);faceGroup.position.set(S/2,0,0);pivot.userData={axis:'y',sign:-1};}
+      if(dir==='W'){pivot.position.set(-S/2,0,0);faceGroup.position.set(-S/2,0,0);pivot.userData={axis:'y',sign:1};}
+      if(dir==='S'){pivot.position.set(0,-S/2,0);faceGroup.position.set(0,-S/2,0);pivot.userData={axis:'x',sign:-1};}
+      if(dir==='N'){pivot.position.set(0,S/2,0);faceGroup.position.set(0,S/2,0);pivot.userData={axis:'x',sign:1};}
+      groups[c.parent].add(pivot);}
+    c._pivot=pivot;groups[id]=faceGroup;
+  });
+  applyFold();
+}
+function applyFold(){
+  const rad=foldDeg*Math.PI/180;
+  net.cells.forEach(c=>{const p=c._pivot;if(!p||!p.userData||!p.userData.axis)return;
+    const a=rad*p.userData.sign;p.rotation.set(0,0,0);
+    if(p.userData.axis==='x')p.rotation.x=a;else p.rotation.y=a;});
+}
+function setRed(id,on){
+  const m=mats.find(x=>x.userData.id===id);if(!m)return;
+  const c=net.cells[id];
+  if(on&&!m.userData.red){m.map.dispose();m.map=faceTexture(c.letter,COLORS[id],true);m.userData.red=1;m.needsUpdate=true;}
+  if(!on&&m.userData.red){m.map.dispose();m.map=faceTexture(c.letter,COLORS[id],false);m.userData.red=0;m.needsUpdate=true;}
+}
+function animate(){requestAnimationFrame(animate);if(!world)return;
+  world.rotation.y=yaw;world.rotation.x=pitch;renderer.render(scene,camera);}
+
+/* ===================== 关卡流程 ===================== */
+const $=id=>document.getElementById(id);
+const ROUND=8;
+let queue=[],idx=0,score=0,answered=false,threeReady=false;
+
+function cellCount(def){return def.grid.join('').split('').filter(ch=>ch==='X').length;}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor((i+1)*Math.random());[a[i],a[j]]=[a[j],a[i]];}return a;}
+function makeQueue(){
+  // 5 格图（面不够）单独抽：每局至多 1 张；其余 6 格图不重复优先填满
+  const five=shuffle(NET_POOL.filter(d=>cellCount(d)===5).slice());
+  const rest=shuffle(NET_POOL.filter(d=>cellCount(d)!==5).slice());
+  const q=[];
+  if(five.length)q.push(five[0]);           // 只放一张 5 格图
+  while(q.length<ROUND&&rest.length)q.push(rest.shift());
+  // 若 6 格图不够填满一局，再用剩余（此时才允许重复），但绝不再加 5 格图
+  while(q.length<ROUND)q.push(rest.length?rest.shift():q[q.length%Math.max(1,q.length)]);
+  return shuffle(q).slice(0,ROUND);
+}
+
+const UI={
+  show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));$(id).classList.add('show');}
+};
+
+const Game={
+  start(){
+    if(!window.THREE){UI.show('game');$('err').style.display='flex';return;}
+    if(!threeReady){initThree();threeReady=true;}
+    queue=makeQueue();idx=0;score=0;$('score').textContent=0;$('total').textContent=ROUND;
+    UI.show('game');this.load();
+  },
+  load(){
+    answered=false;foldDeg=0;yaw=0.5;pitch=-0.5;
+    net=buildNet(queue[idx]);buildSceneMesh();
+    $('fold').value=0;$('sheet').classList.remove('show');
+    $('lvName').textContent=`第 ${idx+1} 张`;$('lvKind').textContent=net.name;
+    $('prog').textContent=idx+1;
+    $('dots').innerHTML=queue.map((_,k)=>`<i class="${k<idx?'done':k===idx?'now':''}"></i>`).join('');
+    $('tip').innerHTML='拖动滑杆，让这张「'+net.name+'」慢慢折起来。';
+  },
+  setFold(v){
+    if(auto){clearInterval(auto);auto=null;}
+    foldDeg=v/100*90;applyFold();
+    if(foldDeg>50&&net.clash.size){
+      const wasRed=net._redOn;
+      net.clash.forEach(id=>setRed(id,true));
+      if(!wasRed){net._redOn=true;Audio8.sfx.clash();}
+      $('tip').innerHTML='💥 <b style="color:var(--bad)">红色的面撞到一起了！</b>它们要占同一个位置。';
+    }else{
+      net._redOn=false;
+      net.cells.forEach(c=>setRed(c.id,false));
+      if(foldDeg>88&&net.valid){
+        if(!net._snapped){net._snapped=true;Audio8.sfx.snap();}
+        $('tip').innerHTML='🎉 <b style="color:var(--good)">六个面严丝合缝，正方体合拢！</b>';
+      }else{net._snapped=false;$('tip').innerHTML='继续拖动滑杆，把它折到底看看。';}
+    }
+  },
+  autoFold(){
+    if(auto){clearInterval(auto);auto=null;return;}
+    let v=foldDeg/90*100;
+    auto=setInterval(()=>{v+=2;if(v>=100){v=100;clearInterval(auto);auto=null;}
+      $('fold').value=v;Game.setFold(v);},24);
+  },
+  resetView(){yaw=0.5;pitch=-0.5;},
+  judge(user){
+    if(answered)return;
+    const ok=user===net.valid;
+    if(!ok){Audio8.sfx.wrong();$('tip').innerHTML='❌ 先别急～ 把滑杆拉到底，亲眼看看它到底合不合得拢，再判断。';return;}
+    answered=true;score+=10;$('score').textContent=score;Audio8.sfx.correct();
+    // 弹出结果（不再总结规律）
+    const st=$('sheetTitle');
+    if(net.valid){
+      st.innerHTML='<span class="verdict-ok">✅ 判断正确 · 这张能折成正方体</span>';
+    }else{
+      st.innerHTML='<span class="verdict-no">✅ 判断正确 · 这张折不成正方体</span>';
+    }
+    $('sheet').classList.add('show');
+  },
+  next(){
+    $('sheet').classList.remove('show');
+    idx++;
+    if(idx>=queue.length)this.finish();
+    else setTimeout(()=>this.load(),120);
+  },
+  quit(){UI.show('entry');},
+  toEntry(){UI.show('entry');},
+  finish(){
+    UI.show('result');Audio8.sfx.win();
+    const full=ROUND*10, star=score>=full?3:score>=full*0.7?2:1;
+    $('rStars').textContent='★★★'.slice(0,star)+'☆☆☆'.slice(0,3-star);
+    $('rTitle').textContent=star===3?'完美验收！':star===2?'验收合格！':'继续加油！';
+    $('rText').innerHTML=`本轮得分 <b style="color:var(--glow)">${score}</b> / ${full}。<br>`+
+      (star===3?'你已经能一眼看出展开图能不能折成正方体啦！':'多折几张，慢慢就有手感了。');
+  }
+};
+
+/* 拖动转视角 */
+let drag=null;
+document.getElementById('cv').addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,yaw,pitch};});
+addEventListener('pointermove',e=>{if(!drag)return;
+  yaw=drag.yaw+(e.clientX-drag.x)*0.008;pitch=drag.pitch-(e.clientY-drag.y)*0.008;
+  pitch=Math.max(-1.4,Math.min(1.4,pitch));});
+addEventListener('pointerup',()=>drag=null);
+
+if(!window.THREE){/* 开始时再提示 */}
+</script>
+</body>
+</html>

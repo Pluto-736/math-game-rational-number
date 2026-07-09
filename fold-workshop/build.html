@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>建筑工坊 · 三视图搭建（原型）</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--line:#7fd0ff;--ink:#eaf6ff;--glow:#ffd34d;--good:#4ade80;--bad:#fb5a6a;--muted:#8fb4d6;--edge:#2b5fa0}
+html,body{height:100%;overflow:hidden;font-family:'Microsoft YaHei',Arial,sans-serif;color:var(--ink);user-select:none;touch-action:none}
+body{background:
+  linear-gradient(rgba(120,180,255,.07) 1px,transparent 1px) 0 0/30px 30px,
+  linear-gradient(90deg,rgba(120,180,255,.07) 1px,transparent 1px) 0 0/30px 30px,
+  radial-gradient(circle at 20% 8%,rgba(80,150,240,.2),transparent 42%),
+  linear-gradient(180deg,#0a1c33,#0b2038 60%,#0e2949)}
+#app{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center}
+.top{width:100%;max-width:540px;padding:10px 16px 2px;text-align:center;z-index:5}
+.top h1{font-size:19px;letter-spacing:.5px;color:var(--line);text-shadow:0 2px 0 #0a3057}
+.top .sub{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* 目标三视图 */
+.views{display:flex;gap:14px;justify-content:center;margin:8px 0 4px;z-index:5}
+.vcard{background:rgba(8,22,45,.6);border:1.5px solid rgba(127,208,255,.25);border-radius:12px;padding:7px 9px;text-align:center}
+.vcard .cap{font-size:11.5px;color:var(--line);font-weight:700;margin-bottom:5px}
+.vcard .cap .mk{margin-left:3px}
+.grid3{display:grid;grid-template-columns:repeat(3,16px);grid-auto-rows:16px;gap:2px}
+.grid3 i{background:rgba(255,255,255,.09);border-radius:2px}
+.grid3 i.on{background:var(--line)}
+.vcard.ok{border-color:var(--good)} .vcard.ok .cap{color:var(--good)}
+.vcard.no{border-color:rgba(251,90,106,.6)}
+
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:1}
+.stageSpace{flex:1;min-height:120px}
+
+.panel{position:relative;z-index:5;width:100%;display:flex;flex-direction:column;align-items:center;margin-top:auto;padding-bottom:calc(8px + env(safe-area-inset-bottom))}
+.tip{min-height:22px;font-size:13px;color:#ffe9a8;text-align:center;font-weight:700;line-height:1.5;padding:0 16px;margin-bottom:4px}
+.builder{display:flex;gap:16px;align-items:center;justify-content:center}
+.pad-wrap{text-align:center}
+.pad-lab{font-size:11px;color:var(--muted);margin-bottom:4px}
+.pad{display:grid;grid-template-columns:repeat(3,44px);grid-auto-rows:44px;gap:5px;
+  background:rgba(8,22,45,.55);padding:8px;border-radius:14px;border:1.5px solid rgba(127,208,255,.22);
+  position:relative}
+.pad .cell{background:linear-gradient(160deg,#25507f,#173a63);border:1.5px solid rgba(127,208,255,.3);
+  border-radius:9px;font:900 17px inherit;color:#eaf6ff;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.pad .cell:active{transform:scale(.93)}
+.pad .cell.h0{opacity:.5;color:var(--muted)}
+.pad .cell.h1{background:linear-gradient(160deg,#2f7d55,#1c5638)}
+.pad .cell.h2{background:linear-gradient(160deg,#c98a1e,#8a5c12)}
+.pad .cell.h3{background:linear-gradient(160deg,#c0392b,#7d2318)}
+/* 正面指示 */
+.frontMark{position:absolute;left:0;right:0;bottom:-17px;text-align:center;font-size:10.5px;color:var(--glow);font-weight:700}
+.actions{display:flex;flex-direction:column;gap:8px}
+.btn{border:0;border-radius:13px;padding:11px 16px;font:900 14px inherit;cursor:pointer;color:#06203b;background:linear-gradient(#fff0a0,var(--glow));box-shadow:0 5px 0 #b78300}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 #b78300}
+.btn.ghost{background:rgba(255,255,255,.13);color:var(--ink);box-shadow:0 5px 0 rgba(0,0,0,.3)}
+.foot{font-size:11.5px;color:var(--muted);margin-top:6px}
+.foot a{color:var(--line);text-decoration:none}
+.home-btn{position:absolute;left:12px;top:calc(10px + env(safe-area-inset-top));z-index:8;
+  border:0;background:rgba(255,255,255,.13);color:var(--ink);border-radius:11px;padding:7px 11px;font-size:16px;cursor:pointer}
+.home-btn:active{transform:scale(.92)}
+.snd-btn{position:absolute;right:12px;top:calc(10px + env(safe-area-inset-top));z-index:8;
+  border:0;background:rgba(255,255,255,.13);color:var(--ink);border-radius:11px;padding:7px 11px;font-size:16px;cursor:pointer}
+.snd-btn:active{transform:scale(.92)}
+.err{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:30px;z-index:20;color:#ffd0d6;font-size:14px;line-height:1.8}
+.banner{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) scale(.8);opacity:0;
+  background:rgba(7,20,40,.95);border:2px solid var(--good);border-radius:18px;padding:18px 26px;
+  text-align:center;z-index:15;transition:.3s;pointer-events:none}
+.banner.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.banner h2{color:var(--good);font-size:22px;margin-bottom:4px}
+.banner p{font-size:13px;color:#cfe8ff}
+</style>
+</head>
+<body>
+<div id="app">
+  <button class="home-btn" onclick="location.href='index.html'">🏠</button>
+  <button class="snd-btn" id="sndBtn" onclick="Audio8.toggle()">🔊</button>
+  <div class="top">
+    <h1>🏗️ 建筑工坊 <span style="font-size:11px;color:var(--muted)">正向搭建原型</span></h1>
+    <div class="sub">照着三张视图，在下面的网格上垒方块，把立体搭出来</div>
+  </div>
+
+  <div class="views" id="views"></div>
+
+  <canvas id="cv"></canvas>
+  <div class="stageSpace"></div>
+
+  <div class="panel">
+    <div class="tip" id="tip"></div>
+    <div class="builder">
+      <div class="pad-wrap">
+        <div class="pad-lab">俯视网格 · 点格子升高</div>
+        <div class="pad" id="pad"></div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" onclick="B.rotateHint()">↺ 转一转</button>
+        <button class="btn ghost" onclick="B.clear()">清空重搭</button>
+        <button class="btn" onclick="B.next()" id="nextBtn" style="display:none">下一关 →</button>
+      </div>
+    </div>
+    <div class="foot">关卡 <b id="lvNo">1</b></div>
+  </div>
+
+  <div class="banner" id="banner"><h2>✅ 搭对了！</h2><p id="bannerTxt">三张视图全部吻合</p></div>
+  <div class="err" id="err">⚠️ 3D 引擎（Three.js）没能加载。<br>请联网后刷新。</div>
+</div>
+
+<script>
+/* ============ 音频：WebAudio 现场生成的欢快BGM + 音效（无需外部文件，微信可用） ============ */
+const Audio8=(function(){
+  let ctx,master,musicGain,on=true,playing=false,timer=null,step=0,nextT=0;
+  const SPB=0.2;
+  const MEL=[392.00,523.25,659.25,523.25,587.33,659.25,783.99,659.25,
+             523.25,659.25,587.33,523.25,440.00,392.00,440.00,523.25];
+  const BASS=[130.81,196.00,174.61,196.00];
+  function init(){
+    if(ctx)return;
+    const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+    ctx=new AC();
+    master=ctx.createGain();master.gain.value=0.9;master.connect(ctx.destination);
+    musicGain=ctx.createGain();musicGain.gain.value=0.16;musicGain.connect(master);
+  }
+  function tone(freq,dur,type,dest,vol,when){
+    const t=when||ctx.currentTime,o=ctx.createOscillator(),g=ctx.createGain();
+    o.type=type||'square';o.frequency.value=freq;
+    g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(vol||0.25,t+0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g);g.connect(dest||master);o.start(t);o.stop(t+dur+0.03);
+  }
+  function schedule(){
+    if(!ctx)return;
+    while(nextT<ctx.currentTime+0.25){
+      const i=step%MEL.length;
+      tone(MEL[i],SPB*0.95,'triangle',musicGain,0.22,nextT);
+      if(step%4===0)tone(BASS[(step/4)%BASS.length],SPB*3.5,'sine',musicGain,0.30,nextT);
+      nextT+=SPB;step++;
+    }
+  }
+  function startMusic(){
+    if(!ctx||playing||!on)return;playing=true;nextT=ctx.currentTime+0.05;
+    timer=setInterval(schedule,60);schedule();
+  }
+  function stopMusic(){playing=false;if(timer){clearInterval(timer);timer=null;}}
+  const sfx={
+    click(){if(ctx&&on)tone(880,0.06,'square',master,0.18);},
+    pop(){if(ctx&&on){tone(660,0.05,'square',master,0.18);tone(990,0.07,'square',master,0.16,ctx.currentTime+0.05);}},
+    correct(){if(!ctx||!on)return;const t=ctx.currentTime;[523.25,659.25,783.99].forEach((f,k)=>tone(f,0.16,'triangle',master,0.28,t+k*0.09));},
+    wrong(){if(!ctx||!on)return;const t=ctx.currentTime;tone(311.13,0.16,'sawtooth',master,0.22,t);tone(233.08,0.22,'sawtooth',master,0.22,t+0.14);},
+    clash(){if(!ctx||!on)return;const t=ctx.currentTime;tone(150,0.18,'square',master,0.30,t);tone(90,0.22,'sawtooth',master,0.26,t+0.02);},
+    snap(){if(!ctx||!on)return;const t=ctx.currentTime;tone(784,0.1,'triangle',master,0.26,t);tone(1046.5,0.14,'triangle',master,0.24,t+0.08);},
+    win(){if(!ctx||!on)return;const t=ctx.currentTime;[523.25,659.25,783.99,1046.5,783.99,1046.5].forEach((f,k)=>tone(f,0.22,'triangle',master,0.30,t+k*0.11));}
+  };
+  function ensure(){init();if(ctx&&ctx.state==='suspended')ctx.resume();if(on)startMusic();}
+  function toggle(){on=!on;if(on){ensure();}else{stopMusic();}
+    const b=document.getElementById('sndBtn');if(b)b.textContent=on?'🔊':'🔇';return on;}
+  const unlock=()=>{ensure();};
+  ['pointerdown','touchstart','keydown'].forEach(ev=>addEventListener(ev,unlock,{once:true,passive:true}));
+  return {ensure,toggle,sfx,isOn:()=>on};
+})();
+</script>
+<script src="lib/three.min.js"></script>
+<script>
+/* ================== 随机立体生成器（三档递进 + 连通 + 去重 + 难档遮挡） ================== */
+/* 坐标：h[r][c] r=前后(0靠正面) c=左右 值=高0..3 */
+const N=3, MAXH=3;
+const ROUND=8;
+const rnd=n=>Math.floor(Math.random()*n);
+const sig=h=>h.map(r=>r.join('')).join('|');
+
+/* 生成 cells 个连通格子的坐标集合 */
+function connectedCells(cells){
+  const all=[]; for(let r=0;r<N;r++)for(let c=0;c<N;c++)all.push([r,c]);
+  const start=all[rnd(all.length)];
+  const chosen=[start], inSet=new Set([start[0]+','+start[1]]);
+  while(chosen.length<cells){
+    // 从已选集合的邻居里随机挑一个新格
+    const frontier=[];
+    chosen.forEach(([r,c])=>[[1,0],[-1,0],[0,1],[0,-1]].forEach(([dr,dc])=>{
+      const nr=r+dr,nc=c+dc,k=nr+','+nc;
+      if(nr>=0&&nr<N&&nc>=0&&nc<N&&!inSet.has(k))frontier.push([nr,nc,k]);
+    }));
+    if(!frontier.length)break;
+    const pick=frontier[rnd(frontier.length)];
+    chosen.push([pick[0],pick[1]]);inSet.add(pick[2]);
+  }
+  return chosen;
+}
+/* 生成一个立体：cells格数, maxH最高层, occ是否强制俯视遮挡 */
+function randSolid(cells,maxH,occ){
+  for(let tries=0;tries<40;tries++){
+    const cs=connectedCells(cells);
+    const h=[[0,0,0],[0,0,0],[0,0,0]];
+    cs.forEach(([r,c])=>{h[r][c]=1+rnd(maxH);});
+    if(occ){
+      // 找一对 前排(r小)高于 后排(r大)同列 的，制造俯视看不出的高度差
+      let has=false;
+      for(let c=0;c<N&&!has;c++)for(let r1=0;r1<N;r1++)for(let r2=r1+1;r2<N;r2++)
+        if(h[r1][c]>0&&h[r2][c]>0&&h[r1][c]>h[r2][c])has=true;
+      if(!has){ // 手动制造一处：挑一列里两个占用格，让靠前的更高
+        outer:for(let c=0;c<N;c++){const rows=[];for(let r=0;r<N;r++)if(h[r][c]>0)rows.push(r);
+          if(rows.length>=2){h[rows[0]][c]=maxH;h[rows[rows.length-1]][c]=1;break outer;}}
+      }
+    }
+    // 至少2格有方块
+    if(cs.length>=2)return h;
+  }
+  return [[1,0,0],[1,0,0],[0,0,0]];
+}
+/* 生成一局不重复的 ROUND 关 */
+function makeLevels(){
+  const seen=new Set(),out=[];
+  const plan=[ // [cells,maxH,occ]
+    [2,2,0],[3,2,0],[3,3,0],   // 入门
+    [4,3,0],[4,3,0],[5,3,1],   // 进阶
+    [5,3,1],[6,3,1],           // 挑战(遮挡)
+  ];
+  plan.forEach((p,i)=>{
+    let h,s,t=0;
+    do{h=randSolid(p[0],p[1],p[2]);s=sig(h);t++;}while(seen.has(s)&&t<30);
+    seen.add(s);
+    out.push({name:'第'+(i+1)+'关',h});
+  });
+  return out;
+}
+let LEVELS=makeLevels();
+
+/* ---- 由 heights 算三视图 ---- */
+/* front: 从正面(-r方向)看 -> 宽=c(3), 高=level; front[level][c]=1 若 存在 r 使 h[r][c]>level */
+/* left : 从左面看 -> 宽=r(3), 高=level; left[level][r]=1 若 存在 c 使 h[r][c]>level */
+/* top  : 俯视 -> top[r][c]=1 若 h[r][c]>0  （r=0在“上方靠近正面”）*/
+function views(h){
+  const front=[],left=[],top=[];
+  for(let L=0;L<MAXH;L++){front.push([0,0,0]);left.push([0,0,0]);}
+  for(let r=0;r<N;r++){top.push([0,0,0]);
+    for(let c=0;c<N;c++){const v=h[r][c];
+      if(v>0)top[r][c]=1;
+      for(let L=0;L<v;L++){front[L][c]=1;left[L][r]=1;}
+    }
+  }
+  // front/left 顶层在上：翻转使 level 高的在前（渲染时行0=最高层）
+  return {front:front.slice().reverse(), left:left.slice().reverse(), top};
+}
+const eq=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+
+/* ================== Three.js ================== */
+let renderer,scene,camera,world,blocks,yaw=0.7,pitch=0.62,threeReady=false;
+function initThree(){
+  const cv=document.getElementById('cv');
+  renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  scene=new THREE.Scene();
+  camera=new THREE.PerspectiveCamera(40,1,0.1,100);camera.position.set(0,0,9);
+  scene.add(new THREE.AmbientLight(0xffffff,0.92));
+  const d=new THREE.DirectionalLight(0xffffff,0.5);d.position.set(4,7,5);scene.add(d);
+  world=new THREE.Group();scene.add(world);
+  // 底盘
+  const base=new THREE.Mesh(new THREE.BoxGeometry(N+0.3,0.2,N+0.3),
+    new THREE.MeshStandardMaterial({color:0x14335c}));
+  base.position.y=-0.1;world.add(base);
+  // 正面标记：只在台子正面（+z 侧）贴一条金色色块，无文字
+  const mark=new THREE.Mesh(new THREE.PlaneGeometry(N+0.3,0.2),
+    new THREE.MeshBasicMaterial({color:0xfacc15}));
+  mark.position.set(0,-0.1,(N+0.3)/2+0.011);
+  world.add(mark);
+  blocks=new THREE.Group();world.add(blocks);
+  resize();addEventListener('resize',resize);animate();
+}
+function resize(){renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}
+const COLBYH=[0x4ade80,0xfacc15,0xfb7185];
+function rebuild(h){
+  [...blocks.children].forEach(c=>{blocks.remove(c);
+    c.traverse&&c.traverse(o=>{o.geometry&&o.geometry.dispose();o.material&&o.material.dispose();});});
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+    for(let L=0;L<h[r][c];L++){
+      const g=new THREE.BoxGeometry(0.9,0.9,0.9);
+      const m=new THREE.MeshStandardMaterial({color:COLBYH[Math.min(L,2)],roughness:.7});
+      const cube=new THREE.Mesh(g,m);
+      cube.position.set(c-1, L+0.45, (r-1));
+      blocks.add(cube);
+      const edges=new THREE.LineSegments(new THREE.EdgesGeometry(g),
+        new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.35}));
+      cube.add(edges);
+    }
+  }
+}
+function animate(){requestAnimationFrame(animate);if(!world)return;
+  world.rotation.y=yaw;world.rotation.x=pitch;renderer.render(scene,camera);}
+
+/* ================== 游戏 ================== */
+const $=id=>document.getElementById(id);
+let lv=0, H, target;
+const B={
+  load(){
+    const def=LEVELS[lv]; target=views(def.h);
+    H=[[0,0,0],[0,0,0],[0,0,0]];
+    $('lvNo').textContent=lv+1;
+    $('nextBtn').style.display='none';$('banner').classList.remove('show');
+    $('tip').innerHTML='照着上面三张视图，点格子把方块垒到对的高度。';
+    this.renderPad();this.renderViews();rebuild(H);
+  },
+  renderPad(){
+    const pad=$('pad');
+    pad.innerHTML=H.map((row,r)=>row.map((v,c)=>
+      `<div class="cell h${v}" onclick="B.tap(${r},${c})">${v}</div>`).join('')).join('')
+      +'<div class="frontMark">▲ 正面（离你最近）</div>';
+  },
+  renderViews(){
+    const cur=views(H);
+    const card=(cap,gridT,gridC,okKey)=>{
+      const ok=eq(gridT,gridC);
+      const cells=gridT.flat().map(v=>`<i class="${v?'on':''}"></i>`).join('');
+      return `<div class="vcard ${ok?'ok':'no'}"><div class="cap">${cap}<span class="mk">${ok?'✓':'…'}</span></div><div class="grid3">${cells}</div></div>`;
+    };
+    $('views').innerHTML=
+      card('正面看',target.front,cur.front)+
+      card('左面看',target.left,cur.left)+
+      card('上面看',target.top,cur.top);
+    return eq(cur.front,target.front)&&eq(cur.left,target.left)&&eq(cur.top,target.top);
+  },
+  tap(r,c){
+    H[r][c]=(H[r][c]+1)%(MAXH+1);
+    Audio8.sfx.pop();
+    this.renderPad();rebuild(H);
+    const done=this.renderViews();
+    if(done)this.win();
+    else $('tip').innerHTML='照着上面三张视图搭。对上一个方向，卡片就会变绿打勾。';
+  },
+  win(){
+    $('tip').innerHTML='🎉 三张视图全部吻合！';
+    Audio8.sfx.win();
+    $('banner').classList.add('show');
+    $('nextBtn').style.display='block';
+  },
+  clear(){H=[[0,0,0],[0,0,0],[0,0,0]];this.renderPad();rebuild(H);this.renderViews();
+    $('banner').classList.remove('show');$('nextBtn').style.display='none';},
+  next(){
+    lv++;
+    if(lv>=LEVELS.length){LEVELS=makeLevels();lv=0;} // 走完一局，重新随机生成新一局
+    this.load();
+  },
+  rotateHint(){yaw+=Math.PI/6;},
+  start(){if(!window.THREE){$('err').style.display='flex';return;}
+    if(!threeReady){initThree();threeReady=true;}this.load();}
+};
+
+/* 拖动转视角 */
+let drag=null;
+document.getElementById('cv').addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,yaw,pitch};});
+addEventListener('pointermove',e=>{if(!drag)return;
+  yaw=drag.yaw+(e.clientX-drag.x)*0.008;pitch=drag.pitch-(e.clientY-drag.y)*0.008;
+  pitch=Math.max(0.15,Math.min(1.15,pitch));});
+addEventListener('pointerup',()=>drag=null);
+
+B.start();
+</script>
+</body>
+</html>
