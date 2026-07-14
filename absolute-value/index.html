@@ -455,7 +455,7 @@ const Game = {
   diff(){
     const t = this.elapsed; // 秒
     return {
-      speed: 150 + t*7,            // 下落速度 px/秒，比原来快很多，并缓慢加速
+      speed: 150 + t*4,            // 下落速度 px/秒，开局150，后期缓慢加速
       multi: this.kills >= 4       // 击落4个后出多层
     };
   },
