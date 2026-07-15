@@ -114,32 +114,51 @@ html,body{
 .item.eaten{ animation:pop .25s forwards; } @keyframes pop{ to{ transform:translate(-50%,-50%) scale(1.8); opacity:0; } }
 .flashRed{ animation:fr .35s; } @keyframes fr{ 0%,100%{ filter:none;} 50%{ filter:brightness(2) saturate(2);} }
 
-/* === 第2关：峡谷飞越（静止场景，只有车和算式动） === */
+/* === 第2关：峡谷飞越（车原地开，背景左滚，缺口从右滚来限时） === */
 #l2wrap{ position:absolute; inset:0; display:none; overflow:hidden; }
 #l2wrap.show{ display:block; }
-/* 整幅峡谷场景（一张 SVG，覆盖到键盘上方，静止不动） */
-#l2scene{ position:absolute; left:0; right:0; top:0; bottom:0; z-index:1;
-  background-repeat:no-repeat; background-position:center bottom; background-size:cover; }
-/* 算式牌（浮在车头上方，随车一起向崖边推进；字号随屏宽自适应，长式子也不顶出） */
+/* 天空：静止渐变背景 */
+#l2sky{ position:absolute; inset:0; z-index:1;
+  background:linear-gradient(180deg,#8ec9e8 0%,#dfe6d6 58%,#f3ddb0 100%); }
+/* 远景山峦：横向平铺，持续左滚（营造车向右开的纵深） */
+#l2far{ position:absolute; left:0; right:0; bottom:calc(var(--l2lift,0px) + var(--l2ground,132px)); height:120px; z-index:2;
+  background-repeat:repeat-x; background-position:0 bottom; background-size:480px 100%;
+  animation:l2farScroll 9s linear infinite; will-change:background-position; }
+@keyframes l2farScroll{ from{ background-position-x:0; } to{ background-position-x:-480px; } }
+/* 地面带：抬到键盘上方(--l2lift)、固定高度（车踩在上面，不随屏比例悬浮）；纹理持续左滚 */
+#l2ground{ position:absolute; left:0; right:0; bottom:var(--l2lift,0px); height:var(--l2ground,132px); z-index:3;
+  background:linear-gradient(180deg,#c26a35 0%,#9a5228 40%,#6e3a1a 100%);
+  border-top:4px solid #e79a5c; box-shadow:inset 0 8px 14px rgba(0,0,0,.28); overflow:hidden; }
+#l2ground::after{ content:''; position:absolute; left:-64px; right:-64px; top:14px; height:6px;
+  background:repeating-linear-gradient(90deg,#8a4a26 0 40px,transparent 40px 80px); opacity:.5;
+  animation:l2groundScroll 1.1s linear infinite; will-change:transform; }
+@keyframes l2groundScroll{ from{ transform:translateX(0); } to{ transform:translateX(-80px); } }
+/* 峡谷缺口：一段"地面不见了"的深谷，从右滑向小车 = 倒计时；滑到车脚下 = 时间到 */
+#l2gap{ position:absolute; bottom:var(--l2lift,0px); height:var(--l2ground,132px); width:118px; z-index:4;
+  left:110%; will-change:left;
+  background:linear-gradient(180deg,#5a2f18 0%,#3a1d0e 55%,#241108 100%);
+  border-left:4px solid #7a4326; border-right:4px solid #7a4326; }
+#l2gap::before{ content:''; position:absolute; left:8px; right:8px; bottom:18px; height:8px; border-radius:50%;
+  background:#2a3a4a; opacity:.55; }   /* 谷底河流暗影 */
+/* 算式牌（浮在车头上方，随车固定居中偏左；字号自适应，长式子不顶出） */
 #l2eq{ position:absolute; z-index:12; transform:translateX(-50%); max-width:94vw;
   background:var(--cream); color:var(--ink); border-radius:16px; padding:10px 16px;
   font-size:clamp(20px,5.4vw,30px); font-weight:900; box-shadow:0 8px 24px rgba(0,0,0,.5); white-space:nowrap;
   transition:opacity .3s; }
-/* 车（载着算式，缓慢逼近崖边，停在台面上） */
-#l2car{ position:absolute; z-index:11; font-size:52px; bottom:52%; left:6%;
-  will-change:left; transform:translateZ(0); backface-visibility:hidden; }
+/* 车：水平固定（left 28%），踩在地面带上（抬到键盘上方）；只做原地起跳/坠谷 */
+#l2car{ position:absolute; z-index:11; font-size:52px; left:28%; bottom:calc(var(--l2lift,0px) + var(--l2ground,132px));
+  will-change:transform; transform:translateZ(0); backface-visibility:hidden; }
 #l2car .prop{ position:absolute; top:-30px; left:50%; transform:translateX(-50%); font-size:32px; opacity:0; }
 #l2car .body{ display:inline-block; transform:scaleX(-1); text-shadow:0 4px 4px rgba(0,0,0,.45); }
 #l2car.takeoff .prop{ opacity:1; animation:spin .28s linear infinite; }
 @keyframes spin{ from{ transform:translateX(-50%) rotate(0); } to{ transform:translateX(-50%) rotate(360deg); } }
-/* 固定弧线：永远从崖边(44%) 飞到对岸(76%)，平滑稳定 */
-#l2car.arc{ animation:flyArc 1.6s ease-in-out forwards; }
-@keyframes flyArc{
-  0%{ left:44%; bottom:52%; }
-  50%{ left:60%; bottom:70%; }
-  100%{ left:76%; bottom:52%; } }
-#l2car.fall{ animation:carFall 1s ease-in forwards; }
-@keyframes carFall{ 30%{ transform:translateY(6px) rotate(6deg); } to{ bottom:-32%; transform:translateY(60px) rotate(75deg); opacity:.15; } }
+/* 答对：原地起跳越过脚下滚过的缺口（只动 translateY，不横移） */
+#l2car.hop{ animation:l2hop 1.5s ease-in-out forwards; }
+@keyframes l2hop{ 0%{ transform:translateY(0); } 45%{ transform:translateY(-120px) rotate(-6deg); }
+  55%{ transform:translateY(-120px) rotate(6deg); } 100%{ transform:translateY(0); } }
+/* 答错/超时：坠入峡谷 */
+#l2car.fall{ animation:l2fall 1s ease-in forwards; }
+@keyframes l2fall{ 30%{ transform:translateY(10px) rotate(8deg); } to{ transform:translateY(220px) rotate(80deg); opacity:.12; } }
 
 /* === 第3关：拆弹 === */
 #l3wrap{ position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:flex-start; }
@@ -227,7 +246,7 @@ html,body{
     <div class="modal">
       <h2>玩法说明</h2>
       <p><span class="hl">第1关 · 极性闯关</span>：车头朝左往左开，因数从左边开过来。<span class="hl">点击车道</span>、上下滑动、或按 ↑↓ 都能换道去吃。吃到<span class="nb">负数</span>极性翻转（红↔蓝），吃<span class="pr">正数</span>不变。前方<span class="pr">红线=撞线目标正</span>、<span class="nb">蓝线=撞线目标负</span>，让车的颜色和撞线目标一致才能冲过去。</p>
-      <p><span class="hl">第2关 · 峡谷飞越</span>：车载着一道乘除算式（含 ÷）缓缓逼近崖边，趁掉下去之前用键盘算出<span class="hl">得数</span>。除以一个数 = 乘它的倒数。算对算式化作竹蜻蜓带车飞越峡谷，算错或车到崖边就坠谷扣命。</p>
+      <p><span class="hl">第2关 · 峡谷飞越</span>：小车一路向右飞驰，车头顶着一道乘除算式（含 ÷）。前方<span class="hl">峡谷缺口</span>不断滚近就是倒计时，趁缺口到脚下之前用键盘算出<span class="hl">得数</span>。除以一个数 = 乘它的倒数。算对车就化作竹蜻蜓原地起跳、越过脚下的峡谷；算错或缺口滚到脚下就坠谷扣命。</p>
       <p><span class="hl">第3关 · 拆弹撤离</span>：式子里每个运算符都是一根引线。<span class="hl">自己判断先算哪一步</span>，点它再输入<span class="hl">这一步的得数</span>。顺序点错了只会提示、不扣命，可以换一个再点；只有<span class="pr">填错得数</span>或<span class="pr">引线烧完</span>才会爆炸扣命。全部算完拆弹成功，拆弹员起身登上交通工具潇洒撤离！</p>
       <p>每关 3 条命，连击拿高分。</p>
       <button class="btn" style="display:block;margin:16px auto 0" onclick="UI.help(false)">明白啦</button>
@@ -247,9 +266,12 @@ html,body{
     <div id="toast"></div>
     <div id="l1banner"></div>
 
-    <!-- 第2关层：峡谷飞越 -->
+    <!-- 第2关层：峡谷飞越（车原地开，背景左滚，缺口滚来限时） -->
     <div id="l2wrap">
-      <div id="l2scene"></div>
+      <div id="l2sky"></div>
+      <div id="l2far"></div>
+      <div id="l2ground"></div>
+      <div id="l2gap"></div>
       <div id="l2eq"></div>
       <div id="l2car"><span class="prop">🎋</span><span class="body">🏎️</span></div>
     </div>
@@ -843,53 +865,41 @@ const Runner = {
 
 /* ============ 第2关：峡谷飞越 ============ */
 const L2 = {
-  raf:0, running:false, lastTs:0, t:0, dur:13, cur:null, answered:false, speed:60,
-  START:6, EDGE:44, LAND:76,   // 车 left% 关键位置：起点 / 崖边 / 对岸落点
+  raf:0, running:false, lastTs:0, t:0, dur:13, cur:null, answered:false,
+  CAR_LEFT:28,          // 车水平固定位置（%）
+  GAP_START:112,        // 缺口出场位置（% ，屏外右侧）
+  _hopping:false,
 
   start(){
     document.getElementById('l2wrap').classList.add('show');
-    // 一整幅静止的峡谷场景（SVG，铺满键盘上方；只有车和算式会动）
-    document.getElementById('l2scene').style.backgroundImage = this.sceneSVG();
-    this.running=true; this.next();
+    document.getElementById('l2far').style.backgroundImage = this.farSVG();   // 远景山峦（可平铺左滚）
+    this.running=true;
+    this._onResize = ()=>this.syncLift();
+    window.addEventListener('resize', this._onResize);
+    this.next();
   },
   stop(){ this.running=false; cancelAnimationFrame(this.raf);
     document.getElementById('l2wrap').classList.remove('show');
-    const car=document.getElementById('l2car'); if(car) car.classList.remove('takeoff','arc','fall'); },
+    if(this._onResize){ window.removeEventListener('resize', this._onResize); this._onResize=null; }
+    const car=document.getElementById('l2car'); if(car) car.classList.remove('takeoff','hop','fall'); },
 
-  // 峡谷全景：天空 + 远处台地 + 左右两块岩台，中间是深谷缺口（不透明，互不穿帮）
-  sceneSVG(){
+  // 把整幅场景抬到数字键盘上方：--l2lift = 键盘高度（键盘遮住底部，否则只看得到天）
+  syncLift(){
+    const np=document.getElementById('numpad');
+    const h = (np && np.classList.contains('show')) ? np.offsetHeight : 0;
+    document.getElementById('l2wrap').style.setProperty('--l2lift', h+'px');
+    this.placeEq();
+  },
+
+  // 远景山峦剪影：480 宽可无缝平铺（首尾等高），透明底，叠在天空上持续左滚
+  farSVG(){
     const inner =
-      "<defs>"
-      +"<linearGradient id='sky' x1='0' y1='0' x2='0' y2='1'>"
-        +"<stop offset='0' stop-color='#8ec9e8'/><stop offset='0.6' stop-color='#dfe6d6'/><stop offset='1' stop-color='#f3ddb0'/></linearGradient>"
-      +"<linearGradient id='gorge' x1='0' y1='0' x2='0' y2='1'>"
-        +"<stop offset='0' stop-color='#7a4326'/><stop offset='0.5' stop-color='#5a2f18'/><stop offset='1' stop-color='#3a1d0e'/></linearGradient>"
-      +"<linearGradient id='mesa' x1='0' y1='0' x2='0' y2='1'>"
-        +"<stop offset='0' stop-color='#d9884e'/><stop offset='0.16' stop-color='#c26a35'/><stop offset='1' stop-color='#7a3d1e'/></linearGradient>"
-      +"</defs>"
-      // 天空
-      +"<rect x='0' y='0' width='420' height='240' fill='url(#sky)'/>"
-      // 深谷（缺口透出的谷底，深色不透明）
-      +"<rect x='0' y='120' width='420' height='120' fill='url(#gorge)'/>"
-      +"<path d='M150 240 Q210 224 270 240 Z' fill='#2a3a4a' opacity='0.6'/>"   // 谷底河流暗影
-      // 远处台地剪影（地平线一带）
-      +"<g fill='#b06a44' opacity='0.55'>"
-        +"<path d='M0 118 V96 H70 V88 H120 V118 Z'/>"
-        +"<path d='M300 118 V90 H360 V100 H420 V118 Z'/></g>"
-      +"<g fill='#c98a5a' opacity='0.5'><circle cx='356' cy='42' r='24'/></g>"   // 太阳
-      // 左岩台（不透明，顶面 y=118）
-      +"<path d='M0 240 V118 H186 V240 Z' fill='url(#mesa)'/>"
-      +"<rect x='0' y='118' width='186' height='9' fill='#e79a5c'/>"            // 台顶亮边
-      +"<rect x='176' y='118' width='10' height='122' fill='#4a2512'/>"        // 右侧崖壁阴影
-      +"<g stroke='#8a4a26' stroke-width='2' opacity='0.5'>"                   // 岩层纹理
-        +"<line x1='0' y1='150' x2='176' y2='150'/><line x1='0' y1='182' x2='176' y2='182'/><line x1='0' y1='214' x2='176' y2='214'/></g>"
-      // 右岩台（不透明，顶面 y=118）
-      +"<path d='M420 240 V118 H316 V240 Z' fill='url(#mesa)'/>"
-      +"<rect x='316' y='118' width='104' height='9' fill='#e79a5c'/>"
-      +"<rect x='316' y='118' width='10' height='122' fill='#4a2512'/>"
-      +"<g stroke='#8a4a26' stroke-width='2' opacity='0.5'>"
-        +"<line x1='316' y1='150' x2='420' y2='150'/><line x1='316' y1='182' x2='420' y2='182'/><line x1='316' y1='214' x2='420' y2='214'/></g>";
-    const svg="<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 420 240' preserveAspectRatio='none'>"+inner+"</svg>";
+      "<g fill='#b06a44' opacity='0.5'>"
+      +"<path d='M0 120 L60 60 L120 120 Z'/><path d='M100 120 L180 40 L260 120 Z'/>"
+      +"<path d='M240 120 L300 70 L360 120 Z'/><path d='M340 120 L420 46 L480 120 Z'/></g>"
+      +"<g fill='#c98a5a' opacity='0.45'>"
+      +"<path d='M40 120 L110 84 L180 120 Z'/><path d='M200 120 L280 92 L360 120 Z'/><path d='M380 120 L440 88 L480 120 Z'/></g>";
+    const svg="<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 120' preserveAspectRatio='none'>"+inner+"</svg>";
     return "url(\"data:image/svg+xml,"+encodeURIComponent(svg)+"\")";
   },
 
@@ -897,38 +907,43 @@ const L2 = {
     if(!this.running) return;
     Flow.hideNumber();
     this.cur=Quiz.mulDiv(pick([2,3,3]));
-    this.answered=false; this._plunging=false;
-    this.t=0;                    // 已用时，逼近崖边的进度
+    this.answered=false; this._plunging=false; this._hopping=false;
+    this.t=0;                    // 已用时；缺口据此从右滚向小车
     const eq=document.getElementById('l2eq');
     eq.className=''; eq.style.opacity='1'; eq.textContent=this.cur.display+' = ?';
     const car=document.getElementById('l2car');
-    car.classList.remove('takeoff','arc','fall'); car.style.transition=''; car.style.bottom='52%'; car.style.left=this.START+'%';
-    this.placeEq();
+    car.classList.remove('takeoff','hop','fall'); car.style.animation='';
+    const gap=document.getElementById('l2gap');
+    gap.style.transition='none'; gap.style.left=this.GAP_START+'%'; void gap.offsetWidth; gap.style.transition='';
     Flow.askNumber(this.cur.display+' =', v=>this.submit(v));
+    this.syncLift();   // 键盘已显示，测其高度把场景抬到键盘上方（内部会 placeEq）
     this.lastTs=performance.now();
     cancelAnimationFrame(this.raf); this.raf=requestAnimationFrame(t=>this.loop(t));
   },
-  // 把算式牌摆到车头正上方，随车推进；但夹取在屏幕内，长式子也整条可见
+  // 算式牌固定摆在车头正上方；夹取在屏内，长式子整条可见
   placeEq(){
-    const car=document.getElementById('l2car'); const eq=document.getElementById('l2eq');
+    const eq=document.getElementById('l2eq');
     const wrap=document.getElementById('l2wrap'); const W=wrap.clientWidth, H=wrap.clientHeight;
-    let cx = parseFloat(car.style.left)/100*W + 26;   // 理想：车中心 x
-    const half = eq.offsetWidth/2 || 0;               // 牌宽一半（transform:translateX(-50%)）
+    let cx = this.CAR_LEFT/100*W + 26;                 // 车中心 x（车水平固定）
+    const half = eq.offsetWidth/2 || 0;
     const margin = 8;
     const min = margin + half, max = W - margin - half;
-    if(min <= max) cx = Math.max(min, Math.min(max, cx));   // 顶到边就贴边，保证整条不出屏
-    else cx = W/2;                                          // 牌比屏还宽（极端）：居中
+    if(min <= max) cx = Math.max(min, Math.min(max, cx));
+    else cx = W/2;
+    const cs=getComputedStyle(wrap);
+    const groundH = parseFloat(cs.getPropertyValue('--l2ground')) || 132;
+    const lift = parseFloat(cs.getPropertyValue('--l2lift')) || 0;
     eq.style.left = cx+'px';
-    eq.style.bottom = (H*0.52 + 60) + 'px';
+    eq.style.bottom = (lift + groundH + 66) + 'px';    // 车头(=抬升+地面高)之上
   },
   loop(ts){
     if(!this.running) return;
     const dt=(ts-this.lastTs)/1000; this.lastTs=ts;
     if(!this.answered){
       this.t+=dt; const frac=Math.min(1,this.t/this.dur);
-      const car=document.getElementById('l2car');
-      car.style.left=(this.START+(this.EDGE-this.START)*frac)+'%';
-      this.placeEq();
+      // 缺口从 GAP_START 滚到车脚下(CAR_LEFT)：frac=1 时正好到脚下 = 时间到
+      const gapLeft = this.GAP_START + (this.CAR_LEFT - this.GAP_START)*frac;
+      document.getElementById('l2gap').style.left = gapLeft+'%';
       if(this.t>=this.dur){ this.plunge(); return; }
     }
     this.raf=requestAnimationFrame(t=>this.loop(t));
@@ -937,45 +952,40 @@ const L2 = {
     if(this.answered) return;
     if(v===this.cur.value){
       this.answered=true; SFX.right(); Flow.hideNumber();
-      this.flyOver();
+      this.hop();
     } else {
       this.answered=true; SFX.wrong();
       this.plunge();
     }
   },
-  // 答对：先把车稳稳开到崖边，再让算式化作竹蜻蜓、按固定弧线飞越峡谷
-  flyOver(){
-    const car=document.getElementById('l2car'); const eq=document.getElementById('l2eq');
+  // 答对：车原地起跳，算式化作竹蜻蜓；缺口继续从脚下滚过 → 落地继续开
+  hop(){
+    if(this._hopping) return; this._hopping=true;
     cancelAnimationFrame(this.raf);
-    // 1) 无论此刻车在哪，先平滑滑到崖边（44%）
-    const cur=parseFloat(car.style.left);
-    const glide=Math.max(0.25, (this.EDGE-cur)/ (this.EDGE-this.START) * 0.9);   // 距离越远滑得稍久
-    car.style.transition='left '+glide.toFixed(2)+'s ease-in';
-    requestAnimationFrame(()=>{ car.style.left=this.EDGE+'%'; });
+    const car=document.getElementById('l2car'); const eq=document.getElementById('l2eq');
+    const gap=document.getElementById('l2gap');
+    eq.style.opacity='0';
+    car.classList.add('takeoff','hop');
+    SFX.flip(); UI.toast('跳过峡谷 +','#4be36b'); Flow.nextScene();
+    // 起跳的同时缺口从脚下滚到左侧屏外（1.5s 与 hop 同步）
+    gap.style.transition='left 1.5s ease-in';
+    requestAnimationFrame(()=>{ gap.style.left='-30%'; });
+    // 落地进入下一题
     setTimeout(()=>{
       if(!this.running) return;
-      // 2) 到崖边：算式变螺旋桨，走固定 CSS 弧线（44%→76%）
-      eq.style.opacity='0';
-      car.style.transition='';
-      car.classList.add('takeoff','arc');
-      SFX.flip();
-      UI.toast('飞越峡谷 +','#4be36b');
-      Flow.nextScene();
-    }, glide*1000+30);
-    // 3) 弧线走完（1.6s）落地，进入下一题
-    setTimeout(()=>{
-      if(!this.running) return;
+      car.classList.remove('takeoff','hop');
       if(Flow.scoreRight(10)){ this.stop(); return; }
       this.next();
-    }, glide*1000+30+1600+200);
+    }, 1500+200);
   },
-  // 超时 / 答错：车坠落峡谷
+  // 超时 / 答错：缺口在脚下，车坠落峡谷
   plunge(){
     if(this._plunging) return; this._plunging=true;
     cancelAnimationFrame(this.raf);
     Flow.hideNumber();
-    const car=document.getElementById('l2car');
-    car.classList.remove('takeoff','arc'); car.style.transition='';
+    const car=document.getElementById('l2car'); const gap=document.getElementById('l2gap');
+    gap.style.transition='none'; gap.style.left=this.CAR_LEFT+'%';   // 缺口锁定在车脚下
+    car.classList.remove('takeoff','hop'); car.style.animation='';
     car.classList.add('fall'); SFX.boom();
     setTimeout(()=>{
       this._plunging=false;
