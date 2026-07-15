@@ -251,7 +251,9 @@ const Quiz = {
         a=f.a; op=f.op; b=f.b;
       }
       value = op==='+' ? a + b : a - b;
-      display = this.fmt(a) + ' ' + op + ' (' + this.fmt(b) + ')';
+      display = b < 0
+        ? this.fmt(a) + ' ' + op + ' (' + this.fmt(b) + ')'
+        : this.fmt(a) + ' ' + op + ' ' + b;
     }
     return { display, value, sign: value<0?'neg':(value>0?'pos':'zero') };
   },
