@@ -600,10 +600,12 @@ const UI = {
   renderMenu(){
     const m=document.getElementById('levelMenu'); m.innerHTML='';
     for(let lv=1; lv<=3; lv++){
-      const locked=lv>this.unlocked;
+      const soon = lv===3;                    // 第3关暂未开放：锁定置灰 + 敬请期待
+      const locked = soon || lv>this.unlocked;
       const c=document.createElement('div'); c.className='lvCard'+(locked?' locked':'');
+      const tip = soon ? '🚧 敬请期待' : (locked ? '🔒 通关上一关解锁' : this.LV[lv].tip);
       c.innerHTML='<div class="lvNo">'+lv+'</div><div class="lvInfo"><div class="lvName">第'+lv+'关 · '+this.LV[lv].name+'</div>'+
-        '<div class="lvDesc">'+this.LV[lv].desc+'</div>'+(locked?'<div class="lvTip">🔒 通关上一关解锁</div>':'<div class="lvTip">'+this.LV[lv].tip+'</div>')+'</div>';
+        '<div class="lvDesc">'+this.LV[lv].desc+'</div><div class="lvTip">'+tip+'</div></div>';
       if(!locked) c.onclick=()=>Flow.startLevel(lv);
       m.appendChild(c);
     }
@@ -617,6 +619,7 @@ const Flow = {
   numStr:'', onNum:null,  // onNum(value) 提交回调
 
   startLevel(lv){
+    if(lv===3) return;              // 第3关暂未开放
     if(lv>UI.unlocked) return;
     SFX.ensure(); SFX.startBGM();
     this.level=lv; this.lives=3; this.score=0; this.combo=0; this.maxCombo=0; this.cleared=0; this.scene=0;
@@ -695,8 +698,10 @@ const Flow = {
     this.stop(); SFX.level();
     const best=+(localStorage.getItem('zfkb_best')||0); if(this.score>best) localStorage.setItem('zfkb_best',this.score);
     let newly=false;
-    if(this.level<3 && UI.unlocked<this.level+1){ UI.unlocked=this.level+1; localStorage.setItem('zfkb_unlocked',UI.unlocked); newly=true; }
-    const nextTxt = this.level<3 ? (newly?'🎉 解锁第'+(this.level+1)+'关：'+UI.LV[this.level+1].name+'！':'再接再厉！') : '你已通关全部三关，太强了！';
+    // 只解锁到第2关（第3关暂未开放）
+    if(this.level<2 && UI.unlocked<this.level+1){ UI.unlocked=this.level+1; localStorage.setItem('zfkb_unlocked',UI.unlocked); newly=true; }
+    const nextTxt = this.level===1 ? (newly?'🎉 解锁第2关：'+UI.LV[2].name+'！':'再接再厉！')
+                                   : '🚧 第3关 · '+UI.LV[3].name+' 敬请期待！';
     document.getElementById('overTitle').textContent='🎉 过关';
     document.getElementById('overStats').innerHTML='<b>第'+this.level+'关 · 通关！</b><br>得分 <b>'+this.score+'</b>　最高连击 <b>'+this.maxCombo+'</b><br><br><span style="color:var(--gold)">'+nextTxt+'</span>';
     setTimeout(()=>UI.show('over'),500);
