@@ -359,7 +359,7 @@ const Game = {
     this.awaitNum=true; this.numStr='';
     const card=document.getElementById('card');
     card.className=''; card.textContent=this.cur.display+' = ?';
-    document.getElementById('hintBar').textContent='输入得数，按 ✓ 确认';
+    document.getElementById('hintBar').textContent='输入得数，按 确认 提交';
     document.getElementById('numpad').classList.add('show');
     document.getElementById('numInput').textContent='';
   },
@@ -372,7 +372,7 @@ const Game = {
       b.onclick=()=>this.numKey(k); np.appendChild(b);
     });
     const del=document.createElement('button'); del.className='nkey'; del.textContent='⌫'; del.onclick=()=>this.numKey('del'); np.appendChild(del);
-    const ok=document.createElement('button'); ok.className='nkey ok'; ok.textContent='✓'; ok.onclick=()=>this.numSubmit(); np.appendChild(ok);
+    const ok=document.createElement('button'); ok.className='nkey ok'; ok.textContent='确认'; ok.onclick=()=>this.numSubmit(); np.appendChild(ok);
   },
   numKey(k){
     if(!this.awaitNum) return; SFX.tap();
