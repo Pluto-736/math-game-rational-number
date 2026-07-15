@@ -126,7 +126,7 @@ html,body{
   font-size:clamp(20px,5.4vw,30px); font-weight:900; box-shadow:0 8px 24px rgba(0,0,0,.5); white-space:nowrap;
   transition:opacity .3s; }
 /* 车（载着算式，缓慢逼近崖边，停在台面上） */
-#l2car{ position:absolute; z-index:11; font-size:52px; bottom:46%; left:6%;
+#l2car{ position:absolute; z-index:11; font-size:52px; bottom:52%; left:6%;
   will-change:left; transform:translateZ(0); backface-visibility:hidden; }
 #l2car .prop{ position:absolute; top:-30px; left:50%; transform:translateX(-50%); font-size:32px; opacity:0; }
 #l2car .body{ display:inline-block; transform:scaleX(-1); text-shadow:0 4px 4px rgba(0,0,0,.45); }
@@ -135,9 +135,9 @@ html,body{
 /* 固定弧线：永远从崖边(44%) 飞到对岸(76%)，平滑稳定 */
 #l2car.arc{ animation:flyArc 1.6s ease-in-out forwards; }
 @keyframes flyArc{
-  0%{ left:44%; bottom:46%; }
-  50%{ left:60%; bottom:66%; }
-  100%{ left:76%; bottom:46%; } }
+  0%{ left:44%; bottom:52%; }
+  50%{ left:60%; bottom:70%; }
+  100%{ left:76%; bottom:52%; } }
 #l2car.fall{ animation:carFall 1s ease-in forwards; }
 @keyframes carFall{ 30%{ transform:translateY(6px) rotate(6deg); } to{ bottom:-32%; transform:translateY(60px) rotate(75deg); opacity:.15; } }
 
@@ -836,7 +836,7 @@ const L2 = {
     const eq=document.getElementById('l2eq');
     eq.className=''; eq.style.opacity='1'; eq.textContent=this.cur.display+' = ?';
     const car=document.getElementById('l2car');
-    car.classList.remove('takeoff','arc','fall'); car.style.transition=''; car.style.bottom='46%'; car.style.left=this.START+'%';
+    car.classList.remove('takeoff','arc','fall'); car.style.transition=''; car.style.bottom='52%'; car.style.left=this.START+'%';
     this.placeEq();
     Flow.askNumber(this.cur.display+' =', v=>this.submit(v));
     this.lastTs=performance.now();
@@ -853,7 +853,7 @@ const L2 = {
     if(min <= max) cx = Math.max(min, Math.min(max, cx));   // 顶到边就贴边，保证整条不出屏
     else cx = W/2;                                          // 牌比屏还宽（极端）：居中
     eq.style.left = cx+'px';
-    eq.style.bottom = (H*0.46 + 60) + 'px';
+    eq.style.bottom = (H*0.52 + 60) + 'px';
   },
   loop(ts){
     if(!this.running) return;
