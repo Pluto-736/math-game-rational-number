@@ -120,10 +120,10 @@ html,body{
 /* 整幅峡谷场景（一张 SVG，覆盖到键盘上方，静止不动） */
 #l2scene{ position:absolute; left:0; right:0; top:0; bottom:0; z-index:1;
   background-repeat:no-repeat; background-position:center bottom; background-size:cover; }
-/* 算式牌（浮在车头上方，随车一起向崖边推进） */
-#l2eq{ position:absolute; z-index:12; transform:translateX(-50%);
-  background:var(--cream); color:var(--ink); border-radius:16px; padding:12px 20px;
-  font-size:30px; font-weight:900; box-shadow:0 8px 24px rgba(0,0,0,.5); white-space:nowrap;
+/* 算式牌（浮在车头上方，随车一起向崖边推进；字号随屏宽自适应，长式子也不顶出） */
+#l2eq{ position:absolute; z-index:12; transform:translateX(-50%); max-width:94vw;
+  background:var(--cream); color:var(--ink); border-radius:16px; padding:10px 16px;
+  font-size:clamp(20px,5.4vw,30px); font-weight:900; box-shadow:0 8px 24px rgba(0,0,0,.5); white-space:nowrap;
   transition:opacity .3s; }
 /* 车（载着算式，缓慢逼近崖边，停在台面上） */
 #l2car{ position:absolute; z-index:11; font-size:52px; bottom:52%; left:6%;
@@ -842,11 +842,16 @@ const L2 = {
     this.lastTs=performance.now();
     cancelAnimationFrame(this.raf); this.raf=requestAnimationFrame(t=>this.loop(t));
   },
-  // 把算式牌摆到车头正上方，随车推进
+  // 把算式牌摆到车头正上方，随车推进；但夹取在屏幕内，长式子也整条可见
   placeEq(){
     const car=document.getElementById('l2car'); const eq=document.getElementById('l2eq');
     const wrap=document.getElementById('l2wrap'); const W=wrap.clientWidth, H=wrap.clientHeight;
-    const cx = parseFloat(car.style.left)/100*W + 26;   // 车中心 x
+    let cx = parseFloat(car.style.left)/100*W + 26;   // 理想：车中心 x
+    const half = eq.offsetWidth/2 || 0;               // 牌宽一半（transform:translateX(-50%)）
+    const margin = 8;
+    const min = margin + half, max = W - margin - half;
+    if(min <= max) cx = Math.max(min, Math.min(max, cx));   // 顶到边就贴边，保证整条不出屏
+    else cx = W/2;                                          // 牌比屏还宽（极端）：居中
     eq.style.left = cx+'px';
     eq.style.bottom = (H*0.52 + 60) + 'px';
   },
