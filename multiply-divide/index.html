@@ -114,16 +114,32 @@ html,body{
 .item.eaten{ animation:pop .25s forwards; } @keyframes pop{ to{ transform:translate(-50%,-50%) scale(1.8); opacity:0; } }
 .flashRed{ animation:fr .35s; } @keyframes fr{ 0%,100%{ filter:none;} 50%{ filter:brightness(2) saturate(2);} }
 
-/* === 第2关：冲门算得数 === */
-#l2wrap{ position:absolute; inset:0; display:none; flex-direction:column; align-items:center; }
-#l2wrap.show{ display:flex; }
-#l2gate{ position:absolute; top:14%; left:0; right:0; text-align:center; }
-#l2gate .lbl{ font-size:14px; opacity:.85; margin-bottom:10px; }
-#l2eq{ display:inline-block; background:var(--cream); color:var(--ink); border-radius:16px;
-  padding:18px 26px; font-size:34px; font-weight:900; box-shadow:0 8px 24px rgba(0,0,0,.5); }
-#l2bar{ position:absolute; top:42%; left:8%; right:8%; height:14px; background:rgba(255,255,255,.18); border-radius:8px; overflow:hidden; }
-#l2barFill{ height:100%; width:100%; background:linear-gradient(90deg,#4be36b,var(--gold)); transition:width .1s linear; }
-#l2car{ position:absolute; top:46%; font-size:40px; transition:left .1s linear; transform:scaleX(-1); }
+/* === 第2关：峡谷飞越（静止场景，只有车和算式动） === */
+#l2wrap{ position:absolute; inset:0; display:none; overflow:hidden; }
+#l2wrap.show{ display:block; }
+/* 整幅峡谷场景（一张 SVG，覆盖到键盘上方，静止不动） */
+#l2scene{ position:absolute; left:0; right:0; top:0; bottom:0; z-index:1;
+  background-repeat:no-repeat; background-position:center bottom; background-size:cover; }
+/* 算式牌（浮在车头上方，随车一起向崖边推进） */
+#l2eq{ position:absolute; z-index:12; transform:translateX(-50%);
+  background:var(--cream); color:var(--ink); border-radius:16px; padding:12px 20px;
+  font-size:30px; font-weight:900; box-shadow:0 8px 24px rgba(0,0,0,.5); white-space:nowrap;
+  transition:opacity .3s; }
+/* 车（载着算式，缓慢逼近崖边，停在台面上） */
+#l2car{ position:absolute; z-index:11; font-size:52px; bottom:52%; left:6%;
+  filter:drop-shadow(0 4px 5px rgba(0,0,0,.5)); }
+#l2car .prop{ position:absolute; top:-30px; left:50%; transform:translateX(-50%); font-size:32px; opacity:0; }
+#l2car .body{ display:inline-block; transform:scaleX(-1); }
+#l2car.takeoff .prop{ opacity:1; animation:spin .28s linear infinite; }
+@keyframes spin{ from{ transform:translateX(-50%) rotate(0); } to{ transform:translateX(-50%) rotate(360deg); } }
+/* 固定弧线：永远从崖边(44%) 飞到对岸(76%)，平滑稳定 */
+#l2car.arc{ animation:flyArc 1.6s ease-in-out forwards; }
+@keyframes flyArc{
+  0%{ left:44%; bottom:52%; }
+  50%{ left:60%; bottom:70%; }
+  100%{ left:76%; bottom:52%; } }
+#l2car.fall{ animation:carFall 1s ease-in forwards; }
+@keyframes carFall{ 30%{ transform:translateY(6px) rotate(6deg); } to{ bottom:-32%; transform:translateY(60px) rotate(75deg); opacity:.15; } }
 
 /* === 第3关：拆弹 === */
 #l3wrap{ position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:flex-start; }
@@ -144,8 +160,8 @@ html,body{
 #numpad{ position:absolute; left:0; right:0; bottom:0; z-index:50;
   background:rgba(11,16,32,.94); padding:10px; display:none; grid-template-columns:repeat(6,1fr); gap:6px; }
 #numpad.show{ display:grid; }
-#numInput{ grid-column:span 6; text-align:center; font-size:30px; font-weight:900; color:var(--gold); padding:4px; min-height:42px; }
-#numInput .q{ opacity:.7; font-size:22px; color:#fff; margin-right:8px; }
+#numInput{ grid-column:span 4; display:flex; align-items:center; font-size:26px; font-weight:900; color:var(--gold); padding:0 10px; min-height:42px; }
+#numInput .q{ opacity:.85; font-size:20px; color:#fff; margin-right:4px; }
 .nkey{ font-family:inherit; font-size:20px; font-weight:bold; padding:16px 0; border:none; border-radius:8px;
   background:var(--cream); color:var(--ink); cursor:pointer; }
 .nkey:active{ transform:translateY(2px); } .nkey.ok{ background:var(--gold); grid-column:span 2; }
@@ -210,11 +226,11 @@ html,body{
     <div id="toast"></div>
     <div id="l1banner"></div>
 
-    <!-- 第2关层 -->
+    <!-- 第2关层：峡谷飞越 -->
     <div id="l2wrap">
-      <div id="l2gate"><div class="lbl">算出得数，冲过这道门！</div><div id="l2eq"></div></div>
-      <div id="l2bar"><div id="l2barFill"></div></div>
-      <div id="l2car">🏎️</div>
+      <div id="l2scene"></div>
+      <div id="l2eq"></div>
+      <div id="l2car"><span class="prop">🎋</span><span class="body">🏎️</span></div>
     </div>
 
     <!-- 第3关层 -->
@@ -552,16 +568,17 @@ const Flow = {
   /* 键盘（第2、3关共用） */
   buildNumpad(){
     const np=document.getElementById('numpad'); np.innerHTML='';
-    const disp=document.createElement('div'); disp.id='numInput'; np.appendChild(disp);
     ['-','1','2','3','4','5','6','7','8','9','0'].forEach(k=>{
       const b=document.createElement('button'); b.className='nkey'; b.textContent=k; b.onclick=()=>this.numKey(k); np.appendChild(b);
     });
     const del=document.createElement('button'); del.className='nkey'; del.textContent='⌫'; del.onclick=()=>this.numKey('del'); np.appendChild(del);
-    const ok=document.createElement('button'); ok.className='nkey ok'; ok.textContent='✓'; ok.onclick=()=>this.numSubmit(); np.appendChild(ok);
+    // 末行：左侧「答案：xxx」，右侧「确认」
+    const disp=document.createElement('div'); disp.id='numInput'; np.appendChild(disp);
+    const ok=document.createElement('button'); ok.className='nkey ok'; ok.textContent='确认'; ok.onclick=()=>this.numSubmit(); np.appendChild(ok);
   },
   askNumber(label, cb){
     this.numStr=''; this.onNum=cb;
-    const ni=document.getElementById('numInput'); ni.innerHTML='<span class="q">'+label+'</span>';
+    this.renderNum();
     document.getElementById('numpad').classList.add('show');
   },
   hideNumber(){ document.getElementById('numpad').classList.remove('show'); this.onNum=null; },
@@ -572,7 +589,7 @@ const Flow = {
     else { if(this.numStr.replace('-','').length<3) this.numStr+=k; }
     this.renderNum();
   },
-  renderNum(){ const ni=document.getElementById('numInput'); const q=ni.querySelector('.q'); const lbl=q?q.outerHTML:''; ni.innerHTML=lbl+(this.numStr||''); },
+  renderNum(){ const ni=document.getElementById('numInput'); if(ni) ni.innerHTML='<span class="q">答案：</span>'+(this.numStr||''); },
   numSubmit(){ if(!this.onNum) return; if(this.numStr===''||this.numStr==='-'){ SFX.wrong(); return; }
     const v=parseInt(this.numStr,10); const cb=this.onNum; cb(v); },
 
@@ -758,39 +775,90 @@ const Runner = {
   }
 };
 
-/* ============ 第2关：冲门算得数 ============ */
+/* ============ 第2关：峡谷飞越 ============ */
 const L2 = {
-  raf:0, running:false, lastTs:0, t:0, dur:0, cur:null, answered:false,
+  raf:0, running:false, lastTs:0, t:0, dur:13, cur:null, answered:false, speed:60,
+  START:6, EDGE:44, LAND:76,   // 车 left% 关键位置：起点 / 崖边 / 对岸落点
 
   start(){
     document.getElementById('l2wrap').classList.add('show');
+    // 一整幅静止的峡谷场景（SVG，铺满键盘上方；只有车和算式会动）
+    document.getElementById('l2scene').style.backgroundImage = this.sceneSVG();
     this.running=true; this.next();
   },
-  stop(){ this.running=false; cancelAnimationFrame(this.raf); document.getElementById('l2wrap').classList.remove('show'); },
+  stop(){ this.running=false; cancelAnimationFrame(this.raf);
+    document.getElementById('l2wrap').classList.remove('show');
+    const car=document.getElementById('l2car'); if(car) car.classList.remove('takeoff','arc','fall'); },
+
+  // 峡谷全景：天空 + 远处台地 + 左右两块岩台，中间是深谷缺口（不透明，互不穿帮）
+  sceneSVG(){
+    const inner =
+      "<defs>"
+      +"<linearGradient id='sky' x1='0' y1='0' x2='0' y2='1'>"
+        +"<stop offset='0' stop-color='#8ec9e8'/><stop offset='0.6' stop-color='#dfe6d6'/><stop offset='1' stop-color='#f3ddb0'/></linearGradient>"
+      +"<linearGradient id='gorge' x1='0' y1='0' x2='0' y2='1'>"
+        +"<stop offset='0' stop-color='#7a4326'/><stop offset='0.5' stop-color='#5a2f18'/><stop offset='1' stop-color='#3a1d0e'/></linearGradient>"
+      +"<linearGradient id='mesa' x1='0' y1='0' x2='0' y2='1'>"
+        +"<stop offset='0' stop-color='#d9884e'/><stop offset='0.16' stop-color='#c26a35'/><stop offset='1' stop-color='#7a3d1e'/></linearGradient>"
+      +"</defs>"
+      // 天空
+      +"<rect x='0' y='0' width='420' height='240' fill='url(#sky)'/>"
+      // 深谷（缺口透出的谷底，深色不透明）
+      +"<rect x='0' y='120' width='420' height='120' fill='url(#gorge)'/>"
+      +"<path d='M150 240 Q210 224 270 240 Z' fill='#2a3a4a' opacity='0.6'/>"   // 谷底河流暗影
+      // 远处台地剪影（地平线一带）
+      +"<g fill='#b06a44' opacity='0.55'>"
+        +"<path d='M0 118 V96 H70 V88 H120 V118 Z'/>"
+        +"<path d='M300 118 V90 H360 V100 H420 V118 Z'/></g>"
+      +"<g fill='#c98a5a' opacity='0.5'><circle cx='356' cy='42' r='24'/></g>"   // 太阳
+      // 左岩台（不透明，顶面 y=118）
+      +"<path d='M0 240 V118 H186 V240 Z' fill='url(#mesa)'/>"
+      +"<rect x='0' y='118' width='186' height='9' fill='#e79a5c'/>"            // 台顶亮边
+      +"<rect x='176' y='118' width='10' height='122' fill='#4a2512'/>"        // 右侧崖壁阴影
+      +"<g stroke='#8a4a26' stroke-width='2' opacity='0.5'>"                   // 岩层纹理
+        +"<line x1='0' y1='150' x2='176' y2='150'/><line x1='0' y1='182' x2='176' y2='182'/><line x1='0' y1='214' x2='176' y2='214'/></g>"
+      // 右岩台（不透明，顶面 y=118）
+      +"<path d='M420 240 V118 H316 V240 Z' fill='url(#mesa)'/>"
+      +"<rect x='316' y='118' width='104' height='9' fill='#e79a5c'/>"
+      +"<rect x='316' y='118' width='10' height='122' fill='#4a2512'/>"
+      +"<g stroke='#8a4a26' stroke-width='2' opacity='0.5'>"
+        +"<line x1='316' y1='150' x2='420' y2='150'/><line x1='316' y1='182' x2='420' y2='182'/><line x1='316' y1='214' x2='420' y2='214'/></g>";
+    const svg="<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 420 240' preserveAspectRatio='none'>"+inner+"</svg>";
+    return "url(\"data:image/svg+xml,"+encodeURIComponent(svg)+"\")";
+  },
 
   next(){
     if(!this.running) return;
     Flow.hideNumber();
     this.cur=Quiz.mulDiv(pick([2,3,3]));
-    this.answered=false;
-    this.dur = Math.max(5.5, 9 - Flow.cleared*0.4);   // 倒计时秒数随进度变短
-    this.t=this.dur;
-    document.getElementById('l2eq').textContent=this.cur.display+' = ?';
-    document.getElementById('l2barFill').style.width='100%';
-    const stage=document.getElementById('stage'); const car=document.getElementById('l2car');
-    car.style.left='6%';
+    this.answered=false; this._plunging=false;
+    this.t=0;                    // 已用时，逼近崖边的进度
+    const eq=document.getElementById('l2eq');
+    eq.className=''; eq.style.opacity='1'; eq.textContent=this.cur.display+' = ?';
+    const car=document.getElementById('l2car');
+    car.classList.remove('takeoff','arc','fall'); car.style.transition=''; car.style.bottom='52%'; car.style.left=this.START+'%';
+    this.placeEq();
     Flow.askNumber(this.cur.display+' =', v=>this.submit(v));
     this.lastTs=performance.now();
     cancelAnimationFrame(this.raf); this.raf=requestAnimationFrame(t=>this.loop(t));
+  },
+  // 把算式牌摆到车头正上方，随车推进
+  placeEq(){
+    const car=document.getElementById('l2car'); const eq=document.getElementById('l2eq');
+    const wrap=document.getElementById('l2wrap'); const W=wrap.clientWidth, H=wrap.clientHeight;
+    const cx = parseFloat(car.style.left)/100*W + 26;   // 车中心 x
+    eq.style.left = cx+'px';
+    eq.style.bottom = (H*0.52 + 60) + 'px';
   },
   loop(ts){
     if(!this.running) return;
     const dt=(ts-this.lastTs)/1000; this.lastTs=ts;
     if(!this.answered){
-      this.t-=dt; const frac=Math.max(0,this.t/this.dur);
-      document.getElementById('l2barFill').style.width=(frac*100)+'%';
-      document.getElementById('l2car').style.left=(6+(1-frac)*78)+'%';
-      if(this.t<=0){ this.timeout(); return; }
+      this.t+=dt; const frac=Math.min(1,this.t/this.dur);
+      const car=document.getElementById('l2car');
+      car.style.left=(this.START+(this.EDGE-this.START)*frac)+'%';
+      this.placeEq();
+      if(this.t>=this.dur){ this.plunge(); return; }
     }
     this.raf=requestAnimationFrame(t=>this.loop(t));
   },
@@ -798,24 +866,53 @@ const L2 = {
     if(this.answered) return;
     if(v===this.cur.value){
       this.answered=true; SFX.right(); Flow.hideNumber();
-      document.getElementById('l2car').style.left='92%';
-      UI.toast('冲门 +','#4be36b'); Flow.nextScene();
-      if(Flow.scoreRight(10)){ this.stop(); return; }
-      setTimeout(()=>this.next(),420);
+      this.flyOver();
     } else {
-      this.answered=true; Flow.hideNumber();
+      this.answered=true; SFX.wrong();
+      this.plunge();
+    }
+  },
+  // 答对：先把车稳稳开到崖边，再让算式化作竹蜻蜓、按固定弧线飞越峡谷
+  flyOver(){
+    const car=document.getElementById('l2car'); const eq=document.getElementById('l2eq');
+    cancelAnimationFrame(this.raf);
+    // 1) 无论此刻车在哪，先平滑滑到崖边（44%）
+    const cur=parseFloat(car.style.left);
+    const glide=Math.max(0.25, (this.EDGE-cur)/ (this.EDGE-this.START) * 0.9);   // 距离越远滑得稍久
+    car.style.transition='left '+glide.toFixed(2)+'s ease-in';
+    requestAnimationFrame(()=>{ car.style.left=this.EDGE+'%'; });
+    setTimeout(()=>{
+      if(!this.running) return;
+      // 2) 到崖边：算式变螺旋桨，走固定 CSS 弧线（44%→76%）
+      eq.style.opacity='0';
+      car.style.transition='';
+      car.classList.add('takeoff','arc');
+      SFX.flip();
+      UI.toast('飞越峡谷 +','#4be36b');
+      Flow.nextScene();
+    }, glide*1000+30);
+    // 3) 弧线走完（1.6s）落地，进入下一题
+    setTimeout(()=>{
+      if(!this.running) return;
+      if(Flow.scoreRight(10)){ this.stop(); return; }
+      this.next();
+    }, glide*1000+30+1600+200);
+  },
+  // 超时 / 答错：车坠落峡谷
+  plunge(){
+    if(this._plunging) return; this._plunging=true;
+    cancelAnimationFrame(this.raf);
+    Flow.hideNumber();
+    const car=document.getElementById('l2car');
+    car.classList.remove('takeoff','arc'); car.style.transition='';
+    car.classList.add('fall'); SFX.boom();
+    setTimeout(()=>{
+      this._plunging=false;
       Flow.showWrong(this.cur.display+' =', this.cur.value, ()=>{
         if(Flow.loseLife()){ this.stop(); return; }
         this.next();
       });
-    }
-  },
-  timeout(){
-    if(this.answered) return; this.answered=true; Flow.hideNumber();
-    Flow.showWrong(this.cur.display+' =', this.cur.value, ()=>{
-      if(Flow.loseLife()){ this.stop(); return; }
-      this.next();
-    });
+    },900);
   }
 };
 
