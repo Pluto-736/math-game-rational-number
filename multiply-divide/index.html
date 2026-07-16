@@ -247,7 +247,6 @@ html,body{
       <h2>玩法说明</h2>
       <p><span class="hl">第1关 · 极性闯关</span>：车头朝左往左开，因数从左边开过来。<span class="hl">点击车道</span>、上下滑动、或按 ↑↓ 都能换道去吃。吃到<span class="nb">负数</span>极性翻转（红↔蓝），吃<span class="pr">正数</span>不变。前方<span class="pr">红线=撞线目标正</span>、<span class="nb">蓝线=撞线目标负</span>，让车的颜色和撞线目标一致才能冲过去。</p>
       <p><span class="hl">第2关 · 峡谷飞越</span>：小车一路向右飞驰，车头顶着一道乘除算式（含 ÷）。前方<span class="hl">峡谷缺口</span>不断滚近就是倒计时，趁缺口到脚下之前用键盘算出<span class="hl">得数</span>。除以一个数 = 乘它的倒数。算对车就化作竹蜻蜓原地起跳、越过脚下的峡谷；算错或缺口滚到脚下就坠谷扣命。</p>
-      <p><span class="hl">第3关 · 拆弹撤离</span>：式子里每个运算符都是一根引线。<span class="hl">自己判断先算哪一步</span>，点它再输入<span class="hl">这一步的得数</span>。顺序点错了只会提示、不扣命，可以换一个再点；只有<span class="pr">填错得数</span>或<span class="pr">引线烧完</span>才会爆炸扣命。全部算完拆弹成功，拆弹员起身登上交通工具潇洒撤离！</p>
       <p>每关 3 条命，连击拿高分。</p>
       <button class="btn" style="display:block;margin:16px auto 0" onclick="UI.help(false)">明白啦</button>
     </div>
@@ -334,7 +333,8 @@ const Quiz = {
   //       ④ 目标 need 一定可解（同列符号相反 → 每列都能选正或负，天然可达）；
   //       ⑤ allowFree：是否允许"一直待在上道不换道就过关"（只前3门给一次）。
   // 返回 grid: [ [ {v}, {v} ], ... ]
-  planSegment(cols, need, allowFree){
+  planSegment(cols, need, allowFree, startPol){
+    startPol = startPol || 1;
     const mag=()=>rnd(1,9);
     const needSign = need>0?1:-1;
     for(let tries=0; tries<800; tries++){
@@ -350,10 +350,10 @@ const Quiz = {
       const laneMixed=lane=>{ let p=false,n=false;
         for(let c=0;c<cols;c++){ const v=grid[c][lane].v; if(v>0)p=true; else n=true; } return p&&n; };
       if(!laneMixed(0)||!laneMixed(1)) continue;
-      // 约束⑤：免操作过关 = 一直待在上道（lane0）符号积 == need
+      // 约束⑤：免操作过关 = 一直待在上道(lane0)，起手极性 × 各列符号积 == need
       let prod=1;
       for(let c=0;c<cols;c++) prod*=(grid[c][0].v>0?1:-1);
-      const freePass = (prod===needSign);
+      const freePass = (startPol*prod===needSign);
       if(allowFree ? !freePass : freePass) continue;
       return grid;
     }
@@ -370,7 +370,8 @@ const Quiz = {
       for(let i=1;i<numFactors;i++){
         const prevPos = parts[i-1] > 0;
         const sign = prevPos ? -1 : (Math.random()<0.5?1:-1);  // 前一个为正→这个必为负
-        const divs=[]; for(let d=2; d<=R; d++){ if(cur%d===0) divs.push(d); }
+        const usedMag=parts.map(p=>Math.abs(p));   // 前面已出现的因数(绝对值)
+        const divs=[]; for(let d=2; d<=R; d++){ if(cur%d===0 && !usedMag.includes(d)) divs.push(d); }   // 除数不得等于任一已用因数：不出「a÷a」「a×…÷a」这类重复数；乘积恰为除数(如3×2÷6)仍可
         const wantDiv = divs.length && (Math.abs(cur)>10 || Math.random()<0.45);
         if(wantDiv){
           let d=pick(divs)*sign; ops.push('÷'); parts.push(d); cur/=d;
@@ -378,7 +379,7 @@ const Quiz = {
           let f=rnd(2, Math.abs(cur)>6?4:R)*sign; ops.push('×'); parts.push(f); cur*=f;
         }
       }
-      if(!Number.isInteger(cur) || Math.abs(cur)>36) continue;
+      if(!Number.isInteger(cur) || Math.abs(cur)>120) continue;
       let display=String(parts[0]);
       for(let i=0;i<ops.length;i++) display+=' '+ops[i]+' '+wrapNeg(parts[i+1]);
       return { display, value: cur };
@@ -599,11 +600,10 @@ const UI = {
   unlocked: Math.max(1, +(localStorage.getItem('zfkb_unlocked')||1)),
   renderMenu(){
     const m=document.getElementById('levelMenu'); m.innerHTML='';
-    for(let lv=1; lv<=3; lv++){
-      const soon = lv===3;                    // 第3关暂未开放：锁定置灰 + 敬请期待
-      const locked = soon || lv>this.unlocked;
+    for(let lv=1; lv<=2; lv++){
+      const locked = lv>this.unlocked;
       const c=document.createElement('div'); c.className='lvCard'+(locked?' locked':'');
-      const tip = soon ? '🚧 敬请期待' : (locked ? '🔒 通关上一关解锁' : this.LV[lv].tip);
+      const tip = locked ? '🔒 通关上一关解锁' : this.LV[lv].tip;
       c.innerHTML='<div class="lvNo">'+lv+'</div><div class="lvInfo"><div class="lvName">第'+lv+'关 · '+this.LV[lv].name+'</div>'+
         '<div class="lvDesc">'+this.LV[lv].desc+'</div><div class="lvTip">'+tip+'</div></div>';
       if(!locked) c.onclick=()=>Flow.startLevel(lv);
@@ -662,7 +662,7 @@ const Flow = {
     for(let i=0;i<3;i++){ const s=document.createElement('span'); s.textContent='❤'; if(i>=this.lives) s.className='lost'; h.appendChild(s); }
     document.getElementById('scoreLbl').textContent=this.score+' 分';
     document.getElementById('comboLbl').textContent=this.combo>1?(this.combo+' 连击'):'';
-    const unit = this.level===3?'颗':'门';
+    const unit = this.level===3?'颗': this.level===2?'道':'门';   // 第2关峡谷飞越用「道」
     document.getElementById('progLbl').textContent='第'+this.level+'关 · '+UI.LV[this.level].name+'　'+Math.min(this.cleared,this.goal)+'/'+this.goal+' '+unit;
   },
 
@@ -701,7 +701,7 @@ const Flow = {
     // 只解锁到第2关（第3关暂未开放）
     if(this.level<2 && UI.unlocked<this.level+1){ UI.unlocked=this.level+1; localStorage.setItem('zfkb_unlocked',UI.unlocked); newly=true; }
     const nextTxt = this.level===1 ? (newly?'🎉 解锁第2关：'+UI.LV[2].name+'！':'再接再厉！')
-                                   : '🚧 第3关 · '+UI.LV[3].name+' 敬请期待！';
+                                   : '🎉 恭喜！已完成全部关卡！';
     document.getElementById('overTitle').textContent='🎉 过关';
     document.getElementById('overStats').innerHTML='<b>第'+this.level+'关 · 通关！</b><br>得分 <b>'+this.score+'</b>　最高连击 <b>'+this.maxCombo+'</b><br><br><span style="color:var(--gold)">'+nextTxt+'</span>';
     setTimeout(()=>UI.show('over'),500);
@@ -767,10 +767,11 @@ const Runner = {
     // 免操作过关：整局仅一次，且只在前3门（Flow.cleared 为已过门数，0/1/2 即前3门）
     const allowFree = !this.freeUsed && Flow.cleared < 3 && Math.random()<0.6;
     if(allowFree) this.freeUsed = true;
-    this.segGrid = Quiz.planSegment(cols, this.segNeed, allowFree);
+    this.polarity = Math.random()<0.5?1:-1;   // 起手极性随机（不再固定为正）
+    this.segGrid = Quiz.planSegment(cols, this.segNeed, allowFree, this.polarity);
     this.segCol = 0;
     this.gateSpawned = false;
-    this.polarity = 1; this.placePlayer();
+    this.placePlayer();
     const b=document.getElementById('l1banner');
     b.innerHTML='<span class="chip '+(this.segNeed>0?'pos':'neg')+'">撞线目标 '+(this.segNeed>0?'正':'负')+'</span>';
     b.classList.add('show');
@@ -823,7 +824,7 @@ const Runner = {
     if(!this.running) return;
     const dt=Math.min(50,ts-this.lastTs)/1000; this.lastTs=ts;
     const prevSpeed=this.speed;
-    this.speed = 100 + this.cleared()*6;
+    this.speed = 100 + this.cleared()*6 + (this.cleared()>=3 ? 36 : 0);   // 后3门(第4/5/6门)额外提速
     if(this.speed!==prevSpeed) this.syncScenery();
     // 生成节奏：先放若干列因数，再放这一段的门（间隔拉大，避免相邻列挨太近）
     this.spawnAcc += dt;
@@ -911,7 +912,7 @@ const L2 = {
   next(){
     if(!this.running) return;
     Flow.hideNumber();
-    this.cur=Quiz.mulDiv(pick([2,3,3]));
+    this.cur=Quiz.mulDiv(Flow.cleared<2 ? 2 : 3);   // 前2题两个数乘除，后6题三个数乘除
     this.answered=false; this._plunging=false; this._hopping=false;
     this.t=0;                    // 已用时；缺口据此从右滚向小车
     const eq=document.getElementById('l2eq');
