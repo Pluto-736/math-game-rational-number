@@ -319,7 +319,19 @@ const L1={tiles:[],sel:null,busy:false,
 };
 /* ===== 第2关 · 密码转盘（按次数拼图） ===== */
 const L2={total:3,round:0,busy:false,ringStep:0,turn:0,litInner:0,picIndex:-1,
-  pics:[{src:'img/ring1.jpg',cap:'恭喜你，流转了四季！'}],   // 每张环形图按顺序对应一轮，配一句题字；缺图时退回占位色环
+  pics:[
+    {src:'img/ring1.jpg',cap:'恭喜你，流转了四季！'},
+    {src:'img/ring2.jpg',cap:'恭喜你，点亮了满天星座！'},
+    {src:'img/ring3.jpg',cap:'恭喜你，尝遍了人间至味！'},
+    {src:'img/ring4.jpg',cap:'恭喜你，潜入了深蓝海洋！'},
+    {src:'img/ring5.jpg',cap:'恭喜你，环游了整个世界！'},
+    {src:'img/ring6.jpg',cap:'恭喜你，读通了魔法典籍！'},
+    {src:'img/ring7.jpg',cap:'恭喜你，窥见了微观生命！'},
+    {src:'img/ring8.jpg',cap:'恭喜你，飞越了天空乐园！'},
+    {src:'img/ring9.jpg',cap:'恭喜你，接续了文明薪火！'},
+    {src:'img/ring10.jpg',cap:'恭喜你，见证了机械脉动！'}
+  ],   // 图库；每局从中随机抽 total 张（见 start）
+  deck:[],
   innerDeg:[0,1,2,3,0,1,2,3],
   cells:[],tiles:[],labels:[],innerPaths:[],innerTexts:[],
   genBoard(){
@@ -349,13 +361,13 @@ const L2={total:3,round:0,busy:false,ringStep:0,turn:0,litInner:0,picIndex:-1,
     while(out.length<8)out.push(mono(pick([1,2,3])));           // 其余用 1/2/3 次补满
     return shuffle(out);
   },
-  start(){this.round=0;this.picIndex=-1;Flow.banner('按次数拼图','');this.newPic()},
+  start(){this.round=0;this.picIndex=-1;this.deck=shuffle(this.pics.slice()).slice(0,this.total);Flow.banner('按次数拼图','');this.newPic()},
   newPic(){this.busy=false;this.ringStep=0;this.turn=0;this.picIndex++;
     this.cells=this.genBoard().map(m=>({m,done:false}));
     this.render();this.apply();this.litNext()},
   render(){
     const b=document.getElementById('board');
-    const src=(this.pics[this.picIndex]||0).src;
+    const src=(this.deck[this.picIndex]||0).src;
     // 揭示层：真图/占位色环都只画在外圈料带(98-150)，且随转盘一起转，
     // 由 pmDone 裁剪——只有"已拼好的格子"那几块才可见，转动时也偷看不到其它块
     let reveal;
@@ -440,7 +452,7 @@ const L2={total:3,round:0,busy:false,ringStep:0,turn:0,litInner:0,picIndex:-1,
     }
   },
   onPicDone(){this.busy=true;SFX.win();this.ringStep=0;this.turn=Math.round(this.turn/360)*360;this.apply();  // 通关瞬间就近把整张图“咔”地回正
-    Flow.addScore(20);const p=this.pics[this.picIndex];
+    Flow.addScore(20);const p=this.deck[this.picIndex];
     if(p&&p.src){setTimeout(()=>this.showCele(p),700);}      // 有真图：等回正走完，放大揭晓+题字，点「继续」才进下一张
     else{Flow.toast('拼好一张图！🎉',true);setTimeout(()=>this.advance(),1300);}},
   showCele(p){document.getElementById('celeImg').src=p.src;
