@@ -107,7 +107,7 @@ body{background:linear-gradient(160deg,#ffe6f0 0%,#fff3d6 45%,#d8f7ec 100%)}
 .stats{line-height:2.1;font-size:16px;color:#6b4a35;margin-bottom:18px}
 .stats b{color:#c0577f}
 @media(max-height:660px){.logo{font-size:38px}.tile{font-size:20px}.modal p{font-size:13px}}
-/* ===== 第2关 · 密码转盘 ===== */
+/* ===== 第1关 · 密码转盘 ===== */
 .pmDialWrap{display:flex;flex-direction:column;align-items:center;gap:12px}
 .pmDial{position:relative;width:min(86vw,332px);aspect-ratio:1}
 .pmSvg{width:100%;height:100%;display:block;overflow:visible}
@@ -142,7 +142,7 @@ body{background:linear-gradient(160deg,#ffe6f0 0%,#fff3d6 45%,#d8f7ec 100%)}
 .celeCap{margin:22px auto 4px;font-size:22px;font-weight:1000;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.45);animation:celeCap .55s ease .4s both}
 @keyframes celeCap{0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:translateY(0)}}
 #cele .btn{animation:celeCap .55s ease .7s both}
-/* 第3关 · 整式老虎机 */
+/* 第2关 · 整式老虎机 */
 .slot{position:relative;width:100%;max-width:334px;margin:2px auto 0;padding:0 28px 0 0}
 .slotBody{position:relative;background:linear-gradient(#ffcf5d,#ff8f2e 60%,#f07a1c);border-radius:26px 26px 22px 22px;padding:17px 16px 19px;box-shadow:0 14px 0 #c96f1e,0 22px 32px rgba(0,0,0,.32),inset 0 2px 3px rgba(255,255,255,.5),inset 0 -6px 12px rgba(150,70,10,.35);border:3px solid #ffe6a8}
 /* 顶部招牌 + 跑马灯灯泡 */
@@ -203,9 +203,8 @@ body{background:linear-gradient(160deg,#ffe6f0 0%,#fff3d6 45%,#d8f7ec 100%)}
 
 <div id="helpMask" class="mask"><div class="modal">
   <h2>玩法说明</h2>
-  <p><span class="hl">第1关 · 同类项消消乐</span>：棋盘上铺满单项式方块。点两个<span class="hl">同类项</span>（所含字母相同、相同字母指数也相同）把它们一起消掉，全部消完就过关。</p>
-  <p><span class="hl">第2关 · 次数转盘</span>：看顶部指令，把<span class="hl">次数</span>符合要求的式子转到发光凹槽，按中间「确认」放进去；拼满一整轮就点亮一张隐藏图，共 4 轮。</p>
-  <p><span class="hl">第3关 · 整式老虎机</span>：招牌写着要「几次几项式」。拨动摇杆，屏上摇出一个整式——<span class="hl">项数</span>看有几项、<span class="hl">次数</span>看最高次的那一项。判断它符合就按「确认」得金币，判断它不符就按「淘汰」；<span class="hl">无论哪个键，只要判断错了就扣一颗心</span>。集齐 5 枚金币过关。</p>
+  <p><span class="hl">第1关 · 次数转盘</span>：看顶部指令，把<span class="hl">次数</span>符合要求的式子转到发光凹槽，按中间「确认」放进去；拼满一整轮就点亮一张隐藏图，共 4 轮。</p>
+  <p><span class="hl">第2关 · 整式老虎机</span>：招牌写着要「几次几项式」。拨动摇杆，屏上摇出一个整式——<span class="hl">项数</span>看有几项、<span class="hl">次数</span>看最高次的那一项。判断它符合就按「确认」得金币，判断它不符就按「淘汰」；<span class="hl">无论哪个键，只要判断错了就扣一颗心</span>。集齐 5 枚金币过关。</p>
   <button class="btn" style="display:block;margin:16px auto 0" onclick="UI.help(false)">明白啦</button>
 </div></div>
 
@@ -267,7 +266,7 @@ function makeMono(coef,vars){
   const vTxt=vars.map(v=>v[0]+sup(v[1])).join('');
   return {coef,vars,deg,key,html:cTxt+vTxt};
 }
-// 数字的若干次方：本质是常数项，次数为 0（第2关用作迷惑学生的干扰项）
+// 数字的若干次方：本质是常数项，次数为 0（转盘关用作迷惑学生的干扰项）
 function makeNumPow(base,exp){
   const neg=base<0;
   const html=(neg?'('+base+')':String(base))+sup(exp);
@@ -303,30 +302,29 @@ const SFX={ctx:null,muted:false,bgm:null,step:0,
   toggle(){this.muted=!this.muted;document.getElementById('muteBtn').textContent=this.muted?'🔇':'🔊';if(this.muted)this.stopBgm();else if(document.getElementById('game').classList.contains('show'))this.startBgm()}};
 const UI={
   LV:[null,
-    {name:'同类项消消乐',desc:'点两个同类项一起消掉',tip:'字母相同 · 指数也相同'},
     {name:'次数转盘',desc:'转动转盘，按次数拼出整幅图',tip:'看指令次数 · 转到发光槽'},
     {name:'整式老虎机',desc:'拨摇杆看整式，判断几次几项式',tip:'项数看几项 · 次数看最高次'}],
-  unlocked:Math.max(1,+(localStorage.getItem('pm_unlocked')||1)),
+  unlocked:Math.min(2,Math.max(1,+(localStorage.getItem('pm_unlocked')||1))),
   show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));document.getElementById(id).classList.add('show')},
   help(on){document.getElementById('helpMask').classList.toggle('show',on)},
   toEntry(){Flow.stop();this.renderMenu();this.show('entry')},
-  renderMenu(){const m=document.getElementById('levelMenu');m.innerHTML='';for(let lv=1;lv<=3;lv++){const locked=lv>this.unlocked,c=document.createElement('div');c.className='lv'+(locked?' locked':'');c.innerHTML='<div class="lvNo">'+lv+'</div><div><div class="lvName">第'+lv+'关 · '+this.LV[lv].name+'</div><div class="lvDesc">'+this.LV[lv].desc+'</div><div class="lvTip">'+(locked?'通关上一关解锁':this.LV[lv].tip)+'</div></div>';if(!locked)c.onclick=()=>Flow.startLevel(lv);m.appendChild(c)}}
+  renderMenu(){const m=document.getElementById('levelMenu');m.innerHTML='';for(let lv=1;lv<=2;lv++){const locked=lv>this.unlocked,c=document.createElement('div');c.className='lv'+(locked?' locked':'');c.innerHTML='<div class="lvNo">'+lv+'</div><div><div class="lvName">第'+lv+'关 · '+this.LV[lv].name+'</div><div class="lvDesc">'+this.LV[lv].desc+'</div><div class="lvTip">'+(locked?'通关上一关解锁':this.LV[lv].tip)+'</div></div>';if(!locked)c.onclick=()=>Flow.startLevel(lv);m.appendChild(c)}}
 };
 const Flow={level:1,lives:3,score:0,
-  startLevel(lv){if(lv>UI.unlocked)return;SFX.ensure();SFX.startBgm();this.level=lv;this.lives=3;this.score=0;UI.help(false);document.getElementById('toast').classList.remove('show');document.getElementById('slotDlg').classList.remove('show');UI.show('game');document.getElementById('tray').classList.toggle('show',false);document.getElementById('bInstr').classList.toggle('lv2big',lv===2);this.updateHud();const L=[null,L1,L2,L3][lv];L.start()},
+  startLevel(lv){if(lv>UI.unlocked)return;SFX.ensure();SFX.startBgm();this.level=lv;this.lives=3;this.score=0;UI.help(false);document.getElementById('toast').classList.remove('show');document.getElementById('slotDlg').classList.remove('show');UI.show('game');document.getElementById('tray').classList.toggle('show',false);document.getElementById('bInstr').classList.toggle('lv2big',lv===1);this.updateHud();const L=[null,L2,L3][lv];L.start()},
   stop(){SFX.stopBgm()},
   retry(){this.startLevel(this.level)},
-  next(){const lv=this.level<3?this.level+1:1;this.startLevel(lv)},
+  next(){const lv=this.level<2?this.level+1:1;this.startLevel(lv)},
   banner(title,instr){document.getElementById('bTitle').textContent=title;document.getElementById('bInstr').innerHTML=instr||''},
   prog(t){document.getElementById('bProg').textContent=t||''},
   toast(txt,ok){const t=document.getElementById('toast');t.innerHTML=txt;t.classList.toggle('ok',!!ok);t.classList.remove('show');void t.offsetWidth;t.classList.add('show')},
   addScore(n){this.score+=n;this.updateHud()},
   loseLife(){this.lives--;SFX.wrong();this.updateHud();if(this.lives<=0){this.over();return true}return false},
   updateHud(){const h=document.getElementById('hearts');h.innerHTML='';for(let i=0;i<3;i++){const s=document.createElement('span');s.textContent='❤';if(i>=this.lives)s.className='lost';h.appendChild(s)}document.getElementById('score').textContent=this.score+' 分'},
-  win(){SFX.stopBgm();SFX.win();if(this.level<3&&UI.unlocked<this.level+1){UI.unlocked=this.level+1;localStorage.setItem('pm_unlocked',UI.unlocked)}const star=this.lives;document.getElementById('stars').textContent='⭐'.repeat(star)+'☆'.repeat(3-star);document.getElementById('overTitle').textContent=this.level<3?'第'+this.level+'关 · 过关！':'全部通关！';document.getElementById('overStats').innerHTML='得分 <b>'+this.score+'</b>　剩余 <b>'+this.lives+'</b> ❤';setTimeout(()=>UI.show('over'),520)},
+  win(){SFX.stopBgm();SFX.win();if(this.level<2&&UI.unlocked<this.level+1){UI.unlocked=this.level+1;localStorage.setItem('pm_unlocked',UI.unlocked)}const star=this.lives;document.getElementById('stars').textContent='⭐'.repeat(star)+'☆'.repeat(3-star);document.getElementById('overTitle').textContent=this.level<2?'第'+this.level+'关 · 过关！':'全部通关！';document.getElementById('overStats').innerHTML='得分 <b>'+this.score+'</b>　剩余 <b>'+this.lives+'</b> ❤';setTimeout(()=>UI.show('over'),520)},
   over(){SFX.stopBgm();SFX.over();document.getElementById('stars').textContent='💔';document.getElementById('overTitle').textContent='心碎啦';document.getElementById('overStats').innerHTML='第'+this.level+'关 · '+UI.LV[this.level].name+'<br>得分 <b>'+this.score+'</b>';setTimeout(()=>UI.show('over'),520)}
 };
-/* ===== 第1关 · 同类项消消 ===== */
+/* ===== 同类项消消（已暂时移出关卡，代码保留待搬迁，当前不引用） ===== */
 const L1={tiles:[],sel:null,busy:false,
   gen(){
     // 候选字母组合（字母部分）→ 同类项靠这个签名判定
@@ -375,7 +373,7 @@ const L1={tiles:[],sel:null,busy:false,
     }
   }
 };
-/* ===== 第2关 · 密码转盘（按次数拼图） ===== */
+/* ===== 第1关 · 密码转盘（按次数拼图） ===== */
 const L2={total:4,round:0,busy:false,ringStep:0,turn:0,litInner:0,picIndex:-1,
   pics:[
     {src:'img/ring1.jpg',cap:'恭喜你，流转了四季！'},
@@ -519,7 +517,7 @@ const L2={total:4,round:0,busy:false,ringStep:0,turn:0,litInner:0,picIndex:-1,
   celeNext(){document.getElementById('cele').classList.remove('show');this.advance()},
   advance(){this.round++;if(this.round>=this.total)Flow.win();else this.newPic()}
 };
-/* ===== 第3关 · 整式老虎机（看式判对错，符合就确认吐金币） ===== */
+/* ===== 第2关 · 整式老虎机（看式判对错，符合就确认吐金币） ===== */
 const L3={goal:null,coins:0,need:5,busy:false,poly:null,rollTimer:0,_settled:true,
   cn:['','一','二','三','四','五'],
   // 造一项：给定次数 deg 的单项式（deg 0=常数项）
