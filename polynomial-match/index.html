@@ -56,6 +56,7 @@ body{background:linear-gradient(160deg,#ffe6f0 0%,#fff3d6 45%,#d8f7ec 100%)}
 #banner{width:100%;max-width:520px;text-align:center;padding:6px 14px 2px}
 .bTitle{font-size:19px;font-weight:1000;color:#7a4a30}
 .bInstr{font-size:15px;color:#c0577f;font-weight:700;margin-top:3px;min-height:21px}
+.bInstr.lv2big{font-size:19px;line-height:1.5}
 .bProg{font-size:12px;color:#a05a3a;opacity:.85;margin-top:2px}
 /* BOARD */
 #board{flex:1;width:100%;max-width:520px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:12px 14px;align-content:center;overflow:auto}
@@ -151,9 +152,8 @@ body{background:linear-gradient(160deg,#ffe6f0 0%,#fff3d6 45%,#d8f7ec 100%)}
 
 <div id="helpMask" class="mask"><div class="modal">
   <h2>玩法说明</h2>
-  <p><span class="hl">第1关 · 同类项消消</span>：棋盘上铺满单项式方块。点两个<span class="hl">同类项</span>（所含字母相同、相同字母指数也相同）把它们一起消掉，全部消完就过关。</p>
-  <p><span class="hl">第2关 · 按次数清场</span>：看顶部指令，把所有<span class="hl">次数</span>符合要求的方块点掉。点错会扣一颗心哦。</p>
-  <p><span class="hl">第3关 · 凑多项式</span>：按目标挑选方块放进篮子，凑成<span class="hl">指定项数或次数</span>的多项式，再提交验收。</p>
+  <p><span class="hl">第1关 · 同类项消消乐</span>：棋盘上铺满单项式方块。点两个<span class="hl">同类项</span>（所含字母相同、相同字母指数也相同）把它们一起消掉，全部消完就过关。</p>
+  <p><span class="hl">第2关 · 次数转盘</span>：看顶部指令，把<span class="hl">次数</span>符合要求的式子转到发光凹槽，按中间「确认」放进去；拼满一整轮就点亮一张隐藏图，共 4 轮。</p>
   <button class="btn" style="display:block;margin:16px auto 0" onclick="UI.help(false)">明白啦</button>
 </div></div>
 
@@ -245,27 +245,27 @@ const SFX={ctx:null,muted:false,bgm:null,step:0,
   toggle(){this.muted=!this.muted;document.getElementById('muteBtn').textContent=this.muted?'🔇':'🔊';if(this.muted)this.stopBgm();else if(document.getElementById('game').classList.contains('show'))this.startBgm()}};
 const UI={
   LV:[null,
-    {name:'同类项消消',desc:'点两个同类项一起消掉',tip:'字母相同 · 指数也相同'},
-    {name:'按次数清场',desc:'消掉所有指定次数的项',tip:'看清指令 · 别点错'},
+    {name:'同类项消消乐',desc:'点两个同类项一起消掉',tip:'字母相同 · 指数也相同'},
+    {name:'次数转盘',desc:'转动转盘，按次数拼出整幅图',tip:'看指令次数 · 转到发光槽'},
     {name:'凑多项式',desc:'挑方块凑成指定多项式',tip:'数项数 · 看次数'}],
   unlocked:Math.max(1,+(localStorage.getItem('pm_unlocked')||1)),
   show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));document.getElementById(id).classList.add('show')},
   help(on){document.getElementById('helpMask').classList.toggle('show',on)},
   toEntry(){Flow.stop();this.renderMenu();this.show('entry')},
-  renderMenu(){const m=document.getElementById('levelMenu');m.innerHTML='';for(let lv=1;lv<=3;lv++){const locked=lv>this.unlocked,c=document.createElement('div');c.className='lv'+(locked?' locked':'');c.innerHTML='<div class="lvNo">'+lv+'</div><div><div class="lvName">第'+lv+'关 · '+this.LV[lv].name+'</div><div class="lvDesc">'+this.LV[lv].desc+'</div><div class="lvTip">'+(locked?'通关上一关解锁':this.LV[lv].tip)+'</div></div>';if(!locked)c.onclick=()=>Flow.startLevel(lv);m.appendChild(c)}}
+  renderMenu(){const m=document.getElementById('levelMenu');m.innerHTML='';for(let lv=1;lv<=2;lv++){const locked=lv>this.unlocked,c=document.createElement('div');c.className='lv'+(locked?' locked':'');c.innerHTML='<div class="lvNo">'+lv+'</div><div><div class="lvName">第'+lv+'关 · '+this.LV[lv].name+'</div><div class="lvDesc">'+this.LV[lv].desc+'</div><div class="lvTip">'+(locked?'通关上一关解锁':this.LV[lv].tip)+'</div></div>';if(!locked)c.onclick=()=>Flow.startLevel(lv);m.appendChild(c)}}
 };
 const Flow={level:1,lives:3,score:0,
-  startLevel(lv){if(lv>UI.unlocked)return;SFX.ensure();SFX.startBgm();this.level=lv;this.lives=3;this.score=0;UI.help(false);UI.show('game');document.getElementById('tray').classList.toggle('show',lv===3);this.updateHud();const L=[null,L1,L2,L3][lv];L.start()},
+  startLevel(lv){if(lv>UI.unlocked)return;SFX.ensure();SFX.startBgm();this.level=lv;this.lives=3;this.score=0;UI.help(false);document.getElementById('toast').classList.remove('show');UI.show('game');document.getElementById('tray').classList.toggle('show',lv===3);document.getElementById('bInstr').classList.toggle('lv2big',lv===2);this.updateHud();const L=[null,L1,L2,L3][lv];L.start()},
   stop(){SFX.stopBgm()},
   retry(){this.startLevel(this.level)},
-  next(){const lv=this.level<3?this.level+1:1;this.startLevel(lv)},
+  next(){const lv=this.level<2?this.level+1:1;this.startLevel(lv)},
   banner(title,instr){document.getElementById('bTitle').textContent=title;document.getElementById('bInstr').innerHTML=instr||''},
   prog(t){document.getElementById('bProg').textContent=t||''},
   toast(txt,ok){const t=document.getElementById('toast');t.innerHTML=txt;t.classList.toggle('ok',!!ok);t.classList.remove('show');void t.offsetWidth;t.classList.add('show')},
   addScore(n){this.score+=n;this.updateHud()},
   loseLife(){this.lives--;SFX.wrong();this.updateHud();if(this.lives<=0){this.over();return true}return false},
   updateHud(){const h=document.getElementById('hearts');h.innerHTML='';for(let i=0;i<3;i++){const s=document.createElement('span');s.textContent='❤';if(i>=this.lives)s.className='lost';h.appendChild(s)}document.getElementById('score').textContent=this.score+' 分'},
-  win(){SFX.stopBgm();SFX.win();if(this.level<3&&UI.unlocked<this.level+1){UI.unlocked=this.level+1;localStorage.setItem('pm_unlocked',UI.unlocked)}const star=this.lives;document.getElementById('stars').textContent='⭐'.repeat(star)+'☆'.repeat(3-star);document.getElementById('overTitle').textContent=this.level<3?'第'+this.level+'关 · 过关！':'全部通关！';document.getElementById('overStats').innerHTML='得分 <b>'+this.score+'</b>　剩余 <b>'+this.lives+'</b> ❤';setTimeout(()=>UI.show('over'),520)},
+  win(){SFX.stopBgm();SFX.win();if(this.level<2&&UI.unlocked<this.level+1){UI.unlocked=this.level+1;localStorage.setItem('pm_unlocked',UI.unlocked)}const star=this.lives;document.getElementById('stars').textContent='⭐'.repeat(star)+'☆'.repeat(3-star);document.getElementById('overTitle').textContent=this.level<2?'第'+this.level+'关 · 过关！':'全部通关！';document.getElementById('overStats').innerHTML='得分 <b>'+this.score+'</b>　剩余 <b>'+this.lives+'</b> ❤';setTimeout(()=>UI.show('over'),520)},
   over(){SFX.stopBgm();SFX.over();document.getElementById('stars').textContent='💔';document.getElementById('overTitle').textContent='心碎啦';document.getElementById('overStats').innerHTML='第'+this.level+'关 · '+UI.LV[this.level].name+'<br>得分 <b>'+this.score+'</b>';setTimeout(()=>UI.show('over'),520)}
 };
 /* ===== 第1关 · 同类项消消 ===== */
@@ -318,7 +318,7 @@ const L1={tiles:[],sel:null,busy:false,
   }
 };
 /* ===== 第2关 · 密码转盘（按次数拼图） ===== */
-const L2={total:3,round:0,busy:false,ringStep:0,turn:0,litInner:0,picIndex:-1,
+const L2={total:4,round:0,busy:false,ringStep:0,turn:0,litInner:0,picIndex:-1,
   pics:[
     {src:'img/ring1.jpg',cap:'恭喜你，流转了四季！'},
     {src:'img/ring2.jpg',cap:'恭喜你，点亮了满天星座！'},
@@ -401,7 +401,7 @@ const L2={total:3,round:0,busy:false,ringStep:0,turn:0,litInner:0,picIndex:-1,
           </g>
         </svg>
         <div class="pmLabelRing">${labs}</div>
-        <button class="pmLock" onclick="L2.lock()">锁定<small>放料</small></button>
+        <button class="pmLock" onclick="L2.lock()">确认</button>
       </div>
       <div class="pmArrows">
         <button class="btn ghost pmArrow" onclick="L2.rotate(-1)">◀ 转</button>
@@ -426,7 +426,7 @@ const L2={total:3,round:0,busy:false,ringStep:0,turn:0,litInner:0,picIndex:-1,
   setLit(L){this.innerPaths.forEach((p,j)=>p.classList.toggle('lit',j===L));
     this.innerTexts.forEach((t,j)=>t.classList.toggle('lit',j===L));
     this.litInner=L;const d=this.innerDeg[L];
-    Flow.banner('按次数拼图','把 <span class="pmChip">次数 = '+d+'</span> 的料转到<b style="color:#e07d2a">发光凹槽</b>，按中间「锁定」');
+    Flow.banner('按次数拼图','把 <span class="pmChip">次数 = '+d+'</span> 的式子转到<b style="color:#e07d2a">发光凹槽</b>，按中间「确认」');
     this.updateAim()},
   litNext(){const rem=this.cells.filter(c=>!c.done);
     if(!rem.length){this.onPicDone();return}
@@ -436,7 +436,7 @@ const L2={total:3,round:0,busy:false,ringStep:0,turn:0,litInner:0,picIndex:-1,
     Flow.prog('第 '+(this.round+1)+'/'+this.total+' 张 · 还差 '+rem.length+' 块')},
   rotate(dir){if(this.busy)return;this.ringStep=(this.ringStep+dir+8)%8;this.turn+=dir*45;SFX.click();this.apply()},
   lock(){if(this.busy)return;const ai=(this.litInner-this.ringStep+8)%8;const c=this.cells[ai];
-    if(c.done){Flow.toast('这个凹槽已经拼好啦，转到还有式子的料上',false);return}
+    if(c.done){Flow.toast('这个凹槽已经拼好啦，转到还没拼的式子上',false);return}
     if(c.m.deg===this.innerDeg[this.litInner]){
       c.done=true;SFX.right();SFX.click();Flow.addScore(8);
       // 把这一格登记进"已拼"裁剪区：图块随即出现在褪去的料下面（露出这块图）
