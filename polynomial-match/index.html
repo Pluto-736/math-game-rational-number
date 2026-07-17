@@ -139,6 +139,47 @@ body{background:linear-gradient(160deg,#ffe6f0 0%,#fff3d6 45%,#d8f7ec 100%)}
 .celeCap{margin:22px auto 4px;font-size:22px;font-weight:1000;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.45);animation:celeCap .55s ease .4s both}
 @keyframes celeCap{0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:translateY(0)}}
 #cele .btn{animation:celeCap .55s ease .7s both}
+/* 第3关 · 整式老虎机 */
+.slot{position:relative;width:100%;max-width:330px;margin:6px auto 0;padding:0 26px 0 0}
+.slotBody{position:relative;background:linear-gradient(#ffcf5d,#ff8f2e 60%,#f07a1c);border-radius:24px 24px 22px 22px;padding:14px 15px 16px;box-shadow:0 12px 0 #c96f1e,0 20px 30px rgba(0,0,0,.32),inset 0 2px 3px rgba(255,255,255,.5),inset 0 -6px 12px rgba(150,70,10,.35);border:3px solid #ffe6a8}
+/* 顶部招牌 + 跑马灯灯泡 */
+.slotCrown{position:relative;background:linear-gradient(#b3312f,#8c1f24);border-radius:16px;padding:9px 10px 8px;text-align:center;box-shadow:inset 0 2px 6px rgba(0,0,0,.4),0 3px 0 #6d161a;margin-bottom:12px;border:2px solid #ffcf5d}
+.slotBulbs{position:absolute;inset:3px;border-radius:13px;pointer-events:none}
+.slotBulbs i{position:absolute;width:7px;height:7px;border-radius:50%;background:#ffe27a;box-shadow:0 0 6px 2px rgba(255,214,80,.9);animation:bulb 1s steps(1) infinite}
+.slotBulbs i:nth-child(2n){animation-delay:.5s}
+@keyframes bulb{0%{opacity:1}50%{opacity:.25}100%{opacity:1}}
+.slotTop{position:relative;font-size:14px;font-weight:900;color:#ffe9c2;text-shadow:0 1px 2px rgba(0,0,0,.4);z-index:1}
+.slotTop b{display:inline-block;background:linear-gradient(#fff,#ffe7bd);color:#c0392b;border-radius:9px;padding:2px 12px;font-size:19px;margin-left:4px;box-shadow:0 2px 4px rgba(0,0,0,.3)}
+/* 显示窗 */
+.slotWin{position:relative;background:linear-gradient(#20150d,#2f2013);border:4px solid #7a4a1e;border-radius:14px;height:96px;padding:0;box-shadow:inset 0 3px 14px rgba(0,0,0,.75),inset 0 0 0 2px rgba(255,190,90,.15);overflow:hidden}
+.slotWin:before{content:'';position:absolute;top:0;left:0;right:0;height:42%;background:linear-gradient(rgba(255,255,255,.14),transparent);pointer-events:none;z-index:2}
+.slotGlass{position:absolute;inset:0;border-radius:10px;box-shadow:inset 0 0 26px rgba(0,0,0,.6);pointer-events:none;z-index:3}
+.slotReel{position:absolute;left:0;right:0;top:0;z-index:1;will-change:transform}
+.slotReel.spin{transition:transform 1.05s cubic-bezier(.08,.72,.15,1)}
+.slotReel.blur .slotPoly{filter:blur(1.4px);opacity:.9}
+.slotRow{height:96px;display:flex;align-items:center;justify-content:center;padding:0 14px}
+.slotPoly{position:relative;font-size:29px;font-weight:1000;color:#ffe08a;letter-spacing:.5px;text-shadow:0 0 12px rgba(255,196,72,.6);white-space:nowrap;z-index:1}
+.slotPoly small{font-size:.58em;vertical-align:super;position:relative;top:-.42em;line-height:0}
+/* 金币出口托盘 */
+.slotBase{margin-top:13px}
+.slotCoins{position:relative;text-align:center;font-size:18px;font-weight:1000;color:#5a3d2b;background:linear-gradient(#fff6df,#ffe6b0);border-radius:11px;padding:7px 4px;margin-bottom:11px;box-shadow:inset 0 2px 5px rgba(150,90,20,.3),0 2px 0 rgba(255,255,255,.4);border:2px solid #e7b96a}
+.slotCoins.bump{animation:coinBump .42s}
+@keyframes coinBump{0%{transform:scale(1)}42%{transform:scale(1.2);color:#e07d2a}100%{transform:scale(1)}}
+.slotBtns{display:flex;gap:11px}
+.slotBtn{flex:1;font:900 18px 'Microsoft YaHei',sans-serif;border:0;border-radius:15px;padding:14px 0;color:#fff;cursor:pointer;box-shadow:0 5px 0 rgba(0,0,0,.28),inset 0 2px 4px rgba(255,255,255,.35);text-shadow:0 1px 2px rgba(0,0,0,.28);border:2px solid rgba(255,255,255,.4)}
+.slotBtn:active{transform:translateY(4px);box-shadow:0 1px 0 rgba(0,0,0,.28)}
+.slotBtn.ok{background:linear-gradient(#7fe6a0,#28bd5e)}
+.slotBtn.re{background:linear-gradient(#ffa0b2,#f0566f)}
+/* 右侧拨杆：竖直，向下压后回弹 */
+.slotArm{position:absolute;right:2px;top:34px;width:18px;height:120px}
+.slotArm .rod{position:absolute;left:50%;bottom:0;transform:translateX(-50%);transform-origin:bottom center;width:11px;height:96px;background:linear-gradient(#e9e9f2,#9a9aac);border-radius:6px;box-shadow:0 2px 4px rgba(0,0,0,.3);transition:height .18s cubic-bezier(.3,1.5,.5,1),transform .18s cubic-bezier(.3,1.5,.5,1)}
+.slotArm .knob{position:absolute;left:50%;top:-4px;transform:translateX(-50%);width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 36% 30%,#ff9a9a,#d1302f);box-shadow:0 3px 6px rgba(0,0,0,.4),inset 0 -3px 5px rgba(120,10,10,.5)}
+.slotArm .socket{position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);width:22px;height:14px;border-radius:7px;background:linear-gradient(#c96f1e,#8c4c12);box-shadow:inset 0 2px 3px rgba(0,0,0,.4)}
+.slot.pull .rod{height:52px}
+.slot.shake .slotBody{animation:slotShake .42s}
+@keyframes slotShake{0%,100%{transform:translateX(0)}18%{transform:translateX(-9px)}38%{transform:translateX(9px)}58%{transform:translateX(-6px)}78%{transform:translateX(6px)}}
+.coinFly{position:absolute;left:50%;bottom:66px;font-size:32px;pointer-events:none;z-index:5;animation:coinFly .8s ease forwards}
+@keyframes coinFly{0%{transform:translate(-50%,-90px) scale(.4) rotate(0);opacity:0}30%{opacity:1}100%{transform:translate(-50%,0) scale(1.1) rotate(300deg);opacity:0}}
 </style>
 <!-- 51.la 访问统计 -->
 <script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
@@ -157,6 +198,7 @@ body{background:linear-gradient(160deg,#ffe6f0 0%,#fff3d6 45%,#d8f7ec 100%)}
   <h2>玩法说明</h2>
   <p><span class="hl">第1关 · 同类项消消乐</span>：棋盘上铺满单项式方块。点两个<span class="hl">同类项</span>（所含字母相同、相同字母指数也相同）把它们一起消掉，全部消完就过关。</p>
   <p><span class="hl">第2关 · 次数转盘</span>：看顶部指令，把<span class="hl">次数</span>符合要求的式子转到发光凹槽，按中间「确认」放进去；拼满一整轮就点亮一张隐藏图，共 4 轮。</p>
+  <p><span class="hl">第3关 · 整式老虎机</span>：招牌写着要「几次几项式」。拨动摇杆，屏上摇出一个整式——<span class="hl">项数</span>看有几项、<span class="hl">次数</span>看最高次的那一项，还要当心藏着的<span class="hl">同类项</span>。判断它符合就按「确认」吐金币，判断它不符就按「重来」；<span class="hl">无论哪个键，只要判断错了就扣一颗心</span>。集齐 5 枚金币过关。</p>
   <button class="btn" style="display:block;margin:16px auto 0" onclick="UI.help(false)">明白啦</button>
 </div></div>
 
@@ -250,25 +292,25 @@ const UI={
   LV:[null,
     {name:'同类项消消乐',desc:'点两个同类项一起消掉',tip:'字母相同 · 指数也相同'},
     {name:'次数转盘',desc:'转动转盘，按次数拼出整幅图',tip:'看指令次数 · 转到发光槽'},
-    {name:'凑多项式',desc:'挑方块凑成指定多项式',tip:'数项数 · 看次数'}],
+    {name:'整式老虎机',desc:'拨摇杆看整式，判断几次几项式',tip:'次数看最高次 · 当心同类项'}],
   unlocked:Math.max(1,+(localStorage.getItem('pm_unlocked')||1)),
   show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));document.getElementById(id).classList.add('show')},
   help(on){document.getElementById('helpMask').classList.toggle('show',on)},
   toEntry(){Flow.stop();this.renderMenu();this.show('entry')},
-  renderMenu(){const m=document.getElementById('levelMenu');m.innerHTML='';for(let lv=1;lv<=2;lv++){const locked=lv>this.unlocked,c=document.createElement('div');c.className='lv'+(locked?' locked':'');c.innerHTML='<div class="lvNo">'+lv+'</div><div><div class="lvName">第'+lv+'关 · '+this.LV[lv].name+'</div><div class="lvDesc">'+this.LV[lv].desc+'</div><div class="lvTip">'+(locked?'通关上一关解锁':this.LV[lv].tip)+'</div></div>';if(!locked)c.onclick=()=>Flow.startLevel(lv);m.appendChild(c)}}
+  renderMenu(){const m=document.getElementById('levelMenu');m.innerHTML='';for(let lv=1;lv<=3;lv++){const locked=lv>this.unlocked,c=document.createElement('div');c.className='lv'+(locked?' locked':'');c.innerHTML='<div class="lvNo">'+lv+'</div><div><div class="lvName">第'+lv+'关 · '+this.LV[lv].name+'</div><div class="lvDesc">'+this.LV[lv].desc+'</div><div class="lvTip">'+(locked?'通关上一关解锁':this.LV[lv].tip)+'</div></div>';if(!locked)c.onclick=()=>Flow.startLevel(lv);m.appendChild(c)}}
 };
 const Flow={level:1,lives:3,score:0,
-  startLevel(lv){if(lv>UI.unlocked)return;SFX.ensure();SFX.startBgm();this.level=lv;this.lives=3;this.score=0;UI.help(false);document.getElementById('toast').classList.remove('show');UI.show('game');document.getElementById('tray').classList.toggle('show',lv===3);document.getElementById('bInstr').classList.toggle('lv2big',lv===2);this.updateHud();const L=[null,L1,L2,L3][lv];L.start()},
+  startLevel(lv){if(lv>UI.unlocked)return;SFX.ensure();SFX.startBgm();this.level=lv;this.lives=3;this.score=0;UI.help(false);document.getElementById('toast').classList.remove('show');UI.show('game');document.getElementById('tray').classList.toggle('show',false);document.getElementById('bInstr').classList.toggle('lv2big',lv===2);this.updateHud();const L=[null,L1,L2,L3][lv];L.start()},
   stop(){SFX.stopBgm()},
   retry(){this.startLevel(this.level)},
-  next(){const lv=this.level<2?this.level+1:1;this.startLevel(lv)},
+  next(){const lv=this.level<3?this.level+1:1;this.startLevel(lv)},
   banner(title,instr){document.getElementById('bTitle').textContent=title;document.getElementById('bInstr').innerHTML=instr||''},
   prog(t){document.getElementById('bProg').textContent=t||''},
   toast(txt,ok){const t=document.getElementById('toast');t.innerHTML=txt;t.classList.toggle('ok',!!ok);t.classList.remove('show');void t.offsetWidth;t.classList.add('show')},
   addScore(n){this.score+=n;this.updateHud()},
   loseLife(){this.lives--;SFX.wrong();this.updateHud();if(this.lives<=0){this.over();return true}return false},
   updateHud(){const h=document.getElementById('hearts');h.innerHTML='';for(let i=0;i<3;i++){const s=document.createElement('span');s.textContent='❤';if(i>=this.lives)s.className='lost';h.appendChild(s)}document.getElementById('score').textContent=this.score+' 分'},
-  win(){SFX.stopBgm();SFX.win();if(this.level<2&&UI.unlocked<this.level+1){UI.unlocked=this.level+1;localStorage.setItem('pm_unlocked',UI.unlocked)}const star=this.lives;document.getElementById('stars').textContent='⭐'.repeat(star)+'☆'.repeat(3-star);document.getElementById('overTitle').textContent=this.level<2?'第'+this.level+'关 · 过关！':'全部通关！';document.getElementById('overStats').innerHTML='得分 <b>'+this.score+'</b>　剩余 <b>'+this.lives+'</b> ❤';setTimeout(()=>UI.show('over'),520)},
+  win(){SFX.stopBgm();SFX.win();if(this.level<3&&UI.unlocked<this.level+1){UI.unlocked=this.level+1;localStorage.setItem('pm_unlocked',UI.unlocked)}const star=this.lives;document.getElementById('stars').textContent='⭐'.repeat(star)+'☆'.repeat(3-star);document.getElementById('overTitle').textContent=this.level<3?'第'+this.level+'关 · 过关！':'全部通关！';document.getElementById('overStats').innerHTML='得分 <b>'+this.score+'</b>　剩余 <b>'+this.lives+'</b> ❤';setTimeout(()=>UI.show('over'),520)},
   over(){SFX.stopBgm();SFX.over();document.getElementById('stars').textContent='💔';document.getElementById('overTitle').textContent='心碎啦';document.getElementById('overStats').innerHTML='第'+this.level+'关 · '+UI.LV[this.level].name+'<br>得分 <b>'+this.score+'</b>';setTimeout(()=>UI.show('over'),520)}
 };
 /* ===== 第1关 · 同类项消消 ===== */
@@ -464,62 +506,120 @@ const L2={total:4,round:0,busy:false,ringStep:0,turn:0,litInner:0,picIndex:-1,
   celeNext(){document.getElementById('cele').classList.remove('show');this.advance()},
   advance(){this.round++;if(this.round>=this.total)Flow.win();else this.newPic()}
 };
-/* ===== 第3关 · 凑多项式 ===== */
-const L3={tiles:[],sel:[],goal:null,round:0,total:4,busy:false,
-  bank(){
-    // 一批字母部分互不相同的项，避免出现需要合并的同类项干扰判断
-    return [
-      makeMono(pick([2,3,-2,5]),[['x',2]]),
-      makeMono(pick([3,-4,6]),[['x',1]]),
-      makeMono(pick([2,4,-3]),[['y',1]]),
-      makeMono(pick([5,-5,7]),[]),                  // 常数项
-      makeMono(pick([2,-2,3]),[['x',1],['y',1]]),
-      makeMono(pick([4,-3,2]),[['a',2]]),
-      makeMono(pick([3,5,-4]),[['a',1],['b',1]]),
-      makeMono(pick([2,-2,6]),[['x',3]]),
-      makeMono(pick([3,-3,4]),[['b',1]]),
-      makeMono(pick([2,4,-5]),[['x',2],['y',1]]),
-      makeMono(pick([3,-2,5]),[['y',2]]),
-      makeMono(pick([4,-4,2]),[['m',1]]),
-    ];
+/* ===== 第3关 · 整式老虎机（看式判对错，符合就确认吐金币） ===== */
+const L3={goal:null,coins:0,need:5,busy:false,poly:null,rollTimer:0,_settled:true,
+  cn:['','一','二','三','四','五'],
+  // 造一项：给定次数 deg 的单项式（deg 0=常数项）
+  makeTerm(deg){
+    if(deg===0)return makeMono(pick([2,3,4,5,-2,-3,-4,6,7]),[]);
+    const pool={1:[[['x',1]],[['y',1]],[['a',1]],[['m',1]],[['b',1]]],
+      2:[[['x',2]],[['y',2]],[['a',2]],[['x',1],['y',1]],[['a',1],['b',1]]],
+      3:[[['x',3]],[['y',3]],[['x',2],['y',1]],[['a',2],['b',1]]]};
+    return makeMono(pick([2,3,4,5,-2,-3,-4,6]),pick(pool[deg]).map(v=>[v[0],v[1]]));
   },
-  start(){this.round=0;
-    // 4 题：第 1 题是纯“X项式”，其余 3 题都是“X次X项式”
-    const both=[];for(let i=0;i<3;i++)both.push({type:'both',n:rnd(2,4),d:pick([2,3])});
-    this.schedule=[{type:'terms',n:rnd(2,4)},...shuffle(both)];
-    this.newRound()},
-  newRound(){this.busy=false;this.sel=[];this.tiles=shuffle(this.bank());
-    this.goal=this.schedule[this.round];this.round++;
-    if(this.goal.type==='terms'){const n=this.goal.n;Flow.banner('凑多项式','凑一个 <span style="color:#fff;background:#3fc795;border-radius:8px;padding:1px 9px">'+['','一','二','三','四'][n]+'项式</span>（'+n+' 项）')}
-    else{const{n,d}=this.goal;const cn=['','一','二','三','四'];Flow.banner('凑多项式','凑一个 <span style="color:#fff;background:#3aa6ff;border-radius:8px;padding:1px 9px">'+cn[d]+'次'+cn[n]+'项式</span>（次数 '+d+' · 共 '+n+' 项）')}
-    Flow.prog('第 '+this.round+'/'+this.total+' 题 · 点方块放入篮子');this.render();this.drawTray()},
-  render(){const b=document.getElementById('board');b.style.gridTemplateColumns='repeat(4,1fr)';b.innerHTML='';this.tiles.forEach((t,i)=>{const d=document.createElement('div');d.className='tile t'+(i%6);d.innerHTML=t.html;d.dataset.i=i;d.onclick=()=>this.tap(i,d);b.appendChild(d)})},
-  tap(i,el){if(this.busy)return;const t=this.tiles[i];SFX.tap();const pos=this.sel.indexOf(i);
-    if(pos>=0){this.sel.splice(pos,1);el.classList.remove('sel')}
-    else{this.sel.push(i);el.classList.add('sel')}
-    this.drawTray()},
-  drawTray(){const box=document.getElementById('trayBox');if(!this.sel.length){box.innerHTML='<span style="opacity:.5;font-size:15px;font-weight:700">点上方方块，放进来组成多项式</span>';return}
-    box.innerHTML=this.sel.map((i,k)=>{const c=this.tiles[i].coef;const h='<span class="trayChip">'+this.tiles[i].html+'</span>';return (k>0&&c>=0?'<span class="trayPlus">+</span>':k>0?'<span class="trayPlus"></span>':'')+h}).join('')},
-  clear(){this.sel.forEach(i=>{const e=document.querySelector('.tile[data-i="'+i+'"]');if(e)e.classList.remove('sel')});this.sel=[];this.drawTray()},
-  submit(){if(this.busy)return;const items=this.sel.map(i=>this.tiles[i]);
-    if(items.length===0){Flow.toast('篮子是空的哦',false);return}
-    // 同类项检查
-    const keys=items.map(t=>t.key);
-    if(new Set(keys).size!==keys.length){Flow.toast('里面有同类项，应先合并，不能算多个项',false);if(Flow.loseLife())return;return}
-    let ok=false,why='';
-    const maxDeg=items.length?Math.max(...items.map(t=>t.deg)):0;
-    if(this.goal.type==='terms'){
-      if(items.length===this.goal.n)ok=true;else why='这是 '+items.length+' 项，目标是 '+this.goal.n+' 项';
-    }else{ // both：次数和项数都要对
-      if(items.length!==this.goal.n)why='项数不对：这是 '+items.length+' 项，要 '+this.goal.n+' 项';
-      else if(maxDeg!==this.goal.d)why='次数不对：这个多项式次数是 '+maxDeg+'（看最高次的项），要 '+this.goal.d+' 次';
-      else ok=true;
+  // 造一个「d次n项式」：最高次恰为 d、其余项次数各不相同且都 <= d、字母部分互不相同（无同类项）
+  buildPoly(d,n){
+    const degs=[d];const lower=[0,1,2,3].filter(x=>x<d);
+    for(let i=0;i<n-1;i++){let dg=pick(lower);
+      if(dg===0&&degs.includes(0))dg=pick(lower.filter(x=>x>0));  // 常数项互为同类，最多留一个
+      degs.push(dg);}
+    // 逐项生成，保证 key 互不相同（不含同类项）
+    const used=new Set(),terms=[];
+    degs.forEach(dg=>{let t,guard=0;do{t=this.makeTerm(dg);guard++}while(used.has(t.key)&&guard<30);used.add(t.key);terms.push(t)});
+    return terms;
+  },
+  // 造一个「不符合」的整式：随机命中 次数错/项数错/藏同类项 三类陷阱
+  buildTrap(d,n){
+    const kind=pick(['deg','deg','num','num','same']);
+    if(kind==='deg'){                        // 项数对，最高次不是 d
+      let d2;do{d2=pick([2,3])}while(d2===d);return this.buildPoly(d2,n);
     }
-    if(ok){this.busy=true;SFX.right();Flow.addScore(15);Flow.toast('验收通过！',true);
-      this.sel.forEach(i=>{const e=document.querySelector('.tile[data-i="'+i+'"]');if(e){e.classList.remove('sel');e.classList.add('gone')}});
-      setTimeout(()=>{if(this.round>=this.total)Flow.win();else this.newRound()},800);
-    }else{Flow.toast(why,false);if(Flow.loseLife())return;}
-  }
+    if(kind==='num'){                        // 次数对，项数不是 n
+      let n2;do{n2=rnd(2,4)}while(n2===n);return this.buildPoly(d,n2);
+    }
+    // same：看着 n 项，其实藏一对同类项（真项数 n-1），最高次仍为 d
+    const base=this.buildPoly(d,Math.max(2,n-1));
+    const dup=base[rnd(0,base.length-1)];
+    const twin=dup.deg===0?makeMono(pick([2,3,-2,4]),[]):makeMono(pick([2,3,-2,4,5]),dup.vars.map(v=>[v[0],v[1]]));
+    const arr=base.slice();arr.splice(rnd(0,arr.length),0,twin);return arr;
+  },
+  // 把若干项拼成一条多项式字符串（+/- 连接）
+  polyHtml(terms){return terms.map((t,k)=>{
+    const neg=(typeof t.coef==='number')?t.coef<0:/^-/.test(String(t.coef));
+    if(k===0)return t.html;
+    return neg?' - '+t.html.replace(/^-/,''):' + '+t.html;
+  }).join('')},
+  // 判断这条式子是否真的符合 goal（d次n项式）：项数=项的个数、次数=最高次、无同类项
+  isMatch(terms){
+    const keys=terms.map(t=>t.key);
+    if(new Set(keys).size!==keys.length)return{ok:false,why:'藏了同类项，合并后其实只有 '+new Set(keys).size+' 项'};
+    if(terms.length!==this.goal.n)return{ok:false,why:'项数不对：这是 '+terms.length+' 项，要 '+this.cn[this.goal.n]+'项'};
+    const maxDeg=Math.max(...terms.map(t=>t.deg));
+    if(maxDeg!==this.goal.d)return{ok:false,why:'次数不对：最高次是 '+maxDeg+' 次，要 '+this.cn[this.goal.d]+'次'};
+    return{ok:true};
+  },
+  start(){this.coins=0;this.busy=false;this.render();this.newGoal()},
+  render(){const b=document.getElementById('board');b.style.gridTemplateColumns='1fr';
+    let bulbs='';for(let i=0;i<10;i++){const s=i<5?'left:'+(6+i*20)+'%;top:2px':'left:'+(6+(9-i)*20)+'%;bottom:2px';bulbs+='<i style="'+s+'"></i>';}
+    b.innerHTML=`
+    <div class="slot" id="slot">
+      <div class="slotBody">
+        <div class="slotCrown"><div class="slotBulbs">${bulbs}</div>
+          <div class="slotTop">目标：<b id="slotGoal">—</b></div></div>
+        <div class="slotWin"><div class="slotReel" id="slotReel"></div><div class="slotGlass"></div></div>
+        <div class="slotBase">
+          <div class="slotCoins" id="slotCoins">🪙 金币 0 / 5</div>
+          <div class="slotBtns">
+            <button class="slotBtn ok" onclick="L3.confirm()">✓ 确认</button>
+            <button class="slotBtn re" onclick="L3.again()">↻ 重来</button>
+          </div>
+        </div>
+      </div>
+      <div class="slotArm"><span class="rod"><span class="knob"></span></span><span class="socket"></span></div>
+    </div>`;
+  },
+  updateCoins(bump){const el=document.getElementById('slotCoins');el.textContent='🪙 金币 '+this.coins+' / '+this.need;
+    if(bump){el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump')}},
+  newGoal(){this.goal={d:pick([2,3]),n:rnd(2,4)};
+    document.getElementById('slotGoal').textContent=this.cn[this.goal.d]+'次'+this.cn[this.goal.n]+'项式';
+    Flow.banner('整式老虎机','拨动摇杆，屏上摇出一个整式');
+    Flow.prog('判断对了才安全：符合按「确认」，不符按「重来」');
+    this.updateCoins(false);this.spin()},
+  // 拨杆下压 + 卷轴竖直滚动：一排候选式子从上往下滚过、减速，停在最终那条
+  spin(){this.busy=true;const slot=document.getElementById('slot');slot.classList.add('pull');
+    const g=this.goal;this.poly=(pick([1,1,2,2,2])===2)?this.buildTrap(g.d,g.n):this.buildPoly(g.d,g.n);
+    const reel=document.getElementById('slotReel');const ROW=96,COUNT=12;
+    // 造一条卷轴：第一行是最终结果，其后是随机式子。初始把卷轴上移到末行对齐窗口，
+    // 再滚回 translateY(0) —— 视觉上式子从上往下滚落，最终停在第一行
+    let rows='<div class="slotRow"><div class="slotPoly">'+this.polyHtml(this.poly)+'</div></div>';
+    for(let i=0;i<COUNT-1;i++){const t=this.buildPoly(pick([2,3]),rnd(2,4));rows+='<div class="slotRow"><div class="slotPoly">'+this.polyHtml(t)+'</div></div>';}
+    reel.innerHTML=rows;
+    // 起始停在末行、加动感模糊，强制回流后再滚到第一行（从上往下、减速停住）
+    reel.classList.remove('spin');reel.classList.add('blur');reel.style.transform='translateY(-'+((COUNT-1)*ROW)+'px)';
+    void reel.offsetHeight;
+    SFX.slide(300,760,.6,'square',.08);
+    let ticks=0;clearInterval(this.rollTimer);
+    this.rollTimer=setInterval(()=>{SFX.tap();if(++ticks>=6)clearInterval(this.rollTimer)},150);
+    reel.classList.add('spin');reel.style.transform='translateY(0)';
+    const done=()=>{if(this._settled)return;this._settled=true;reel.removeEventListener('transitionend',done);clearInterval(this.rollTimer);
+      reel.classList.remove('blur');SFX.click();slot.classList.remove('pull');this.busy=false};
+    this._settled=false;reel.addEventListener('transitionend',done);
+    setTimeout(done,1200);   // 兜底：transitionend 万一没触发也能解锁
+  },
+  // ✓确认：判断“它符合” —— 判对(真符合)吐金币；判错(其实不符)震动扣心
+  confirm(){if(this.busy)return;const r=this.isMatch(this.poly);
+    if(r.ok){this.busy=true;SFX.right();this.coins++;Flow.addScore(15);this.flyCoin();this.updateCoins(true);
+      Flow.toast('符合！吐出一枚金币 🪙',true);
+      setTimeout(()=>{if(this.coins>=this.need){Flow.win()}else{this.newGoal()}},900);
+    }else{this.misjudge('看走眼啦——'+r.why)}},
+  // ↻重来：判断“它不符合” —— 判对(真不符)放行重摇；判错(其实符合)震动扣心
+  again(){if(this.busy)return;const r=this.isMatch(this.poly);
+    if(!r.ok){SFX.click();Flow.toast('没错，这个不合格 →',true);setTimeout(()=>this.spin(),450);}
+    else{this.misjudge('它其实是合格的「'+this.cn[this.goal.d]+'次'+this.cn[this.goal.n]+'项式」，别放走啦')}},
+  // 判断错误：只震动、不冒烟，扣一颗心，同一目标重摇
+  misjudge(msg){this.busy=true;const slot=document.getElementById('slot');slot.classList.remove('shake');void slot.offsetWidth;slot.classList.add('shake');
+    Flow.toast(msg,false);if(Flow.loseLife())return;setTimeout(()=>this.spin(),520)},
+  flyCoin(){const slot=document.getElementById('slot');const c=document.createElement('div');c.className='coinFly';c.textContent='🪙';slot.appendChild(c);setTimeout(()=>c.remove(),760)}
 };
 UI.renderMenu();
 </script>
