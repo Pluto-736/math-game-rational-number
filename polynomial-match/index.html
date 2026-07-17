@@ -560,7 +560,7 @@ const L3={goal:null,coins:0,need:5,busy:false,poly:null,rollTimer:0,_settled:tru
     if(new Set(keys).size!==keys.length)return{ok:false,why:'藏了同类项，合并后其实只有 '+new Set(keys).size+' 项'};
     if(terms.length!==this.goal.n)return{ok:false,why:'项数不对：这是 '+terms.length+' 项，要 '+this.cn[this.goal.n]+'项'};
     const maxDeg=Math.max(...terms.map(t=>t.deg));
-    if(maxDeg!==this.goal.d)return{ok:false,why:'次数不对：最高次是 '+maxDeg+' 次，要 '+this.cn[this.goal.d]+'次'};
+    if(maxDeg!==this.goal.d)return{ok:false,why:'次数不对：最高次是 '+maxDeg+' 次，要 '+this.goal.d+'次'};
     return{ok:true};
   },
   start(){this.coins=0;this.busy=false;this.render();this.newGoal()},
@@ -620,7 +620,7 @@ const L3={goal:null,coins:0,need:5,busy:false,poly:null,rollTimer:0,_settled:tru
   // ✕淘汰：判断“它不符合” —— 判对(真不符)放行重摇；判错(其实符合)扣心
   again(){if(this.busy)return;const r=this.isMatch(this.poly);
     if(!r.ok){SFX.click();Flow.toast('没错，这个不合格',true);setTimeout(()=>this.spin(),450);}
-    else{this.misjudge('它其实是合格的「'+this.cn[this.goal.d]+'次'+this.cn[this.goal.n]+'项式」，别放走啦')}},
+    else{this.misjudge('它其实是合格的「'+this.goal.d+'次'+this.cn[this.goal.n]+'项式」，别放走啦')}},
   // 判断错误：震动 + 弹出提示，停留到学生点「确定」才继续（扣心也在点确定时结算）
   misjudge(msg){this.busy=true;const slot=document.getElementById('slot');slot.classList.remove('shake');void slot.offsetWidth;slot.classList.add('shake');SFX.wrong();
     document.getElementById('slotDlgMsg').textContent=msg;document.getElementById('slotDlg').classList.add('show')},
