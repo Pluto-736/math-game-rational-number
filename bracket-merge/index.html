@@ -162,6 +162,23 @@ body{background:linear-gradient(160deg,#0b1220 0%,#16233f 55%,#0a1120 100%)}
 .dHint{font-size:10px;font-weight:700;color:#8a96bf}
 #dialTip{width:100%;max-width:520px;text-align:center;font-size:11px;color:#8a96bf;padding:0 14px 10px;flex-shrink:0}
 @media(max-height:660px){.dWheel{height:50px}.dCur{font-size:20px}}
+/* ===== 最终结算 · 机密卷宗（牛皮纸信封 + 任务完成文档） ===== */
+#missionMask{align-items:center}
+.msnWrap{display:flex;flex-direction:column;align-items:center;gap:20px;width:min(86vw,330px)}
+.msnEnv{position:relative;width:min(80vw,300px);height:196px;border-radius:10px;background:linear-gradient(160deg,#e8d6ac,#d9c28e 55%,#c8a86b);box-shadow:0 16px 42px rgba(0,0,0,.55),inset 0 2px 3px rgba(255,255,255,.35);animation:msnPop .5s cubic-bezier(.2,1.35,.4,1) both}
+@keyframes msnPop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
+.msnDoc{position:absolute;left:7%;right:7%;top:7px;height:238px;padding:18px 12px;text-align:center;background:repeating-linear-gradient(#fffdf7 0 26px,#f3ecd9 26px 27px);border-radius:6px;box-shadow:0 4px 14px rgba(60,40,15,.35);z-index:2;animation:msnDocUp .7s cubic-bezier(.25,1,.35,1) .45s both}
+@keyframes msnDocUp{0%{transform:translateY(0)}100%{transform:translateY(-96px)}}
+.msnDoc h2{font-family:'KaiTi','STKaiti','Microsoft YaHei',sans-serif;color:#5a3d1c;font-size:19px;letter-spacing:2px;white-space:nowrap;margin:18px 0 8px}
+.msnStars{font-size:26px;margin:4px 0 6px}
+.msnStats{font-size:13px;line-height:1.9;color:#6b5334}
+.msnStats b{color:#b22a26}
+.msnSeal{position:absolute;top:-24px;right:-18px;z-index:4;font-family:'KaiTi','STKaiti','Microsoft YaHei',sans-serif;font-weight:900;font-size:19px;letter-spacing:3px;color:rgba(178,42,38,.85);text-align:center;line-height:1.15;padding:9px 10px 7px;border:3px double rgba(178,42,38,.72);border-radius:9px;transform:rotate(-13deg);background:rgba(255,250,238,.94);box-shadow:inset 0 0 12px rgba(178,42,38,.16),0 3px 8px rgba(60,40,15,.3);animation:msnSeal .38s cubic-bezier(.2,1.6,.4,1) 1.15s both}
+.msnSeal small{display:block;font-size:8px;letter-spacing:1px;margin-top:2px}
+@keyframes msnSeal{0%{transform:rotate(-13deg) scale(2.4);opacity:0}100%{transform:rotate(-13deg) scale(1);opacity:1}}
+.msnPocket{position:absolute;left:0;right:0;bottom:0;height:58%;z-index:3;border-radius:0 0 10px 10px;background:linear-gradient(165deg,#dfc995,#caa869);clip-path:polygon(0 26%,50% 0,100% 26%,100% 100%,0 100%);box-shadow:0 -3px 8px rgba(60,40,15,.25)}
+.msnBtns{display:flex;gap:10px;animation:msnFade .45s ease 1.35s both}
+@keyframes msnFade{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:translateY(0)}}
 /* 手机窄屏：压缩齿轮模块，保证 1 张已知卡 + 3 个齿轮同排不换行 */
 @media(max-width:480px){
   #row{gap:7px}
@@ -247,7 +264,7 @@ body{background:linear-gradient(160deg,#0b1220 0%,#16233f 55%,#0a1120 100%)}
 <div id="helpMask" class="mask"><div class="modal">
   <h2>玩法说明</h2>
   <p><span class="hl">第1关 · 密钥配对</span>：保险库外层是一道 4×4 密钥矩阵。点选两张<span class="hl">字母部分完全相同</span>的密钥卡（同类项）即可配对核销，清空矩阵就能解除外层防线。配错一对扣一格电量，电量耗尽矩阵会重置。</p>
-  <p><span class="hl">第2关 · 单层保险箱</span>：保险箱正面刻着一道<span class="hl">带括号的整式</span>，去括号化简就是开锁密码。括号前是“+”，里面各项照抄；括号前是“−”，里面每一项都要<span class="hl">变号</span>。拨动卡片上的密码齿轮，调出正确的系数和符号。</p>
+  <p><span class="hl">第2关 · 智取密件</span>：保险箱正面刻着一道<span class="hl">带括号的整式</span>，去括号化简就是开锁密码。括号前是“+”，里面各项照抄；括号前是“−”，里面每一项都要<span class="hl">变号</span>。拨动卡片上的密码齿轮，调出正确的系数和符号。</p>
   <p>填完点<span class="hl">确认</span>核对。答错扣一格电量；电量用完会<span class="hl">重做这道题</span>；第二次还没做对，就直接告诉你正确的步骤和答案。</p>
   <button class="btn" style="display:block;margin:16px auto 0" onclick="UI.help(false)">明白啦</button>
 </div></div>
@@ -296,6 +313,22 @@ body{background:linear-gradient(160deg,#0b1220 0%,#16233f 55%,#0a1120 100%)}
     <button id="kpMinus" onclick="KP.sign(-1)">－</button>
   </div>
   <div class="kpBtns"><button class="btn ghost" id="kpDel" onclick="KP.del()">⌫ 退格</button><button class="btn" id="kpOk" onclick="KP.ok()">确定</button></div>
+</div></div>
+
+<div id="missionMask" class="mask"><div class="msnWrap">
+  <div class="msnEnv">
+    <div class="msnDoc">
+      <div class="msnSeal">任务完成<small>MISSION CLEAR</small></div>
+      <h2>机密卷宗·破解完成</h2>
+      <div id="msnStars" class="msnStars"></div>
+      <div id="msnStats" class="msnStats"></div>
+    </div>
+    <div class="msnPocket"></div>
+  </div>
+  <div class="msnBtns">
+    <button class="btn" onclick="LFlow.retry()">↺ 再玩一次</button>
+    <button class="btn ghost" onclick="UI.toEntry()">选关卡</button>
+  </div>
 </div></div>
 
 <div id="over" class="screen"><div class="overCard">
@@ -363,7 +396,7 @@ function cardText(coef,letter){return answerText(coef,letter,true)}
 function joinTerms(arr){return arr.map((t,i)=>seqText(t.correct,t.letter,i)).join('')}
 
 /* ===== 出题引擎 =====
-   当前启用：genL1（新第2关 · 单层保险箱）。
+   当前启用：genL1（新第2关 · 智取密件）。
    原第2、3关（双层保险箱 genL2 / 嵌套密室 genL3）已隐藏：生成器代码保留，关卡菜单不再展示。 */
 function genL1(qi,total){
   while(true){
@@ -610,10 +643,10 @@ const L1E={tiles:[],sel:null,busy:false,
 const UI={
   LV:[null,
     {name:'密钥配对',desc:'配对相同密钥，解除保险库外层防线',tip:'字母相同 · 指数也相同 · 才是同类项',steps:0,qTotal:1},
-    {name:'单层保险箱',desc:'去括号定符号，一步搞定密码',tip:'括号前的符号 · 决定要不要变号',steps:1,qTotal:7}],
+    {name:'智取密件',desc:'去括号定符号，一步搞定密码',tip:'括号前的符号 · 决定要不要变号',steps:1,qTotal:7}],
   // 原第2关「双层保险箱」、原第3关「嵌套密室」已隐藏：genL2/genL3 保留在 GEN 中，菜单不再展示
   unlocked:Math.max(1,+(localStorage.getItem('bm_unlocked')||1)),
-  show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));document.getElementById(id).classList.add('show')},
+  show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));document.getElementById(id).classList.add('show');const mm=document.getElementById('missionMask');if(mm)mm.classList.remove('show')},
   help(on){document.getElementById('helpMask').classList.toggle('show',on)},
   toEntry(){this.renderMenu();this.show('entry')},
   renderMenu(){const m=document.getElementById('levelMenu');m.innerHTML='';for(let lv=1;lv<=2;lv++){const locked=lv>this.unlocked,c=document.createElement('div');c.className='lv'+(locked?' locked':'');c.innerHTML='<div class="lvNo">'+lv+'</div><div><div class="lvName">第'+lv+'关 · '+this.LV[lv].name+'</div><div class="lvDesc">'+this.LV[lv].desc+'</div><div class="lvTip">'+(locked?'通关上一关解锁':this.LV[lv].tip)+'</div></div>';if(!locked)c.onclick=()=>LFlow.startLevel(lv);m.appendChild(c)}}
@@ -631,17 +664,25 @@ const LFlow={level:1,qTotal:5,mistakes:0,reveals:0,
     let star;
     if(this.reveals>0)star=1;else if(this.mistakes===0)star=3;else if(this.mistakes<=3)star=2;else star=1;
     SFX.win();
-    document.getElementById('stars').textContent='⭐'.repeat(star)+'☆'.repeat(3-star);
-    document.getElementById('overTitle').textContent=this.level===1?'外层防线解除！':'全部通关！';
-    document.getElementById('overStats').innerHTML=this.level===1
-      ?'配错 <b>'+this.mistakes+'</b> 次'
-      :'答错 <b>'+this.mistakes+'</b> 次　需要看解法 <b>'+this.reveals+'</b> 次';
     if(this.level===1){
-      // 承载密钥矩阵的面板本身就是「外层防线」的大门：通关即向左旋开
+      // 密钥配对：面板大门旋开 → 普通结算屏（带「下一关」）
+      document.getElementById('stars').textContent='⭐'.repeat(star)+'☆'.repeat(3-star);
+      document.getElementById('overTitle').textContent='外层防线解除！';
+      document.getElementById('overStats').innerHTML='配错 <b>'+this.mistakes+'</b> 次';
       document.getElementById('boardWrap').classList.add('opened');
       document.getElementById('board').classList.add('gateOpen');
-    }else{Vault.open()}
-    setTimeout(()=>UI.show('over'),this.level===1?1350:850);
+      setTimeout(()=>UI.show('over'),1350);
+    }else{
+      // 最终关：保险箱开门 → 牛皮纸卷宗「任务完成」
+      Vault.open();
+      setTimeout(()=>this.showMission(star),950);
+    }
+  },
+  showMission(star){
+    document.getElementById('msnStars').textContent='⭐'.repeat(star)+'☆'.repeat(3-star);
+    document.getElementById('msnStats').innerHTML='机密卷宗已全部破解<br>答错 <b>'+this.mistakes+'</b> 次 · 需要看解法 <b>'+this.reveals+'</b> 次';
+    document.getElementById('missionMask').classList.add('show');
+    setTimeout(()=>SFX.click(),1250);   // 盖章音
   }
 };
 
