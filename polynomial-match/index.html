@@ -89,6 +89,8 @@ body{background:linear-gradient(160deg,#ffe6f0 0%,#fff3d6 45%,#d8f7ec 100%)}
 #toast{position:absolute;top:30%;left:50%;transform:translateX(-50%);z-index:85;max-width:88%;text-align:center;font-size:18px;font-weight:1000;color:#fff;background:rgba(192,87,127,.95);border-radius:16px;padding:13px 20px;opacity:0;pointer-events:none}
 #toast.ok{background:rgba(63,199,149,.96)}
 #toast.show{animation:toast 1.5s ease forwards}
+.soundHint{display:none;margin-top:auto;margin-bottom:10px;padding:7px 16px;font-size:13px;font-weight:800;color:var(--ink);background:rgba(255,211,77,.55);border-radius:14px;letter-spacing:.5px}
+.soundHint.show{display:block}
 @keyframes toast{0%{opacity:0;transform:translateX(-50%) scale(.8)}16%,78%{opacity:1;transform:translateX(-50%) scale(1)}100%{opacity:0;transform:translateX(-50%) translateY(-20px)}}
 .mask{position:absolute;inset:0;background:rgba(90,61,43,.55);display:none;align-items:center;justify-content:center;z-index:90;padding:22px}
 .mask.show{display:flex}
@@ -224,6 +226,7 @@ body{background:linear-gradient(160deg,#ffe6f0 0%,#fff3d6 45%,#d8f7ec 100%)}
   <div id="board"></div>
   <div id="tray"><div id="trayBox" class="trayBox"></div><div class="trayBtns"><button class="btn ghost" onclick="L3.clear()">清空</button><button class="btn" onclick="L3.submit()">提交验收</button></div></div>
   <div id="toast"></div>
+  <div id="soundHint" class="soundHint">🔊 关闭静音开关，拥有游戏声音</div>
 </div>
 
 <div id="over" class="screen"><div class="overCard">
@@ -242,6 +245,8 @@ body{background:linear-gradient(160deg,#ffe6f0 0%,#fff3d6 45%,#d8f7ec 100%)}
 </div></div>
 </div>
 <script>
+// iPhone 的合成音会被侧边静音开关掐掉，仅对 iPhone 显示"关静音"提示
+if(/iPhone|iPod/.test(navigator.userAgent))document.getElementById('soundHint').classList.add('show');
 const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=rnd(0,i);[a[i],a[j]]=[a[j],a[i]]}return a};
