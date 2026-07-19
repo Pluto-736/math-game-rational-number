@@ -558,7 +558,7 @@ const L3={goal:null,coins:0,need:5,busy:false,poly:null,rollTimer:0,_settled:tru
   isMatch(terms){
     const keys=terms.map(t=>t.key);
     if(new Set(keys).size!==keys.length)return{ok:false,why:'藏了同类项，合并后其实只有 '+new Set(keys).size+' 项'};
-    if(terms.length!==this.goal.n)return{ok:false,why:'项数不对：这是 '+terms.length+' 项，要 '+this.cn[this.goal.n]+'项'};
+    if(terms.length!==this.goal.n)return{ok:false,why:'项数不对：这是 '+terms.length+' 项，要 '+this.goal.n+' 项'};
     const maxDeg=Math.max(...terms.map(t=>t.deg));
     if(maxDeg!==this.goal.d)return{ok:false,why:'次数不对：最高次是 '+maxDeg+' 次，要 '+this.goal.d+'次'};
     return{ok:true};
