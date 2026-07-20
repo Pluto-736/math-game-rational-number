@@ -110,6 +110,7 @@ body{background:linear-gradient(180deg,#1a0f2e 0%,#241540 45%,#120a24 100%)}
 .fillLine{text-align:center;font-size:22px;font-weight:900;margin:14px 0 4px;letter-spacing:1px;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px;color:#3a2b1a}
 .blank{font:900 20px inherit;min-width:44px;padding:8px 8px;border-radius:8px;border:2px dashed var(--goldDk);background:rgba(184,138,30,.14);color:#8a5a10;cursor:pointer}
 .blank.filled{border-style:solid;background:linear-gradient(#ffd76b,#e6a92e);color:#4a3200}
+.blank .qm{font-size:1.2em;font-weight:900}
 .blank.bad{animation:tileBad .45s;border-color:var(--red)}
 .eqto{color:#7a5a1a;font-size:18px}
 /* 去分母「同乘展开」三行页：小字、不换行、第三行拉开间距 */
@@ -714,7 +715,7 @@ const B={
           return `<div class="tileWrap" data-i="${o.i}"><button class="tileBody" onclick="B.moveTile(${o.i})">${faceStr(t.origC,t.x,leading)}</button></div>`;
         }
         const filled=t.val!=null;
-        return `<button class="blank${filled?' filled':''}" data-i="${o.i}" onclick="B.editTile(${o.i})">${filled?faceStr(t.val,t.x,leading):'?'}</button>`;
+        return `<button class="blank${filled?' filled':''}" data-i="${o.i}" onclick="B.editTile(${o.i})">${filled?faceStr(t.val,t.x,leading):'<span class="qm">?</span>'}</button>`;
       }).join('');
       html+=ghosts.map(o=>`<div class="tileWrap ghost" data-i="${o.i}"><button class="tileBody" onclick="B.undoTile(${o.i})">${faceStr(o.t.origC,o.t.x,false)}</button></div>`).join('');
       if(!real.length)html='<span class="empty">0</span>'+html;
