@@ -94,17 +94,16 @@ body{background:linear-gradient(180deg,#1a0f2e 0%,#241540 45%,#120a24 100%)}
 .mvRow{display:flex;align-items:stretch;gap:6px;min-height:60px}
 .zone{flex:1;display:flex;flex-wrap:wrap;gap:6px;align-content:center;justify-content:center;padding:8px 4px;background:rgba(60,40,10,.14);border:2px dashed rgba(184,138,30,.6);border-radius:8px;min-width:0}
 .zone .empty{opacity:.4;font-size:20px;font-weight:900;color:#7a5a1a}
-.bridge{flex-shrink:0;width:40px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:1000;color:var(--gold);text-shadow:0 0 10px rgba(245,197,66,.7);position:relative}
+.bridge{flex-shrink:0;width:40px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:1000;color:#6b4400;text-shadow:0 1px 2px rgba(255,248,230,.9);position:relative}
 .bridge:before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:38px;height:38px;border-radius:50%;background:radial-gradient(circle,rgba(245,197,66,.18),transparent 70%)}
 .tileWrap{position:relative;display:inline-flex;align-items:stretch;border-radius:9px;background:linear-gradient(#4a3a7a,#2f2154);box-shadow:0 3px 0 #1a1030}
-.tileWrap.pending{box-shadow:0 0 0 2px var(--red),0 3px 0 #1a1030;animation:pendPulse 1s infinite alternate}
-@keyframes pendPulse{to{box-shadow:0 0 0 3px var(--red),0 0 10px rgba(255,85,107,.6),0 3px 0 #1a1030}}
 .tileBody{font:900 19px inherit;padding:9px 11px;border:0;cursor:pointer;background:transparent;color:#fff;letter-spacing:.5px;transition:transform .12s}
 .tileBody:active{transform:translateY(2px)}
+.tileWrap.crossed{background:linear-gradient(#7a5a14,#4a3a0e);box-shadow:0 3px 0 #2a1e05}
+.tileWrap.crossed .tileBody{min-width:54px;text-align:center;color:#ffd76b}
+.tileWrap.crossed .tileBody.filled{color:#fff}
 .tileFlip{font:900 15px inherit;width:30px;border:0;border-left:1px solid rgba(255,255,255,.18);border-radius:0 9px 9px 0;background:rgba(0,0,0,.22);color:var(--gold);cursor:pointer}
 .tileFlip:active{background:rgba(0,0,0,.4)}
-.tileWrap.pending .tileFlip{background:var(--red);color:#fff}
-.pendTag{position:absolute;top:-9px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:900;color:#fff;background:var(--red);padding:1px 6px;border-radius:8px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.5)}
 .tileWrap.bad{animation:tileBad .45s}
 .tileWrap.hintFlash{animation:hintF .6s 2}
 @keyframes tileBad{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(5px)}}
@@ -256,6 +255,8 @@ const sumC=arr=>arr.filter(t=>!t.x).reduce((s,t)=>s+t.c,0);
 const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b]}return a};
 const lcm=(a,b)=>Math.abs(a*b)/gcd(a,b);
 const lcmAll=arr=>arr.reduce((l,d)=>lcm(l,d),1);
+// 同一侧是否存在可抵消为 0 的相反数对（去括号/去分母后出现 −3+3 这类式子不合常理，出题时排除）
+function hasCancelPair(arr){for(let i=0;i<arr.length;i++)for(let j=i+1;j<arr.length;j++){if(!!arr[i].x===!!arr[j].x&&arr[i].c+arr[j].c===0)return true}return false}
 
 /* ===== 音效 + 循环 BGM ===== */
 const SFX={ctx:null,muted:false,bgm:null,step:0,bgmGain:null,
@@ -355,6 +356,7 @@ function defracSideExpr(arr,LCD){
 // extra: null | {brackets:[{side,bk}], fracs?:{L,R}, LCD?, multi?:{L,R}}
 function buildPlan(floor,eqDeb,extra,headEq){
   const eqAfter={L:clone(eqDeb.L),R:clone(eqDeb.R)};
+  if(hasCancelPair(eqAfter.L)||hasCancelPair(eqAfter.R))return null;
   const A=sumX(eqAfter.L)-sumX(eqAfter.R);
   const B=sumC(eqAfter.R)-sumC(eqAfter.L);
   if(A===0||B%A!==0)return null;
@@ -643,29 +645,35 @@ const B={
   /* --- 移项 --- */
   renderMove(){
     const eq=this.plan.eqAfter;
-    this.tiles=[...clone(eq.L).map(t=>({origC:t.c,c:t.c,x:t.x,origSide:'L',side:'L'})),...clone(eq.R).map(t=>({origC:t.c,c:t.c,x:t.x,origSide:'R',side:'R'}))];
+    this.tiles=[...clone(eq.L).map(t=>({origC:t.c,x:t.x,origSide:'L',side:'L',val:null})),...clone(eq.R).map(t=>({origC:t.c,x:t.x,origSide:'R',side:'R',val:null}))];
     document.getElementById('board').innerHTML=
-      `<div class="panel"><div class="readEq small">点方块渡过“=”桥；过桥后记得点 ± 变号</div>`
+      `<div class="panel"><div class="readEq small">点方块渡过“=”桥；落岸后填入它变成的新项（过桥要变号）</div>`
       +`<div class="mvRow"><div class="zone" id="zoneL"></div><div class="bridge">=</div><div class="zone" id="zoneR"></div></div></div>`;
     this.renderZones();
-    document.getElementById('instr').textContent='移项：含 x 的项→左边、常数→右边，过桥的项要变号';
+    document.getElementById('instr').textContent='移项：含 x 的项→左边、常数→右边；过桥的项要变号（+ 变 −，− 变 +）';
   },
-  expectC(t){return t.side!==t.origSide?-t.origC:t.origC},
   renderZones(){
     ['L','R'].forEach(side=>{
       const z=document.getElementById('zone'+side);
-      const ts=this.tiles.map((t,i)=>({t,i})).filter(o=>o.t.side===side);
+      // 原地未动的项排前、过桥移入的项排后，与「合并」阶段展示的项序一致（课本习惯写法）
+      const ts=this.tiles.map((t,i)=>({t,i})).filter(o=>o.t.side===side)
+        .sort((a,b)=>((a.t.side!==a.t.origSide)-(b.t.side!==b.t.origSide))||a.i-b.i);
       if(!ts.length){z.innerHTML='<span class="empty">0</span>';return}
       z.innerHTML=ts.map((o,k)=>{
-        const pend=o.t.c!==this.expectC(o.t);
-        return `<div class="tileWrap${pend?' pending':''}" data-i="${o.i}">${pend?'<span class="pendTag">变号?</span>':''}`
-          +`<button class="tileBody" onclick="B.moveTile(${o.i})">${faceStr(o.t.c,o.t.x,k===0)}</button>`
-          +`<button class="tileFlip" onclick="B.flipTile(${o.i})">±</button></div>`;
+        const t=o.t,leading=k===0;
+        if(t.side===t.origSide){
+          return `<div class="tileWrap" data-i="${o.i}"><button class="tileBody" onclick="B.moveTile(${o.i})">${faceStr(t.origC,t.x,leading)}</button></div>`;
+        }
+        const filled=t.val!=null;
+        return `<div class="tileWrap crossed" data-i="${o.i}">`
+          +`<button class="tileBody${filled?' filled':''}" onclick="B.editTile(${o.i})">${filled?faceStr(t.val,t.x,leading):'?'}</button>`
+          +`<button class="tileFlip" onclick="B.backTile(${o.i})" title="放回原边">↩</button></div>`;
       }).join('');
     });
   },
-  moveTile(i){SFX.tap();const t=this.tiles[i];t.side=t.side==='L'?'R':'L';this.renderZones()},
-  flipTile(i){SFX.tap();const t=this.tiles[i];t.c=-t.c;this.renderZones()},
+  moveTile(i){SFX.tap();const t=this.tiles[i];t.side=t.side==='L'?'R':'L';t.val=null;this.renderZones()},
+  backTile(i){SFX.tap();const t=this.tiles[i];t.side=t.origSide;t.val=null;this.renderZones()},
+  editTile(i){const t=this.tiles[i];KP.open({value:t.val,isX:!!t.x,onOk:v=>{t.val=v;this.renderZones()}})},
   /* --- 合并 --- */
   renderMerge(){
     const p=this.plan;
@@ -679,6 +687,17 @@ const B={
   /* --- 系数化 1 --- */
   renderSolve(){
     const p=this.plan;
+    if(p.A===1){
+      // 系数已是 1，答案就是 B，无需再让玩家填，直接展示并破甲通过
+      this.blanks={};
+      document.getElementById('board').innerHTML=
+        `<div class="panel"><div class="readEq">${faceStr(p.A,true,true)} = ${faceStr(p.B,false,true)}</div>`
+        +`<div class="fillLine"><span>x</span><span class="eqto">=</span><span>${faceStr(p.B,false,true)}</span></div></div>`;
+      document.getElementById('instr').textContent='x 的系数已经是 1，答案就是它了';
+      document.getElementById('confirmBtn').disabled=true;
+      setTimeout(()=>{if(this.curStage==='solve'&&document.getElementById('game').classList.contains('show'))this.correctStep()},900);
+      return;
+    }
     this.blanks={ans:{expect:p.ans,isX:false,leading:true,val:null}};
     document.getElementById('board').innerHTML=
       `<div class="panel"><div class="readEq">${faceStr(p.A,true,true)} = ${faceStr(p.B,false,true)}</div>`
@@ -695,7 +714,13 @@ const B={
     else this.confirmFill();
   },
   confirmMove(){
-    const bad=this.tiles.filter(t=>{const posOk=t.x?t.side==='L':t.side==='R';return !(posOk&&t.c===this.expectC(t))});
+    const crossed=this.tiles.filter(t=>t.side!==t.origSide);
+    if(crossed.some(t=>t.val==null)){toast('过桥的项还没填完');return}
+    const bad=this.tiles.filter(t=>{
+      const posOk=t.x?t.side==='L':t.side==='R';
+      if(!posOk)return true;
+      return t.side!==t.origSide&&t.val!==-t.origC;
+    });
     if(!bad.length){this.correctStep();return}
     bad.forEach(t=>{const el=document.querySelector('.tileWrap[data-i="'+this.tiles.indexOf(t)+'"]');if(el){el.classList.add('bad');setTimeout(()=>el.classList.remove('bad'),450)}});
     this.wrongStep();
@@ -743,7 +768,7 @@ const B={
     }
     else if(st==='debracket'&&this.floor===3)this.showHint('两边都可能藏着括号，仔细检查<b>左边和右边</b>，把每个括号都展开。');
     else if(st==='debracket')this.showHint('把括号外的 '+(p.brackets[0].bk.s<0?'−':'')+p.brackets[0].bk.k+' 乘进括号里的<b>每一项</b>（x 和常数都要乘，注意符号）');
-    else if(st==='move'){this.showHint('含 x 的项移到<b>左边</b>、常数移到<b>右边</b>；<b>过桥的项要点 ± 变号</b>');this.tiles.forEach((t,i)=>{const need=(t.x?t.side!=='L':t.side!=='R')||t.c!==this.expectC(t);if(need){const el=document.querySelector('.tileWrap[data-i="'+i+'"]');if(el){el.classList.add('hintFlash');setTimeout(()=>el.classList.remove('hintFlash'),1200)}}})}
+    else if(st==='move'){this.showHint('含 x 的项移到<b>左边</b>、常数移到<b>右边</b>；<b>过桥的项要变号</b>（+ 变 −，− 变 +），落岸后自己填出变号后的项');this.tiles.forEach((t,i)=>{const posBad=t.x?t.side!=='L':t.side!=='R';if(posBad){const el=document.querySelector('.tileWrap[data-i="'+i+'"]');if(el){el.classList.add('hintFlash');setTimeout(()=>el.classList.remove('hintFlash'),1200)}}})}
     else if(st==='merge')this.showHint('左边所有 x 的系数相加，右边所有常数相加');
     else if(st==='solve')this.showHint('x = 右边 ÷ x 的系数（'+p.A+'）');
   },
