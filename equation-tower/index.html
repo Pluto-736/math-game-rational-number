@@ -19,7 +19,8 @@ body{background:linear-gradient(180deg,#1a0f2e 0%,#241540 45%,#120a24 100%)}
 .btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--purDk),0 0 0 2px #2a1a4d}
 .btn.gold{background:linear-gradient(#ffd76b,var(--gold));color:#4a3200;box-shadow:0 4px 0 var(--goldDk),0 0 0 2px #4a3200}
 .btn.gold:active{box-shadow:0 1px 0 var(--goldDk),0 0 0 2px #4a3200}
-.btn.ghost{background:#2c2148;color:var(--ink);box-shadow:0 4px 0 #180f2e}
+.btn.ghost{background:linear-gradient(#c2a86a,#94733a);color:#3a2c14;box-shadow:0 4px 0 #5c4620,0 0 0 2px #3a2c14}
+.btn.ghost:active{box-shadow:0 1px 0 #5c4620,0 0 0 2px #3a2c14}
 .btn[disabled]{opacity:.4;pointer-events:none}
 /* ===== TOWER (entry) ===== */
 #entry{justify-content:flex-start;overflow-y:auto}
@@ -78,10 +79,10 @@ body{background:linear-gradient(180deg,#1a0f2e 0%,#241540 45%,#120a24 100%)}
 #hearts .heart{font-size:18px;color:var(--red);text-shadow:0 0 6px rgba(255,85,107,.6);margin:0 1px;transition:.2s}
 #hearts .heart.dead{color:#3a2f5c;text-shadow:none;transform:scale(.8)}
 /* board */
-#board{width:100%;max-width:520px;padding:10px 14px;flex:1;display:flex;flex-direction:column;justify-content:center}
+#board{width:100%;max-width:520px;padding:10px 4px;flex:1;display:flex;flex-direction:column;justify-content:center}
 #board.shake{animation:shk .4s}
 @keyframes shk{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
-.panel{background:linear-gradient(160deg,#efe7d0,#e2d6b4 60%,#e9dfc4);border:3px solid var(--gold);border-radius:12px;padding:14px 12px;box-shadow:inset 0 0 20px rgba(184,138,30,.28),0 0 22px rgba(245,197,66,.32),0 6px 18px rgba(0,0,0,.5);position:relative}
+.panel{background:linear-gradient(160deg,#efe7d0,#e2d6b4 60%,#e9dfc4);border:3px solid var(--gold);border-radius:12px;padding:14px 7px;box-shadow:inset 0 0 20px rgba(184,138,30,.28),0 0 22px rgba(245,197,66,.32),0 6px 18px rgba(0,0,0,.5);position:relative}
 .panel:before{content:'';position:absolute;inset:4px;border:1px dashed rgba(184,138,30,.5);border-radius:8px;pointer-events:none}
 .readEq{text-align:center;font-size:20px;font-weight:900;letter-spacing:.5px;color:#3a2b1a;margin:2px 0 10px}
 .readEq.small{font-size:16px;opacity:.85}
@@ -106,8 +107,8 @@ body{background:linear-gradient(180deg,#1a0f2e 0%,#241540 45%,#120a24 100%)}
 .hintFlash{animation:hintF .6s 2}
 @keyframes tileBad{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(5px)}}
 @keyframes hintF{50%{box-shadow:0 0 0 3px var(--gold),0 3px 0 var(--goldDk);transform:translateY(-3px)}}
-.fillLine{text-align:center;font-size:22px;font-weight:900;margin:14px 0 4px;letter-spacing:1px;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;color:#3a2b1a}
-.blank{font:900 20px inherit;min-width:56px;padding:8px 12px;border-radius:8px;border:2px dashed var(--goldDk);background:rgba(184,138,30,.14);color:#8a5a10;cursor:pointer}
+.fillLine{text-align:center;font-size:22px;font-weight:900;margin:14px 0 4px;letter-spacing:1px;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px;color:#3a2b1a}
+.blank{font:900 20px inherit;min-width:44px;padding:8px 8px;border-radius:8px;border:2px dashed var(--goldDk);background:rgba(184,138,30,.14);color:#8a5a10;cursor:pointer}
 .blank.filled{border-style:solid;background:linear-gradient(#ffd76b,#e6a92e);color:#4a3200}
 .blank.bad{animation:tileBad .45s;border-color:var(--red)}
 .eqto{color:#7a5a1a;font-size:18px}
@@ -115,7 +116,7 @@ body{background:linear-gradient(180deg,#1a0f2e 0%,#241540 45%,#120a24 100%)}
 .defracExpand .readEq.small{font-size:14px;margin-bottom:6px}
 .defracExpand .fillLine{font-size:15px;margin:4px 0;flex-wrap:nowrap;gap:4px;letter-spacing:0}
 .defracExpand .dfLine2{margin-top:34px}
-.defracExpand .blank{font-size:14px;min-width:30px;padding:5px 7px}
+.defracExpand .blank{font-size:14px;min-width:22px;padding:5px 4px}
 .defracExpand .eqto{font-size:15px}
 .defracExpand .frac{font-size:.84em}
 /* actions */
@@ -157,7 +158,7 @@ body{background:linear-gradient(180deg,#1a0f2e 0%,#241540 45%,#120a24 100%)}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 @media(max-height:660px){
 .bossFace{font-size:48px}.readEq{font-size:18px}.tileBody{font-size:17px;padding:8px 9px}
-.fillLine{font-size:19px;margin:10px 0 2px}#board{padding:6px 12px}
+.fillLine{font-size:19px;margin:10px 0 2px}#board{padding:6px 4px}
 }
 </style>
 <!-- 51.la 访问统计 -->
