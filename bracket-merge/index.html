@@ -403,6 +403,7 @@ function genL1(qi,total){
     // 最后 2 题：括号前带乘数（系数 |m|∈2~5，不是 ±1，需要先乘进去）
     const withMult = typeof qi==='number' && typeof total==='number' && qi>=total-2;
     const m = withMult ? (Math.random()<0.5?-1:1)*rnd(2,5) : 0;
+    const coefMax = withMult ? Math.min(9, Math.floor(30/Math.abs(m))) : 9;  // 保证去括号后新系数 |m×coef| ≤ 30
     const n=rnd(2,3);
     const letters=pickLetters(n+1);
     const letterA=letters[0];
@@ -414,7 +415,7 @@ function genL1(qi,total){
     for(let i=0;i<n;i++){
       const isConstSlot=useConst&&i===n-1;
       const letter=isConstSlot?null:innerLetters[i];
-      const coef=rnd(1,9);
+      const coef=rnd(1,coefMax);
       const internalSign=Math.random()<0.5?1:-1;   // 括号内首项符号同样随机
       innerTerms.push({letter,coef:coef*internalSign});
     }
