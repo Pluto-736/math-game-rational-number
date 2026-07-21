@@ -7,7 +7,8 @@
 <title>折叠工坊 · 正方体展开图</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-:root{--line:#7fd0ff;--ink:#eaf6ff;--glow:#ffd34d;--good:#4ade80;--bad:#fb5a6a;--muted:#8fb4d6;--edge:#2b5fa0}
+:root{--line:#7fd0ff;--ink:#eaf6ff;--glow:#ffd34d;--good:#4ade80;--bad:#fb5a6a;--muted:#8fb4d6;--edge:#2b5fa0;
+  --hand:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><text x="20" y="21" font-size="30" text-anchor="middle" dominant-baseline="central">🖐️</text></svg>')}
 html,body{height:100%;overflow:hidden;font-family:'Microsoft YaHei',Arial,sans-serif;color:var(--ink);user-select:none;touch-action:none}
 body{background:
   linear-gradient(rgba(120,180,255,.08) 1px,transparent 1px) 0 0/30px 30px,
@@ -35,6 +36,8 @@ body{background:
 .hud{width:100%;max-width:540px;display:flex;align-items:center;justify-content:space-between;padding:12px 16px 4px;z-index:5}
 .hud .mid{text-align:center;font-weight:900;color:var(--line);font-size:15px}
 .hud .mid small{display:block;color:var(--muted);font-size:11.5px;font-weight:700}
+.quest{z-index:5;text-align:center;font-size:16px;font-weight:900;color:var(--glow);
+  text-shadow:0 2px 0 #a8760a;letter-spacing:1px;padding:2px 16px 4px}
 .icon-btn{border:0;background:rgba(255,255,255,.13);color:var(--ink);border-radius:11px;padding:7px 11px;font-size:16px;cursor:pointer}
 .dots{display:flex;gap:6px}
 .dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.22)}
@@ -44,10 +47,13 @@ body{background:
 .overlay{position:relative;z-index:5;width:100%;display:flex;flex-direction:column;align-items:center;margin-top:auto}
 .tip{min-height:42px;width:100%;max-width:480px;font-size:13.5px;color:#ffe9a8;text-align:center;font-weight:700;line-height:1.55;padding:0 16px}
 .slider{width:100%;max-width:330px;display:flex;align-items:center;gap:10px;padding:2px 12px}
-.slider input{flex:1;accent-color:var(--glow)}
+.slider input{flex:1;-webkit-appearance:none;appearance:none;height:8px;border-radius:6px;
+  background:linear-gradient(90deg,var(--glow),#b78300);outline:none}
+.slider input::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:38px;height:38px;
+  cursor:pointer;border:0;background:var(--hand) center/contain no-repeat}
+.slider input::-moz-range-thumb{width:38px;height:38px;cursor:pointer;border:0;background:var(--hand) center/contain no-repeat}
 .slider span{font-size:12px;color:var(--muted)}
-.controls,.controls2{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;padding:5px 12px;align-items:center}
-.controls2 .lab{font-size:13px;color:var(--muted)}
+.controls2{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;padding:8px 12px;align-items:center}
 .btn{border:0;border-radius:14px;padding:12px 22px;font:900 15px inherit;cursor:pointer;color:#06203b;background:linear-gradient(#fff0a0,var(--glow));box-shadow:0 5px 0 #b78300}
 .btn:active{transform:translateY(3px);box-shadow:0 2px 0 #b78300}
 .btn.ghost{background:rgba(255,255,255,.13);color:var(--ink);box-shadow:0 5px 0 rgba(0,0,0,.3)}
@@ -107,20 +113,16 @@ body{background:
     <div class="mid"><span id="lvName">第 1 张</span><small id="lvKind">图纸</small></div>
     <div class="dots" id="dots"></div>
   </div>
+  <div class="quest">判断是否为正方体展开图</div>
   <canvas id="cv"></canvas>
   <div class="overlay">
     <div class="tip" id="tip"></div>
     <div class="slider"><span>摊平</span>
       <input id="fold" type="range" min="0" max="100" value="0" oninput="Game.setFold(this.value)">
       <span>合拢</span></div>
-    <div class="controls">
-      <button class="btn ghost small" onclick="Game.autoFold()">▶ 自动折叠</button>
-      <button class="btn ghost small" onclick="Game.resetView()">↺ 摆正</button>
-    </div>
     <div class="controls2">
-      <span class="lab">这张图纸——</span>
-      <button class="btn j good" onclick="Game.judge(true)">✓ 能折成</button>
-      <button class="btn j bad" onclick="Game.judge(false)">✗ 折不成</button>
+      <button class="btn j good" onclick="Game.judge(true)">是</button>
+      <button class="btn j bad" onclick="Game.judge(false)">不是</button>
     </div>
     <div class="foot">得分 <b id="score">0</b> · 第 <b id="prog">1</b>/<b id="total">8</b> 张</div>
   </div>
@@ -278,7 +280,7 @@ function faceTexture(letter,color,red){
 }
 
 /* ===================== Three.js ===================== */
-let renderer,scene,camera,world,foldRoot,mats=[],net,foldDeg=0,auto=null,yaw=0.5,pitch=-0.5;
+let renderer,scene,camera,world,foldRoot,mats=[],net,foldDeg=0,yaw=0.5,pitch=-0.5;
 function initThree(){
   const cv=document.getElementById('cv');
   renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
@@ -372,7 +374,6 @@ const Game={
     $('tip').innerHTML='拖动滑杆，让这张「'+net.name+'」慢慢折起来。';
   },
   setFold(v){
-    if(auto){clearInterval(auto);auto=null;}
     foldDeg=v/100*90;applyFold();
     if(foldDeg>50&&net.clash.size){
       const wasRed=net._redOn;
@@ -388,13 +389,6 @@ const Game={
       }else{net._snapped=false;$('tip').innerHTML='继续拖动滑杆，把它折到底看看。';}
     }
   },
-  autoFold(){
-    if(auto){clearInterval(auto);auto=null;return;}
-    let v=foldDeg/90*100;
-    auto=setInterval(()=>{v+=2;if(v>=100){v=100;clearInterval(auto);auto=null;}
-      $('fold').value=v;Game.setFold(v);},24);
-  },
-  resetView(){yaw=0.5;pitch=-0.5;},
   judge(user){
     if(answered)return;
     const ok=user===net.valid;
@@ -403,9 +397,9 @@ const Game={
     // 弹出结果（不再总结规律）
     const st=$('sheetTitle');
     if(net.valid){
-      st.innerHTML='<span class="verdict-ok">✅ 判断正确 · 这张能折成正方体</span>';
+      st.innerHTML='<span class="verdict-ok">✅ 判断正确 · 这张图是正方体的展开图</span>';
     }else{
-      st.innerHTML='<span class="verdict-no">✅ 判断正确 · 这张折不成正方体</span>';
+      st.innerHTML='<span class="verdict-no">✅ 判断正确 · 这张图不是正方体的展开图</span>';
     }
     $('sheet').classList.add('show');
   },

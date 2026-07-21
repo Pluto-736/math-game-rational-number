@@ -221,7 +221,7 @@ function makeLevels(){
     seen.add(s);out.push({name:'第'+(i+1)+'关',h});});
   return out;
 }
-let LEVELS=makeLevels();
+let LEVELS=null; // 延后到 start() 生成：makeLevels 依赖 THREE 与后置 const，顶层执行会踩暂时性死区
 /* 三视图（与 build.html 完全一致） */
 function views(h){
   const front=[],left=[],top=[];
@@ -253,8 +253,39 @@ function bestAlign(draw,ansShape,GS){
   return best;
 }
 
+/* ============ 遮挡检测 + 视角选择 ============ */
+/* 用 Three.js 真实 Raycaster 在已构建的 mesh 上判遮挡，与渲染画面完全一致。
+   斜视角度：正面朝右前方，前后排自然错开，绝大多数立体一眼看全。 */
+/* 全部用正 yaw：正面统一朝右前方，保证每题正面朝向一致（不会突然朝左） */
+const _YAWS=[0.6,0.72,0.5,0.85,0.42,0.95], _PITCHES=[0.5,0.62,0.72,0.42];
+const VIEW_CANDS=[]; _YAWS.forEach(y=>_PITCHES.forEach(p=>VIEW_CANDS.push([y,p])));
+const _ray=new THREE.Raycaster();
+const _SAMP=[[0,0,0],[.44,.44,.44],[-.44,.44,.44],[.44,-.44,.44],[-.44,-.44,.44],[.44,.44,-.44],[-.44,.44,-.44],[.44,-.44,-.44],[-.44,-.44,-.44]];
+function _cubeVisible(mesh){ // 该方块是否至少露出一角（从相机发射线，首个命中是自己就算可见）
+  for(const s of _SAMP){
+    const P=mesh.localToWorld(new THREE.Vector3(s[0],s[1],s[2]));
+    const dir=P.clone().sub(camera.position).normalize();
+    _ray.set(camera.position,dir);
+    const hits=_ray.intersectObjects(blocks.children,false);
+    if(hits.length&&hits[0].object===mesh)return true;
+  }
+  return false;
+}
+/* 在候选角度里选第一个能看全的（斜视优先）；都看不全则返回露出最多的，并标记 full=false */
+function selectView(){
+  const total=blocks.children.length;
+  let best=null,bestN=-1;
+  for(const [y,p] of VIEW_CANDS){
+    world.rotation.set(p,y,0); world.updateMatrixWorld(true);
+    let n=0; for(const m of blocks.children) if(_cubeVisible(m)) n++;
+    if(n>=total)return {yaw:y,pitch:p,full:true};
+    if(n>bestN){bestN=n;best={yaw:y,pitch:p,full:false};}
+  }
+  return best;
+}
+
 /* ============ Three.js（沿用 build.html 的相机/描边/正面标记） ============ */
-let renderer,scene,camera,world,blocks,yaw=0.7,pitch=0.62,threeReady=false;
+let renderer,scene,camera,world,blocks,yaw=0,pitch=0.52,threeReady=false;
 function initThree(){
   const cv=document.getElementById('cv');
   renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
@@ -296,10 +327,24 @@ const VKEYS=[['front','正面看'],['left','左面看'],['top','上面看']];
 let lv=0, target, step, draw, score=0, checked, ansShape, GS;
 const R={
   load(){
-    const def=LEVELS[lv]; target=views(def.h);
+    let def=LEVELS[lv], v;
+    // 先建 mesh 再用真实 raycaster 选斜视角度；若这道题所有候选都看不全，就换一道新题重试
+    for(let tries=0;tries<40;tries++){
+      rebuild(def.h);
+      v=selectView();
+      if(v.full)break;
+      const nd=this._regen(def); if(!nd)break; def=nd; LEVELS[lv]=def;
+    }
+    target=views(def.h); yaw=v.yaw; pitch=v.pitch;
     $('lvNo').textContent=lv+1;
-    rebuild(def.h); step=0; this.startStep();
+    step=0; this.startStep();
     $('banner').classList.remove('show');
+  },
+  _regen(old){ // 按同规模重生成一道不重复的新题
+    const cells=old.h.flat().filter(x=>x>0).length;
+    for(let t=0;t<30;t++){const h=randSolid(cells,3,0);
+      if(sig(h)!==sig(old.h))return {name:old.name,h};}
+    return null;
   },
   startStep(){
     checked=false;
@@ -360,7 +405,9 @@ const R={
   again(){ LEVELS=makeLevels(); lv=0; $('overlay').classList.remove('show'); this.load(); },
   rotateHint(){yaw+=Math.PI/6;},
   start(){if(!window.THREE){$('err').style.display='flex';return;}
-    if(!threeReady){initThree();threeReady=true;}this.load();}
+    if(!threeReady){initThree();threeReady=true;}
+    if(!LEVELS)LEVELS=makeLevels();
+    this.load();}
 };
 /* 拖动转视角（锁俯视） */
 let drag=null;
