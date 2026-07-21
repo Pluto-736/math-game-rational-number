@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>建筑工坊 · 三视图搭建（原型）</title>
+<title>建筑工坊 · 三视图搭建</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{--line:#7fd0ff;--ink:#eaf6ff;--glow:#ffd34d;--good:#4ade80;--bad:#fb5a6a;--muted:#8fb4d6;--edge:#2b5fa0}
@@ -79,7 +79,7 @@ body{background:
   <button class="home-btn" onclick="location.href='index.html'">🏠</button>
   <button class="snd-btn" id="sndBtn" onclick="Audio8.toggle()">🔊</button>
   <div class="top">
-    <h1>🏗️ 建筑工坊 <span style="font-size:11px;color:var(--muted)">正向搭建原型</span></h1>
+    <h1>🏗️ 建筑工坊 <span style="font-size:11px;color:var(--muted)">三视图搭建</span></h1>
     <div class="sub">照着三张视图，在下面的网格上垒方块，把立体搭出来</div>
   </div>
 
@@ -105,7 +105,7 @@ body{background:
   </div>
 
   <div class="banner" id="banner"><h2>✅ 搭对了！</h2><p id="bannerTxt">三张视图全部吻合</p></div>
-  <div class="err" id="err">⚠️ 3D 引擎（Three.js）没能加载。<br>请联网后刷新。</div>
+  <div class="err" id="err">⚠️ 3D 引擎（Three.js）没能加载。<br>请确认 lib 文件夹和本页面放在一起，然后刷新重试。</div>
 </div>
 
 <script>
@@ -164,7 +164,7 @@ const Audio8=(function(){
 <script src="lib/three.min.js"></script>
 <script>
 /* ================== 随机立体生成器（三档递进 + 连通 + 去重 + 难档遮挡） ================== */
-/* 坐标：h[r][c] r=前后(0靠正面) c=左右 值=高0..3 */
+/* 坐标：h[r][c] r=前后（r=2 靠正面，即金色标记一侧；r=0 为背面） c=左右 值=高0..3 */
 const N=3, MAXH=3;
 const ROUND=8;
 const rnd=n=>Math.floor(Math.random()*n);
