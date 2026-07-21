@@ -24,11 +24,23 @@ body{background:
 .vcard{background:rgba(8,22,45,.6);border:1.5px solid rgba(127,208,255,.25);border-radius:12px;padding:7px 9px;text-align:center}
 .vcard .cap{font-size:11.5px;color:var(--line);font-weight:700;margin-bottom:5px}
 .vcard .cap .mk{margin-left:3px}
-.grid3{display:grid;grid-template-columns:repeat(3,16px);grid-auto-rows:16px;gap:2px}
-.grid3 i{background:rgba(255,255,255,.09);border-radius:2px}
-.grid3 i.on{background:var(--line)}
+.vgrid{display:grid;gap:2px;justify-content:center;align-content:end;min-height:52px;margin:0 auto}
+.vgrid i{width:16px;height:16px;border-radius:2px}
+.vgrid i.on{background:var(--line)}
+.vgrid i.hole{visibility:hidden}
 .vcard.ok{border-color:var(--good)} .vcard.ok .cap{color:var(--good)}
 .vcard.no{border-color:rgba(251,90,106,.6)}
+.markHint{display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;color:var(--muted);margin:4px 0 2px}
+.markHint .swatch{display:inline-block;width:16px;height:5px;border-radius:2px;background:#facc15}
+.overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:30;
+  background:rgba(4,12,26,.72);backdrop-filter:blur(2px)}
+.overlay.show{display:flex}
+.ov-card{background:linear-gradient(180deg,#0e2949,#0a1c33);border:2px solid var(--good);border-radius:20px;
+  padding:26px 30px;text-align:center;max-width:320px;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.ov-emo{font-size:52px;margin-bottom:6px}
+.ov-card h2{color:var(--good);font-size:22px;margin-bottom:6px}
+.ov-card p{color:#cfe8ff;font-size:13px;line-height:1.6;margin-bottom:18px}
+.ov-btns{display:flex;flex-direction:column;gap:10px}
 
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:1}
 .stageSpace{flex:1;min-height:120px}
@@ -63,16 +75,7 @@ body{background:
   border:0;background:rgba(255,255,255,.13);color:var(--ink);border-radius:11px;padding:7px 11px;font-size:16px;cursor:pointer}
 .snd-btn:active{transform:scale(.92)}
 .err{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:30px;z-index:20;color:#ffd0d6;font-size:14px;line-height:1.8}
-.banner{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) scale(.8);opacity:0;
-  background:rgba(7,20,40,.95);border:2px solid var(--good);border-radius:18px;padding:18px 26px;
-  text-align:center;z-index:15;transition:.3s;pointer-events:none}
-.banner.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
-.banner h2{color:var(--good);font-size:22px;margin-bottom:4px}
-.banner p{font-size:13px;color:#cfe8ff}
 </style>
-<!-- 51.la 访问统计 -->
-<script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
-<script>LA.init({id:"3QacsvaHgKQ6M8cx",ck:"3QacsvaHgKQ6M8cx"})</script>
 </head>
 <body>
 <div id="app">
@@ -84,6 +87,7 @@ body{background:
   </div>
 
   <div class="views" id="views"></div>
+  <div class="markHint"><span class="swatch"></span>黄边所对的方向就是「正面」</div>
 
   <canvas id="cv"></canvas>
   <div class="stageSpace"></div>
@@ -104,8 +108,19 @@ body{background:
     <div class="foot">关卡 <b id="lvNo">1</b></div>
   </div>
 
-  <div class="banner" id="banner"><h2>✅ 搭对了！</h2><p id="bannerTxt">三张视图全部吻合</p></div>
   <div class="err" id="err">⚠️ 3D 引擎（Three.js）没能加载。<br>请确认 lib 文件夹和本页面放在一起，然后刷新重试。</div>
+
+  <div class="overlay" id="overlay">
+    <div class="ov-card">
+      <div class="ov-emo">🎉</div>
+      <h2>8 关全部完成！</h2>
+      <p>你把每个立体都搭对了，空间感真棒。</p>
+      <div class="ov-btns">
+        <button class="btn" onclick="B.again()">↺ 再来一局</button>
+        <button class="btn ghost" onclick="location.href='index.html'">🏠 回主页</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -244,6 +259,16 @@ function views(h){
   return {front:front.slice().reverse(), left:left.slice().reverse(), top};
 }
 const eq=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+/* 平移归一：把立体整体平移到最小行、列对齐 0（形状、朝向、高矮不变）。
+   初一不要求摆放位置与视图格子严格对应——形状对就算对，位置不限。 */
+function normH(h){
+  let r0=N,c0=N;
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(h[r][c]>0){if(r<r0)r0=r;if(c<c0)c0=c;}
+  const out=[[0,0,0],[0,0,0],[0,0,0]];
+  if(r0===N)return out; // 全空
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(h[r][c]>0)out[r-r0][c-c0]=h[r][c];
+  return out;
+}
 
 /* ================== Three.js ================== */
 let renderer,scene,camera,world,blocks,yaw=0.7,pitch=0.62,threeReady=false;
@@ -291,28 +316,42 @@ function animate(){requestAnimationFrame(animate);if(!world)return;
 
 /* ================== 游戏 ================== */
 const $=id=>document.getElementById(id);
-let lv=0, H, target;
+let lv=0, H, target, PS=3;
 const B={
   load(){
-    const def=LEVELS[lv]; target=views(def.h);
+    const def=LEVELS[lv]; const nh=normH(def.h); target=views(nh); // 目标视图按归一化显示：只表达形状，不限定位置
+    // 地基（归一化后的俯视图）行列跨度都不超过 2 → 点击区收成 2×2；任一方向占 3 格才用 3×3
+    let mr=0,mc=0;
+    nh.forEach((row,r)=>row.forEach((v,c)=>{if(v>0){if(r+1>mr)mr=r+1;if(c+1>mc)mc=c+1;}}));
+    PS=(mr<=2&&mc<=2)?2:3;
     H=[[0,0,0],[0,0,0],[0,0,0]];
     $('lvNo').textContent=lv+1;
-    $('nextBtn').style.display='none';$('banner').classList.remove('show');
-    $('tip').innerHTML='照着上面三张视图，点格子把方块垒到对的高度。';
+    $('nextBtn').style.display='none';
+    $('tip').innerHTML='照着上面三张视图，点格子把方块垒到对的高度。<br>位置不限，在网格哪儿垒都行，形状和高矮对就算对。';
     this.renderPad();this.renderViews();rebuild(H);
   },
   renderPad(){
     const pad=$('pad');
-    pad.innerHTML=H.map((row,r)=>row.map((v,c)=>
-      `<div class="cell h${v}" onclick="B.tap(${r},${c})">${v}</div>`).join('')).join('')
-      +'<div class="frontMark">▲ 正面（离你最近）</div>';
+    const sz=PS===2?64:44; // 2×2 时格子放大，更好点
+    pad.style.gridTemplateColumns=`repeat(${PS},${sz}px)`;
+    pad.style.gridAutoRows=sz+'px';
+    let cells='';
+    for(let r=0;r<PS;r++)for(let c=0;c<PS;c++)
+      cells+=`<div class="cell h${H[r][c]}" onclick="B.tap(${r},${c})">${H[r][c]}</div>`;
+    pad.innerHTML=cells+'<div class="frontMark">▲ 正面（离你最近）</div>';
   },
   renderViews(){
-    const cur=views(H);
+    const cur=views(normH(H)); // 孩子垒的也归一化再比：消除摆放位置影响
+    // 裁掉外围空行空列，只画形状本身（不再是九宫格）；形状内部的洞用透明占位保持轮廓，整体下对齐
+    const trim=g=>{let r0=9,r1=-1,c0=9,c1=-1;
+      g.forEach((row,r)=>row.forEach((v,c)=>{if(v){if(r<r0)r0=r;if(r>r1)r1=r;if(c<c0)c0=c;if(c>c1)c1=c;}}));
+      if(r1<0)return [[0]];
+      const out=[];for(let r=r0;r<=r1;r++)out.push(g[r].slice(c0,c1+1));return out;};
     const card=(cap,gridT,gridC,okKey)=>{
       const ok=eq(gridT,gridC);
-      const cells=gridT.flat().map(v=>`<i class="${v?'on':''}"></i>`).join('');
-      return `<div class="vcard ${ok?'ok':'no'}"><div class="cap">${cap}<span class="mk">${ok?'✓':'…'}</span></div><div class="grid3">${cells}</div></div>`;
+      const t=trim(gridT);
+      const cells=t.flat().map(v=>`<i class="${v?'on':' hole'}"></i>`).join('');
+      return `<div class="vcard ${ok?'ok':'no'}"><div class="cap">${cap}<span class="mk">${ok?'✓':'…'}</span></div><div class="vgrid" style="grid-template-columns:repeat(${t[0].length},16px)">${cells}</div></div>`;
     };
     $('views').innerHTML=
       card('正面看',target.front,cur.front)+
@@ -331,16 +370,16 @@ const B={
   win(){
     $('tip').innerHTML='🎉 三张视图全部吻合！';
     Audio8.sfx.win();
-    $('banner').classList.add('show');
     $('nextBtn').style.display='block';
   },
   clear(){H=[[0,0,0],[0,0,0],[0,0,0]];this.renderPad();rebuild(H);this.renderViews();
-    $('banner').classList.remove('show');$('nextBtn').style.display='none';},
+    $('nextBtn').style.display='none';},
   next(){
+    if(lv+1>=LEVELS.length){ $('overlay').classList.add('show'); Audio8.sfx.win(); return; } // 走完8关，弹通关框
     lv++;
-    if(lv>=LEVELS.length){LEVELS=makeLevels();lv=0;} // 走完一局，重新随机生成新一局
     this.load();
   },
+  again(){ LEVELS=makeLevels(); lv=0; $('overlay').classList.remove('show'); this.load(); },
   rotateHint(){yaw+=Math.PI/6;},
   start(){if(!window.THREE){$('err').style.display='flex';return;}
     if(!threeReady){initThree();threeReady=true;}this.load();}
@@ -355,6 +394,12 @@ addEventListener('pointermove',e=>{if(!drag)return;
 addEventListener('pointerup',()=>drag=null);
 
 B.start();
+</script>
+<!-- 51.la 访问统计（异步加载，不阻塞页面渲染） -->
+<script>
+(function(){var s=document.createElement('script');s.charset='UTF-8';s.id='LA_COLLECT';s.async=true;
+s.src='//sdk.51.la/js-sdk-pro.min.js';s.onload=function(){LA.init({id:"3QacsvaHgKQ6M8cx",ck:"3QacsvaHgKQ6M8cx"})};
+document.body.appendChild(s);})();
 </script>
 </body>
 </html>

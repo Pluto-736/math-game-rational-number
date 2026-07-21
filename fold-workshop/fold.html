@@ -80,9 +80,6 @@ body{background:
 .result-box p{color:#cfe8ff;line-height:1.8;font-size:14px;margin-bottom:6px}
 .stars{font-size:30px;letter-spacing:4px;margin:6px 0 12px}
 </style>
-<!-- 51.la 访问统计 -->
-<script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
-<script>LA.init({id:"3QacsvaHgKQ6M8cx",ck:"3QacsvaHgKQ6M8cx"})</script>
 </head>
 <body>
 
@@ -439,6 +436,12 @@ addEventListener('pointermove',e=>{if(!drag)return;
 addEventListener('pointerup',()=>drag=null);
 
 if(!window.THREE){/* 开始时再提示 */}
+</script>
+<!-- 51.la 访问统计（异步加载，不阻塞页面渲染） -->
+<script>
+(function(){var s=document.createElement('script');s.charset='UTF-8';s.id='LA_COLLECT';s.async=true;
+s.src='//sdk.51.la/js-sdk-pro.min.js';s.onload=function(){LA.init({id:"3QacsvaHgKQ6M8cx",ck:"3QacsvaHgKQ6M8cx"})};
+document.body.appendChild(s);})();
 </script>
 </body>
 </html>

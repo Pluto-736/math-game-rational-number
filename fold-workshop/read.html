@@ -23,6 +23,8 @@ body{background:
 .step{font-size:12px;color:var(--muted);padding:3px 10px;border-radius:11px;background:rgba(255,255,255,.06);font-weight:700}
 .step.now{color:#06203b;background:var(--glow)}
 .step.done{color:var(--good);background:rgba(74,222,128,.15)}
+.markHint{display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;color:var(--muted);margin-top:5px}
+.markHint .swatch{display:inline-block;width:16px;height:5px;border-radius:2px;background:#facc15}
 
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:1}
 .stageSpace{flex:1;min-height:120px}
@@ -57,10 +59,16 @@ body{background:
 .banner.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
 .banner h2{color:var(--good);font-size:22px;margin-bottom:4px}
 .banner p{font-size:13px;color:#cfe8ff}
+.overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:30;
+  background:rgba(4,12,26,.72);backdrop-filter:blur(2px)}
+.overlay.show{display:flex}
+.ov-card{background:linear-gradient(180deg,#0e2949,#0a1c33);border:2px solid var(--good);border-radius:20px;
+  padding:26px 30px;text-align:center;max-width:320px;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.ov-emo{font-size:52px;margin-bottom:6px}
+.ov-card h2{color:var(--good);font-size:22px;margin-bottom:6px}
+.ov-card p{color:#cfe8ff;font-size:13px;line-height:1.6;margin-bottom:18px}
+.ov-btns{display:flex;flex-direction:column;gap:10px}
 </style>
-<!-- 51.la 访问统计 -->
-<script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
-<script>LA.init({id:"3QacsvaHgKQ6M8cx",ck:"3QacsvaHgKQ6M8cx"})</script>
 </head>
 <body>
 <div id="app">
@@ -74,6 +82,7 @@ body{background:
       <div class="step" id="s1">左面看</div>
       <div class="step" id="s2">上面看</div>
     </div>
+    <div class="markHint"><span class="swatch"></span>黄边所对的方向就是「正面」</div>
   </div>
 
   <canvas id="cv"></canvas>
@@ -97,6 +106,18 @@ body{background:
 
   <div class="banner" id="banner"><h2>✅ 三视图全对！</h2><p>这个立体你看透了</p></div>
   <div class="err" id="err">⚠️ 3D 引擎（Three.js）没能加载。<br>请确认 lib 文件夹和本页面放在一起，然后刷新重试。</div>
+
+  <div class="overlay" id="overlay">
+    <div class="ov-card">
+      <div class="ov-emo">🎉</div>
+      <h2>8 关全部完成！</h2>
+      <p>每个立体的三视图你都画对了，太厉害了。</p>
+      <div class="ov-btns">
+        <button class="btn" onclick="R.again()">↺ 再来一局</button>
+        <button class="btn ghost" onclick="location.href='index.html'">🏠 回主页</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -213,6 +234,24 @@ function views(h){
   }
   return {front:front.slice().reverse(), left:left.slice().reverse(), top};
 }
+/* 裁掉外围空行空列，得到形状最小外接框（用于按视图实际大小定网格 & 位置无关判定） */
+function trim(g){let r0=9,r1=-1,c0=9,c1=-1;
+  g.forEach((row,r)=>row.forEach((v,c)=>{if(v){if(r<r0)r0=r;if(r>r1)r1=r;if(c<c0)c0=c;if(c>c1)c1=c;}}));
+  if(r1<0)return [[0]];
+  const out=[];for(let r=r0;r<=r1;r++)out.push(g[r].slice(c0,c1+1));return out;}
+const shapeEq=(a,b)=>JSON.stringify(trim(a))===JSON.stringify(trim(b));
+/* 在 GS×GS 网格里，把 ansShape 平移到与 draw 重叠最多的位置，返回对齐后的答案网格（用于红/绿提示） */
+function bestAlign(draw,ansShape,GS){
+  const sh=trim(ansShape),sr=sh.length,sc=sh[0].length;
+  let best=null,bestScore=-1;
+  for(let dr=0;dr<=GS-sr;dr++)for(let dc=0;dc<=GS-sc;dc++){
+    const grid=Array.from({length:GS},()=>Array(GS).fill(0));
+    for(let r=0;r<sr;r++)for(let c=0;c<sc;c++)if(sh[r][c])grid[r+dr][c+dc]=1;
+    let sc2=0;for(let r=0;r<GS;r++)for(let c=0;c<GS;c++)if(grid[r][c]&&draw[r][c])sc2++;
+    if(sc2>bestScore){bestScore=sc2;best=grid;}
+  }
+  return best;
+}
 
 /* ============ Three.js（沿用 build.html 的相机/描边/正面标记） ============ */
 let renderer,scene,camera,world,blocks,yaw=0.7,pitch=0.62,threeReady=false;
@@ -254,7 +293,7 @@ function animate(){requestAnimationFrame(animate);if(!world)return;
 /* ============ 游戏 ============ */
 const $=id=>document.getElementById(id);
 const VKEYS=[['front','正面看'],['left','左面看'],['top','上面看']];
-let lv=0, target, step, draw, score=0, checked;
+let lv=0, target, step, draw, score=0, checked, ansShape, GS;
 const R={
   load(){
     const def=LEVELS[lv]; target=views(def.h);
@@ -263,28 +302,41 @@ const R={
     $('banner').classList.remove('show');
   },
   startStep(){
-    draw=[[0,0,0],[0,0,0],[0,0,0]]; checked=false;
+    checked=false;
+    // 画图格子是正方形，边长按形状最大边定：最大边≤2→2×2，达到3→3×3
+    ansShape=trim(target[VKEYS[step][0]]);
+    GS=Math.max(ansShape.length, ansShape[0].length)<=2 ? 2 : 3;
+    draw=Array.from({length:GS},()=>Array(GS).fill(0));
     ['s0','s1','s2'].forEach((id,i)=>{$(id).className='step'+(i<step?' done':i===step?' now':'');});
     const label=VKEYS[step][1];
     $('drawLab').textContent='画「'+label+'」到的形状';
-    $('tip').innerHTML='点格子涂黑，画出从<b style="color:var(--glow)">'+label+'</b>看到的形状。';
+    $('tip').innerHTML='';
     $('okBtn').textContent='确定';
     this.renderGrid();
   },
   renderGrid(showAns){
-    const g=$('dgrid');const ans=target[VKEYS[step][0]];
+    const g=$('dgrid');
+    const sz=GS<=2?64:46; // 2×2 时格子放大，更好点
+    g.style.gridTemplateColumns=`repeat(${GS},${sz}px)`;
+    g.style.gridAutoRows=sz+'px';
+    const aligned=showAns?bestAlign(draw,ansShape,GS):null;
     g.innerHTML=draw.map((row,r)=>row.map((v,c)=>{
       let cls='dc'+(v?' on':'');
-      if(showAns){ const should=ans[r][c];
+      if(showAns){ const should=aligned[r][c];
         if(v&&!should)cls='dc err'; else if(!v&&should)cls='dc miss'; else if(v&&should)cls='dc on'; }
       return `<div class="${cls}" onclick="R.toggle(${r},${c})"></div>`;
     }).join('')).join('');
   },
   toggle(r,c){ if(checked){checked=false;} draw[r][c]=draw[r][c]?0:1; Audio8.sfx.pop(); this.renderGrid(); },
-  clearDraw(){draw=[[0,0,0],[0,0,0],[0,0,0]];checked=false;this.renderGrid();},
+  clearDraw(){draw=Array.from({length:GS},()=>Array(GS).fill(0));checked=false;this.renderGrid();},
   confirm(){
-    const ans=target[VKEYS[step][0]];
-    const ok=JSON.stringify(draw)===JSON.stringify(ans);
+    const painted=draw.some(row=>row.some(v=>v)); // 一个格子都没画 = 未作答
+    if(!painted){
+      Audio8.sfx.wrong();
+      $('tip').innerHTML='还没画呢，先点格子涂出形状再确定～';
+      return;
+    }
+    const ok=shapeEq(draw,ansShape);
     if(ok){
       score+=10;$('score').textContent=score;
       step++;
@@ -299,12 +351,13 @@ const R={
     $('tip').innerHTML='🎉 三视图全部画对！';
     Audio8.sfx.win();
     $('banner').classList.add('show');
-    setTimeout(()=>{
-      lv++;
-      if(lv>=LEVELS.length){LEVELS=makeLevels();lv=0;} // 走完一局重新随机
-      this.load();
-    },1600);
+    if(lv+1>=LEVELS.length){ // 走完8关，弹通关框
+      setTimeout(()=>{$('banner').classList.remove('show');$('overlay').classList.add('show');},1200);
+      return;
+    }
+    setTimeout(()=>{ lv++; this.load(); },1600);
   },
+  again(){ LEVELS=makeLevels(); lv=0; $('overlay').classList.remove('show'); this.load(); },
   rotateHint(){yaw+=Math.PI/6;},
   start(){if(!window.THREE){$('err').style.display='flex';return;}
     if(!threeReady){initThree();threeReady=true;}this.load();}
@@ -317,6 +370,12 @@ addEventListener('pointermove',e=>{if(!drag)return;
   pitch=Math.max(0.15,Math.min(1.15,pitch));});
 addEventListener('pointerup',()=>drag=null);
 R.start();
+</script>
+<!-- 51.la 访问统计（异步加载，不阻塞页面渲染） -->
+<script>
+(function(){var s=document.createElement('script');s.charset='UTF-8';s.id='LA_COLLECT';s.async=true;
+s.src='//sdk.51.la/js-sdk-pro.min.js';s.onload=function(){LA.init({id:"3QacsvaHgKQ6M8cx",ck:"3QacsvaHgKQ6M8cx"})};
+document.body.appendChild(s);})();
 </script>
 </body>
 </html>
