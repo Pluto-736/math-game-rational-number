@@ -79,9 +79,6 @@ body{background:
 .errbox{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;
   padding:30px;z-index:20;color:var(--bad);font-size:15px;line-height:1.8}
 </style>
-<!-- 51.la 访问统计 -->
-<script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
-<script>LA.init({id:"3QacsvaHgKQ6M8cx",ck:"3QacsvaHgKQ6M8cx"})</script>
 </head>
 <body>
 <div id="app">
@@ -289,7 +286,7 @@ function drawArc(){
   g.beginPath();g.arc(cx,cy,R*0.32,-0,-a,true);g.stroke();
   g.fillStyle='#a23b34';g.font='700 15px Georgia,serif';
   const mid=rad(angle/2);
-  g.fillText(angle+'°',cx+Math.cos(mid)*R*0.42,cy-Math.sin(mid)*R*0.42);
+  g.fillText(angle.toFixed(2)+'°',cx+Math.cos(mid)*R*0.42,cy-Math.sin(mid)*R*0.42);
   g.restore();
 }
 function drawProtractor(baseLen){
@@ -348,7 +345,8 @@ const Game={
   },
   lockIn(){
     locked=true;Sound.sfx.lock();
-    const err=Math.abs(angle-goal);
+    angle=Math.round(angle*100)/100; // 角度精确到小数点后两位
+    const err=Math.round(Math.abs(angle-goal)*100)/100;
     let pts,grade,cls;
     if(err<=1){pts=10;grade='⭐ 完美对准';cls='var(--good)';Sound.sfx.great();}
     else if(err<=4){pts=8;grade='很准';cls='var(--good)';Sound.sfx.reveal();}
@@ -358,10 +356,10 @@ const Game={
     score+=pts;$('score').textContent=score;
     $('protractorBtn').disabled=true;
     $('mainBtn').textContent=(lv>=ROUND-1)?'看结果':'下一台 →';
-    $('readout').innerHTML=`你转了 <b>${angle}°</b>，目标 <b>${goal}°</b>，误差 <b>${err}°</b>。`;
+    $('readout').innerHTML=`你转了 <b>${angle.toFixed(2)}°</b>，目标 <b>${goal}°</b>，误差 <b>${err.toFixed(2)}°</b>。`;
     const b=$('banner');
     b.innerHTML=`<div class="grade" style="color:${cls}">${grade}</div>`+
-      `<div class="detail">你的角 <b>${angle}°</b> · 目标 <b>${goal}°</b><br>误差 ${err}° &nbsp;+${pts} 分</div>`;
+      `<div class="detail">你的角 <b>${angle.toFixed(2)}°</b> · 目标 <b>${goal}°</b><br>误差 ${err.toFixed(2)}° &nbsp;+${pts} 分</div>`;
     b.classList.add('show');
     draw();
     if(bannerTimer)clearTimeout(bannerTimer);
@@ -393,6 +391,12 @@ const Game={
 
 addEventListener('resize',resize);
 Game.start();
+</script>
+<!-- 51.la 访问统计（异步加载，不阻塞页面渲染） -->
+<script>
+(function(){var s=document.createElement('script');s.charset='UTF-8';s.id='LA_COLLECT';s.async=true;
+s.src='//sdk.51.la/js-sdk-pro.min.js';s.onload=function(){LA.init({id:"3QacsvaHgKQ6M8cx",ck:"3QacsvaHgKQ6M8cx"})};
+document.body.appendChild(s);})();
 </script>
 </body>
 </html>

@@ -46,10 +46,10 @@ body{background:
 .task .goal b{color:var(--ink)}
 .task .goal .big{font-size:23px}
 
-.stageSpace{flex:1;min-height:10px}
+.stageSpace{flex:1;min-height:6px}
 
 /* 三托盘 */
-.trays{display:flex;gap:10px;justify-content:center;align-items:stretch;margin:16px auto 0;
+.trays{display:flex;gap:10px;justify-content:center;align-items:stretch;margin:14px auto 0;
   max-width:520px;width:100%;padding:0 12px;z-index:5}
 .tray{flex:1;max-width:150px;display:flex;flex-direction:column;align-items:center;
   background:linear-gradient(#efe0bd,#e0cc9f);border:2px solid var(--copper-d);border-radius:14px;
@@ -58,21 +58,54 @@ body{background:
 .tray .val{font-size:40px;font-weight:700;color:var(--ink);line-height:1.1;margin:4px 0}
 .tray .val .sym{font-size:20px;color:var(--copper-d)}
 .tray.hot .val{color:var(--bad)}
+.tray .val.neg{color:var(--bad)}
 .tray .ops{display:flex;flex-direction:column;gap:6px;width:100%;margin-top:6px}
 .opbtn{border:1.5px solid var(--copper-d);border-radius:9px;padding:8px 4px;font:700 13px Georgia,serif;
   cursor:pointer;color:#3a230f;background:linear-gradient(#eccf97,#cf9c5e);
   box-shadow:0 3px 0 var(--copper-d),inset 0 1px 1px rgba(255,255,255,.4);line-height:1.25}
 .opbtn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--copper-d)}
 .opbtn:disabled{opacity:.35;box-shadow:0 3px 0 var(--copper-d);cursor:default}
+.opbtn.armed{background:linear-gradient(#f6e4b0,#e6b56a);box-shadow:0 0 0 2px var(--gold),0 3px 0 var(--copper-d)}
 .opbtn small{display:block;font-size:10px;font-weight:400;color:#6b4522}
 
 /* 底部面板 */
 .panel{position:relative;z-index:5;width:100%;max-width:560px;display:flex;flex-direction:column;align-items:center;
-  padding:14px 16px calc(12px + env(safe-area-inset-bottom));margin-top:auto}
-.readout{min-height:24px;font-size:13.5px;color:var(--ink2);text-align:center;font-weight:600;line-height:1.5;margin-bottom:9px;padding:0 8px}
+  padding:12px 16px calc(12px + env(safe-area-inset-bottom));margin-top:auto}
+.readout{min-height:22px;font-size:13.5px;color:var(--ink2);text-align:center;font-weight:600;line-height:1.5;margin-bottom:9px;padding:0 8px}
 .readout b{color:var(--copper-d)}
+
+/* 拨杆条 */
+.dialer{width:100%;max-width:460px;background:linear-gradient(#efe0bd,#e0cc9f);
+  border:2px solid var(--copper-d);border-radius:14px;padding:11px 14px 12px;
+  box-shadow:0 4px 0 var(--copper-d),inset 0 1px 2px rgba(255,255,255,.45);display:none}
+.dialer.show{display:block;animation:slideUp .2s ease}
+@keyframes slideUp{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+.dtitle{font-size:15px;font-weight:700;color:#3a230f;text-align:center}
+.dtitle small{display:block;font-size:11px;color:#6b4522;font-weight:400;margin-top:2px;letter-spacing:1px}
+.dialRow{display:flex;align-items:center;gap:9px;margin:14px 0 7px}
+.sliderWrap{position:relative;flex:1;padding-top:30px}
+#nSlider{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:5px;outline:none;
+  background:linear-gradient(#d9c191,#c4a468);border:1px solid var(--copper-d)}
+#nSlider::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;cursor:pointer;
+  background:linear-gradient(#eccf97,#c98f52);border:1.5px solid var(--copper-d);box-shadow:0 2px 3px rgba(58,35,15,.35)}
+#nSlider::-moz-range-thumb{width:26px;height:26px;border-radius:50%;cursor:pointer;
+  background:linear-gradient(#eccf97,#c98f52);border:1.5px solid var(--copper-d);box-shadow:0 2px 3px rgba(58,35,15,.35)}
+.nbubble{position:absolute;top:0;transform:translateX(-50%);min-width:34px;padding:2px 7px;text-align:center;
+  font-size:20px;font-weight:700;color:var(--ink);background:linear-gradient(#f6e9c8,#e7d09b);
+  border:1.5px solid var(--copper-d);border-radius:8px;box-shadow:0 2px 4px rgba(58,35,15,.25);
+  pointer-events:none;white-space:nowrap;transition:left .02s linear}
+.nbubble::after{content:'';position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);
+  border:5px solid transparent;border-top-color:var(--copper-d)}
+.nudge{width:40px;height:40px;border:1.5px solid var(--copper-d);border-radius:9px;
+  background:linear-gradient(#eccf97,#cf9c5e);font:700 22px Georgia,serif;color:#3a230f;
+  box-shadow:0 3px 0 var(--copper-d);cursor:pointer;flex-shrink:0;line-height:1}
+.nudge:active{transform:translateY(2px);box-shadow:0 1px 0 var(--copper-d)}
+.dhint{font-size:13.5px;color:var(--ink2);text-align:center;font-weight:600;min-height:20px;margin-bottom:10px}
+.dhint b{color:var(--copper-d);font-size:16px}
+.dbtns{display:flex;gap:10px;justify-content:center}
+
 .btns{display:flex;gap:12px;justify-content:center;align-items:center}
-.btn{border:2px solid var(--copper-d);border-radius:12px;padding:12px 24px;
+.btn{border:2px solid var(--copper-d);border-radius:12px;padding:11px 22px;
   font:700 15px Georgia,serif;cursor:pointer;color:#3a230f;
   background:linear-gradient(#eccf97,#cf9c5e);
   box-shadow:0 4px 0 var(--copper-d),inset 0 1px 2px rgba(255,255,255,.45)}
@@ -88,13 +121,12 @@ body{background:
   box-shadow:0 8px 22px rgba(58,35,15,.28)}
 .banner.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
 .banner.clickable{pointer-events:auto}
+.banner.perfect{border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,145,47,.4),0 8px 22px rgba(58,35,15,.28)}
 .banner .grade{font-size:20px;font-weight:700;margin-bottom:4px;color:var(--good)}
+.banner.perfect .grade{color:var(--gold)}
 .banner .detail{font-size:13.5px;color:var(--ink2);line-height:1.7}
 .banner .detail b{color:var(--copper-d)}
 </style>
-<!-- 51.la 访问统计 -->
-<script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
-<script>LA.init({id:"3QacsvaHgKQ6M8cx",ck:"3QacsvaHgKQ6M8cx"})</script>
 </head>
 <body>
 <div id="app">
@@ -117,33 +149,51 @@ body{background:
       <div class="unit">度 °</div>
       <div class="val"><span id="valD">0</span><span class="sym">°</span></div>
       <div class="ops">
-        <button class="opbtn" id="dDown" onclick="Game.act('d_down')">拆开 ↓<small>1° → 60′</small></button>
+        <button class="opbtn" id="dDown" onclick="Dialer.open('d_down')">拆开 ↓<small>1° → 60′</small></button>
       </div>
     </div>
     <div class="tray" id="trayM">
       <div class="unit">分 ′</div>
       <div class="val"><span id="valM">0</span><span class="sym">′</span></div>
       <div class="ops">
-        <button class="opbtn" id="mUp" onclick="Game.act('m_up')">合成 ↑<small>60′ → 1°</small></button>
-        <button class="opbtn" id="mDown" onclick="Game.act('m_down')">拆开 ↓<small>1′ → 60″</small></button>
+        <button class="opbtn" id="mUp" onclick="Dialer.open('m_up')">合成 ↑<small>60′ → 1°</small></button>
+        <button class="opbtn" id="mDown" onclick="Dialer.open('m_down')">拆开 ↓<small>1′ → 60″</small></button>
       </div>
     </div>
     <div class="tray" id="trayS">
       <div class="unit">秒 ″</div>
       <div class="val"><span id="valS">0</span><span class="sym">″</span></div>
       <div class="ops">
-        <button class="opbtn" id="sUp" onclick="Game.act('s_up')">合成 ↑<small>60″ → 1′</small></button>
+        <button class="opbtn" id="sUp" onclick="Dialer.open('s_up')">合成 ↑<small>60″ → 1′</small></button>
       </div>
     </div>
   </div>
 
   <div class="panel">
-    <div class="readout" id="readout">满 60 就能合成上一级；不够时把上一级拆开借下来。</div>
-    <div class="btns">
-      <button class="btn ghost" id="resetBtn" onclick="Game.resetHolding()">重置</button>
-      <button class="btn" id="checkBtn" onclick="Game.check()">校准完成</button>
+    <div class="readout" id="readout">点托盘上的按钮，估一估要换算几组，拨好后「确认转换」。</div>
+
+    <div class="dialer" id="dialer">
+      <div class="dtitle" id="dTitle"></div>
+      <div class="dialRow">
+        <button class="nudge" onclick="Dialer.nudge(-1)">−</button>
+        <div class="sliderWrap">
+          <div class="nbubble" id="nBubble">1</div>
+          <input type="range" id="nSlider" min="0" max="120" value="1" oninput="Dialer.update()">
+        </div>
+        <button class="nudge" onclick="Dialer.nudge(1)">＋</button>
+      </div>
+      <div class="dhint" id="dHint"></div>
+      <div class="dbtns">
+        <button class="btn ghost" onclick="Dialer.cancel()">取消</button>
+        <button class="btn" onclick="Dialer.confirm()">确认转换</button>
+      </div>
     </div>
-    <div class="foot">第 <b id="prog">1</b>/<b id="total">8</b> 台 · 得分 <b id="score">0</b></div>
+
+    <div class="btns" id="idleBar">
+      <button class="btn ghost" id="resetBtn" onclick="Game.resetHolding()">重置本台</button>
+    </div>
+
+    <div class="foot">第 <b id="prog">1</b>/<b id="total">8</b> 台 · 确认 <b id="confCount">0</b> 次 · 得分 <b id="score">0</b></div>
   </div>
 
   <div class="banner" id="banner"></div>
@@ -205,100 +255,172 @@ const Sound=(function(){
   return {ensure,toggle,sfx,isOn:()=>on};
 })();
 
-/* ============ B关：度分秒换算 ============ */
+/* ============ B关：度分秒换算 · 拨杆版 ============ */
 const $=id=>document.getElementById(id);
 const ROUND=8;
 const fmt=(d,m,s)=>{let a=[];if(d)a.push(d+'°');if(m)a.push(m+'′');if(s)a.push(s+'″');return a.length?a.join(''):'0';};
 
+/* 每种操作的换算口 */
+const OPS={
+  s_up:  {label:'合成：秒 → 分', unit:'每 60″ = 1′', max:120},
+  m_up:  {label:'合成：分 → 度', unit:'每 60′ = 1°', max:12},
+  d_down:{label:'拆开：度 → 分', unit:'每 1° = 60′', max:12},
+  m_down:{label:'拆开：分 → 秒', unit:'每 1′ = 60″', max:12},
+};
+/* 各题型理论最少确认次数 */
+const MINCONF={A:1,B:1,C:2};
+
 /* 题型：
-   A 单位→标准：给全为分 → 目标标准(度分)
-   B 标准→单位：给标准(度分) → 目标全为分
-   C 带秒→标准：给全为秒 → 目标标准(度分秒)
+   A 单位→标准：给全为分 → 目标标准(度分)          最少 1 次
+   B 标准→单位：给标准(度分) → 目标全为分           最少 1 次
+   C 带秒→标准：给全为秒 → 目标标准(度分秒)         最少 2 次（度=1，总秒≤6000）
 */
-function toStd(totalSec){return {d:Math.floor(totalSec/3600),m:Math.floor((totalSec%3600)/60),s:totalSec%60};}
 function makeLevel(kind){
   if(kind==='A'){ // 全分 → 标准（度分，无秒）
     const d=1+Math.floor(Math.random()*4), m=10+Math.floor(Math.random()*49); // 目标 d°m′
     const totalMin=d*60+m;
-    return{start:{d:0,m:totalMin,s:0}, target:{d,m,s:0}, targetForm:'dm',
+    return{kind,start:{d:0,m:totalMin,s:0}, target:{d,m,s:0}, targetForm:'dm',
       q:`把 <span class="big"><b>${totalMin}′</b></span> 整理成规范的「度 分」写法`};
   }
   if(kind==='B'){ // 标准(度分) → 全分
     const d=1+Math.floor(Math.random()*4), m=5+Math.floor(Math.random()*54);
     const totalMin=d*60+m;
-    return{start:{d,m,s:0}, target:{d:0,m:totalMin,s:0}, targetForm:'m',
+    return{kind,start:{d,m,s:0}, target:{d:0,m:totalMin,s:0}, targetForm:'m',
       q:`把 <span class="big"><b>${d}°${m}′</b></span> 全部换算成「分」`};
   }
-  // C 全秒 → 标准（度分秒）
-  const d=1+Math.floor(Math.random()*2), m=Math.floor(Math.random()*60), s=1+Math.floor(Math.random()*59);
+  // C 全秒 → 标准（度分秒）；度固定为 1、总秒 ≤ 6000″，确保秒收组数 61~99（＜杆量程 120）
+  const d=1, m=1+Math.floor(Math.random()*39), s=1+Math.floor(Math.random()*59);
   const totalSec=d*3600+m*60+s;
-  return{start:{d:0,m:0,s:totalSec}, target:{d,m,s}, targetForm:'dms',
+  return{kind,start:{d:0,m:0,s:totalSec}, target:{d,m,s}, targetForm:'dms',
     q:`把 <span class="big"><b>${totalSec}″</b></span> 整理成规范的「度 分 秒」写法`};
 }
 function makePlan(){
-  // 8 关：难度递进，A 起步、混 B、后段加 C
-  const kinds=['A','A','B','A','B','C','B','C'];
+  // 按题型 A→B→C 递进：先度分合成、再度分拆分、最后带秒的度分秒
+  const kinds=['A','A','A','B','B','B','C','C'];
   return kinds.map(makeLevel);
 }
 let PLAN=makePlan();
 
-let lv=0, hold={d:0,m:0,s:0}, cur=null, score=0, moves=0, bannerTimer=null;
+let lv=0, hold={d:0,m:0,s:0}, cur=null, score=0, confirms=0, locked=false, bannerTimer=null;
 
+function setVal(id,v){const e=$(id);e.textContent=v;e.parentElement.classList.toggle('neg',v<0);}
 function render(){
-  $('valD').textContent=hold.d;$('valM').textContent=hold.m;$('valS').textContent=hold.s;
-  // 满60高亮
+  setVal('valD',hold.d);setVal('valM',hold.m);setVal('valS',hold.s);
   $('trayM').classList.toggle('hot',hold.m>=60);
   $('trayS').classList.toggle('hot',hold.s>=60);
-  // 按钮可用性
-  $('dDown').disabled=hold.d<1;
-  $('mUp').disabled=hold.m<60;
-  $('mDown').disabled=hold.m<1;
-  $('sUp').disabled=hold.s<60;
+  const dOpen=!!Dialer.op, block=locked||dOpen;
+  $('dDown').disabled=block||hold.d<1;
+  $('mUp').disabled  =block||hold.m<60;
+  $('mDown').disabled=block||hold.m<1;
+  $('sUp').disabled  =block||hold.s<60;
+  // 高亮当前正在拨的操作按钮
+  ['dDown','mUp','mDown','sUp'].forEach(id=>$(id).classList.remove('armed'));
+  if(dOpen){const map={d_down:'dDown',m_up:'mUp',m_down:'mDown',s_up:'sUp'};$(map[Dialer.op]).classList.add('armed');}
+  $('resetBtn').disabled=locked;
+  $('confCount').textContent=confirms;
 }
+
+/* ---- 拨杆条：估组数 → 确认转换 ---- */
+function applyOp(op,N){
+  if(op==='s_up'){hold.m+=N;hold.s-=60*N;}
+  else if(op==='m_up'){hold.d+=N;hold.m-=60*N;}
+  else if(op==='d_down'){hold.d-=N;hold.m+=60*N;}
+  else if(op==='m_down'){hold.m-=N;hold.s+=60*N;}
+}
+function dialHint(op,N){
+  if(op==='s_up')  return `预估：合成 <b>${N}</b> 组 → 分 +${N}′`;
+  if(op==='m_up')  return `预估：合成 <b>${N}</b> 组 → 度 +${N}°`;
+  if(op==='d_down')return `预估：拆开 <b>${N}</b> 组 → 分 +${N*60}′`;
+  if(op==='m_down')return `预估：拆开 <b>${N}</b> 组 → 秒 +${N*60}″`;
+  return '';
+}
+const Dialer={
+  op:null,
+  open(op){
+    if(locked)return;
+    this.op=op;
+    const o=OPS[op];
+    $('dTitle').innerHTML=`${o.label} <small>${o.unit}</small>`;
+    const r=$('nSlider');r.max=o.max;r.value=1;
+    this.update();
+    $('dialer').classList.add('show');
+    $('idleBar').style.display='none';
+    render();
+  },
+  update(){
+    const r=$('nSlider'), N=+r.value, max=+r.max||1;
+    const b=$('nBubble');
+    b.textContent=N;
+    // 圆头宽 26px，两端各内缩 13px，气泡随圆头中心走
+    const pct=N/max;
+    b.style.left=`calc(13px + ${pct} * (100% - 26px))`;
+    $('dHint').innerHTML=dialHint(this.op,N);
+  },
+  nudge(delta){
+    const r=$('nSlider');
+    r.value=Math.max(+r.min,Math.min(+r.max,+r.value+delta));
+    this.update();
+  },
+  cancel(){this.close();},
+  close(){
+    $('dialer').classList.remove('show');
+    $('idleBar').style.display='';
+    this.op=null;
+    render();
+  },
+  confirm(){
+    const N=+$('nSlider').value, op=this.op;
+    applyOp(op,N);
+    confirms++;
+    this.close();
+    Game.afterConfirm(op);
+  }
+};
 
 const Game={
   load(){
     cur=PLAN[lv];
     hold={...cur.start};
-    moves=0;
+    confirms=0; locked=false;
     $('goalText').innerHTML=cur.q;
     $('prog').textContent=lv+1;
-    $('checkBtn').textContent='校准完成';
-    $('checkBtn').disabled=false;$('resetBtn').disabled=false;
-    $('banner').classList.remove('show','clickable');
+    Dialer.op=null;
+    $('dialer').classList.remove('show');
+    $('idleBar').style.display='';
+    $('banner').classList.remove('show','clickable','perfect');
     $('steps').innerHTML=PLAN.map((_,k)=>`<span class="dot ${k<lv?'done':k===lv?'now':''}"></span>`).join('');
     $('readout').innerHTML=hintFor(cur.targetForm);
     render();
   },
-  act(op){
-    let done=false;
-    if(op==='s_up'&&hold.s>=60){hold.s-=60;hold.m+=1;done=true;}
-    else if(op==='m_up'&&hold.m>=60){hold.m-=60;hold.d+=1;done=true;}
-    else if(op==='d_down'&&hold.d>=1){hold.d-=1;hold.m+=60;done=true;}
-    else if(op==='m_down'&&hold.m>=1){hold.m-=1;hold.s+=60;done=true;}
-    if(!done){Sound.sfx.nope();return;}
-    moves++;
-    (op.endsWith('_up')?Sound.sfx.up:Sound.sfx.down)();
+  afterConfirm(op){
+    render();
+    const t=cur.target;
+    if(hold.d===t.d&&hold.m===t.m&&hold.s===t.s){this.win();return;}
+    if(hold.d<0||hold.m<0||hold.s<0)Sound.sfx.poor();
+    else (op.endsWith('_up')?Sound.sfx.up:Sound.sfx.down)();
+    $('readout').innerHTML=statusMsg();
+  },
+  resetHolding(){
+    if(locked)return;
+    hold={...cur.start};
+    $('readout').innerHTML=hintFor(cur.targetForm)+'<br><span style="color:var(--muted);font-weight:400">（已重置本台，确认次数仍会保留）</span>';
     render();
   },
-  resetHolding(){hold={...cur.start};moves=0;render();
-    $('readout').innerHTML=hintFor(cur.targetForm);},
-  check(){
+  win(){
+    Sound.sfx.great();
+    locked=true;
     const t=cur.target;
-    const ok=hold.d===t.d&&hold.m===t.m&&hold.s===t.s;
-    if(ok){
-      Sound.sfx.great();
-      const pts=10;score+=pts;$('score').textContent=score;
-      $('checkBtn').disabled=true;$('resetBtn').disabled=true;
-      const b=$('banner');
-      b.innerHTML=`<div class="grade">✦ 校准准确</div>`+
-        `<div class="detail">整理为 <b>${fmt(t.d,t.m,t.s)}</b> &nbsp;+${pts} 分<br>`+
-        `<button class="btn" style="margin-top:10px;padding:8px 18px;font-size:14px" onclick="Game.next()">${lv>=ROUND-1?'看结果':'下一台 →'}</button></div>`;
-      b.classList.add('show','clickable');
-    }else{
-      Sound.sfx.poor();
-      $('readout').innerHTML=whyWrong(cur.targetForm);
-    }
+    const perfect=confirms<=MINCONF[cur.kind];
+    const pts=perfect?15:10;
+    score+=pts;$('score').textContent=score;
+    render();
+    const b=$('banner');
+    b.className='banner'+(perfect?' perfect':'');
+    b.innerHTML=`<div class="grade">${perfect?'✦ 完美校准':'✧ 校准准确'}</div>`+
+      `<div class="detail">整理为 <b>${fmt(t.d,t.m,t.s)}</b><br>`+
+      `${perfect?'一步到位！':'用了'} <b>${confirms}</b> 次确认 &nbsp;+${pts} 分<br>`+
+      `<button class="btn" style="margin-top:10px;padding:8px 18px;font-size:14px" onclick="Game.next()">${lv>=ROUND-1?'看结果':'下一台 →'}</button></div>`;
+    b.classList.add('show','clickable');
   },
   next(){
     if(bannerTimer){clearTimeout(bannerTimer);bannerTimer=null;}
@@ -308,30 +430,43 @@ const Game={
   },
   finish(){
     Sound.sfx.win();
-    const full=ROUND*10,star=score>=full*0.9?3:score>=full*0.6?2:1;
+    locked=true;
+    const full=ROUND*15,star=score>=full*0.9?3:score>=full*0.6?2:1;
     const b=$('banner');
+    b.className='banner';
     b.innerHTML=`<div class="grade" style="color:var(--gold)">🧭 校准完成</div>`+
       `<div class="detail">${'★'.repeat(star)}${'☆'.repeat(3-star)}<br>`+
       `本轮得分 <b>${score}</b> / ${full}<br>`+
       `<button class="btn" style="margin-top:10px;padding:8px 18px;font-size:14px" onclick="Game.restart()">再来一轮</button></div>`;
     b.classList.add('show','clickable');
-    $('checkBtn').disabled=true;$('resetBtn').disabled=true;
-    $('readout').innerHTML='一轮结束，再练一次会更熟练。';
+    $('readout').innerHTML='一轮结束，估得越准、步数越省，越接近满星。';
   },
   restart(){lv=0;score=0;PLAN=makePlan();$('score').textContent=0;this.load();},
   start(){$('total').textContent=ROUND;this.load();}
 };
+
 function hintFor(form){
-  if(form==='m')return '目标是<b>全部化成分</b>：把每 1° 拆开换成 60′，直到度为 0。';
-  if(form==='dms')return '目标是<b>度 分 秒</b>规范写法：秒满 60 合成 1 分，分满 60 合成 1 度（分、秒都要小于 60）。';
-  return '目标是<b>度 分</b>规范写法：分满 60 就合成 1 度，让分小于 60。';
+  if(form==='m')  return '目标：<b>全部化成分</b>。点度托盘的「拆开↓」，拨出要拆的度数，直到度为 0。';
+  if(form==='dms')return '目标：<b>度 分 秒</b>规范写法。先把秒<b>合成</b>成分、再把分<b>合成</b>成度（分、秒都要小于 60）。';
+  return '目标：<b>度 分</b>规范写法。点分托盘的「合成↑」，估一估分里有几个 60，拨好再确认。';
 }
-function whyWrong(form){
-  if(form==='m')return '❌ 还没整理好：要把度<b>全部拆开</b>成分，度托盘应为 0。';
-  if(form==='dms')return '❌ 还没整理好：<b>秒和分都要小于 60</b>，满 60 记得合成上一级。';
-  return '❌ 还没整理好：<b>分要小于 60</b>，满 60 就合成 1 度。';
+function statusMsg(){
+  if(hold.d<0||hold.m<0||hold.s<0)
+    return '❌ 有一格变成了负数 —— 这次<b>估多了</b>。看看差多少，往回拨补上，或点「重置本台」。';
+  const f=cur.targetForm;
+  if(f==='m'){ if(hold.d>0)return '度还没拆完：把每 1° 继续<b>拆开</b>成 60′，直到度为 0。'; }
+  else if(f==='dm'){ if(hold.m>=60)return '分还满 60：继续把分<b>合成</b>成度，让分小于 60。'; }
+  else { if(hold.s>=60)return '秒还满 60：先把秒<b>合成</b>成分。'; if(hold.m>=60)return '分还满 60：再把分<b>合成</b>成度。'; }
+  return '快好了，再核对一下每一格是否都符合规范。';
 }
+
 Game.start();
+</script>
+<!-- 51.la 访问统计（异步加载，不阻塞页面渲染） -->
+<script>
+(function(){var s=document.createElement('script');s.charset='UTF-8';s.id='LA_COLLECT';s.async=true;
+s.src='//sdk.51.la/js-sdk-pro.min.js';s.onload=function(){LA.init({id:"3QacsvaHgKQ6M8cx",ck:"3QacsvaHgKQ6M8cx"})};
+document.body.appendChild(s);})();
 </script>
 </body>
 </html>
