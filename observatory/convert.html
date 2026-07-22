@@ -129,17 +129,17 @@ body{background:
 .foot{font-size:12px;color:var(--muted);margin-top:10px;text-align:center}
 .foot b{color:var(--copper-d)}
 
-.banner{position:fixed;left:50%;top:46%;transform:translate(-50%,-50%) scale(.85);opacity:0;
-  background:rgba(242,230,201,.98);border:2px solid var(--copper-d);border-radius:16px;
-  padding:16px 24px;text-align:center;z-index:14;transition:.28s;pointer-events:none;
-  box-shadow:0 8px 22px rgba(58,35,15,.28)}
-.banner.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
-.banner.clickable{pointer-events:auto}
-.banner.perfect{border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,145,47,.4),0 8px 22px rgba(58,35,15,.28)}
-.banner .grade{font-size:20px;font-weight:700;margin-bottom:4px;color:var(--good)}
-.banner.perfect .grade{color:var(--gold)}
-.banner .detail{font-size:13.5px;color:var(--ink2);line-height:1.7}
-.banner .detail b{color:var(--copper-d)}
+/* 结束纪念卡（Canvas 生成为图片，可长按保存）；按钮与提示在卡片下方 */
+.cardOverlay{position:fixed;inset:0;z-index:20;display:none;flex-direction:column;
+  align-items:center;justify-content:center;gap:13px;padding:18px;
+  background:rgba(28,18,8,.58)}
+.cardOverlay.show{display:flex;animation:cardFade .3s ease}
+@keyframes cardFade{from{opacity:0}to{opacity:1}}
+.cardImg{max-width:min(86vw,344px);max-height:74vh;max-height:74dvh;width:auto;height:auto;
+  border-radius:16px;box-shadow:0 12px 30px rgba(0,0,0,.42);animation:cardPop .36s ease}
+@keyframes cardPop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.cardHint{font-size:12.5px;color:#f2e6c9;opacity:.82;letter-spacing:1px}
+.cardBtns{display:flex;gap:12px}
 
 /* 矮屏自适应：视口越矮，字号与间距分档收紧，保证拨杆条与「确认转换」永远露全、无需滚动 */
 @media (max-height:760px){
@@ -264,7 +264,14 @@ body{background:
     <div class="foot">第 <b id="prog">1</b>/<b id="total">8</b> 台 · 确认 <b id="confCount">0</b> 次 · 得分 <b id="score">0</b></div>
   </div>
 
-  <div class="banner" id="banner"></div>
+  <div class="cardOverlay" id="cardOverlay">
+    <img class="cardImg" id="cardImg" alt="观星台荣誉纪念卡">
+    <div class="cardHint">长按卡片可保存纪念图</div>
+    <div class="cardBtns">
+      <button class="btn" onclick="Game.restart()">再来一轮</button>
+      <button class="btn ghost" onclick="location.href='index.html'">返回星台</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -467,7 +474,7 @@ const Game={
     Dialer.op=null;
     $('dialer').classList.remove('show');
     $('idleBar').style.display='';
-    $('banner').classList.remove('show','clickable','perfect');
+    $('cardOverlay').classList.remove('show');
     $('result').className='result';$('result').innerHTML='';
     $('steps').innerHTML=PLAN.map((_,k)=>`<span class="dot ${k<lv?'done':k===lv?'now':''}"></span>`).join('');
     $('readout').innerHTML=hintFor(cur.targetForm);
@@ -512,19 +519,101 @@ const Game={
   finish(){
     Sound.sfx.win();
     locked=true;
-    const full=ROUND*15,star=score>=full*0.9?3:score>=full*0.6?2:1;
-    const b=$('banner');
-    b.className='banner';
-    b.innerHTML=`<div class="grade" style="color:var(--gold)">🧭 校准完成</div>`+
-      `<div class="detail">${'★'.repeat(star)}${'☆'.repeat(3-star)}<br>`+
-      `本轮得分 <b>${score}</b> / ${full}<br>`+
-      `<button class="btn" style="margin-top:10px;padding:8px 18px;font-size:14px" onclick="Game.restart()">再来一轮</button></div>`;
-    b.classList.add('show','clickable');
+    const full=ROUND*15, star=score>=full*0.9?3:score>=full*0.6?2:1;
+    drawCard(star,score,full);
+    $('cardOverlay').classList.add('show');
     $('readout').innerHTML='一轮结束，估得越准、步数越省，越接近满星。';
   },
   restart(){lv=0;score=0;PLAN=makePlan();$('score').textContent=0;this.load();},
   start(){$('total').textContent=ROUND;this.load();}
 };
+
+/* ---- 结束纪念卡：Canvas 手绘成一张 PNG，长按可保存 ---- */
+function roundRect(g,x,y,w,h,r){
+  g.beginPath();g.moveTo(x+r,y);
+  g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);
+  g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();
+}
+function drawCard(star,score,full){
+  const HON =['见习观星学徒','资深刻度校准师','首席星图校准师'];
+  const CONG=[['观星之路已然启程，','多加练习必成校准大师。'],
+              ['刻度渐明，星图在你手中','愈发清晰、愈发准确。'],
+              ['你已校准全部观测记录，','让每一颗星辰都精准归位。']];
+  const FLAV=['✧ 初登星台，未来可期 ✧','✧ 勤加校准，星途可期 ✧','✦ 星河浩瀚，度分不差 ✦'];
+  const honor=HON[star-1], cong=CONG[star-1], flav=FLAV[star-1];
+
+  const W=640,H=860,S=Math.min(3,Math.max(2,Math.round(window.devicePixelRatio||2)));
+  const cv=document.createElement('canvas');cv.width=W*S;cv.height=H*S;
+  const g=cv.getContext('2d');g.scale(S,S);
+  const CN='Georgia,"Songti SC","STSong",serif', cx=W/2;
+
+  // 羊皮纸底 + 两角光晕 + 细横纹
+  g.fillStyle='#f2e6c9';g.fillRect(0,0,W,H);
+  let rad=g.createRadialGradient(W*0.22,H*0.13,0,W*0.22,H*0.13,W*0.62);
+  rad.addColorStop(0,'rgba(176,112,58,0.13)');rad.addColorStop(1,'rgba(176,112,58,0)');
+  g.fillStyle=rad;g.fillRect(0,0,W,H);
+  rad=g.createRadialGradient(W*0.82,H*0.9,0,W*0.82,H*0.9,W*0.62);
+  rad.addColorStop(0,'rgba(39,64,96,0.12)');rad.addColorStop(1,'rgba(39,64,96,0)');
+  g.fillStyle=rad;g.fillRect(0,0,W,H);
+  g.fillStyle='rgba(138,83,38,0.04)';
+  for(let y=0;y<H;y+=4)g.fillRect(0,y,W,1.4);
+
+  // 铜边（外粗 + 内细金线）
+  g.lineJoin='round';
+  roundRect(g,20,20,W-40,H-40,26);g.lineWidth=6;g.strokeStyle='#8a5326';g.stroke();
+  roundRect(g,32,32,W-64,H-64,20);g.lineWidth=1.5;g.strokeStyle='#c8912f';g.stroke();
+
+  g.textAlign='center';g.textBaseline='middle';
+
+  // 四角星饰
+  g.fillStyle='#b0703a';g.font='18px '+CN;
+  g.fillText('✦',56,56);g.fillText('✦',W-56,56);
+  g.fillText('✦',56,H-56);g.fillText('✦',W-56,H-56);
+
+  // 望远镜
+  g.font='64px "Apple Color Emoji","Segoe UI Emoji",'+CN;
+  g.fillText('🔭',cx,122);
+
+  // 标题
+  g.fillStyle='#274060';g.font='bold 30px '+CN;
+  g.fillText('天文观测台 · 荣誉认证',cx,186);
+
+  // 副标题 + 两侧短线
+  g.fillStyle='#8a7a58';g.font='15px '+CN;
+  const sub='刻度校准所 · 结业纪念';g.fillText(sub,cx,218);
+  const sw=g.measureText(sub).width;g.strokeStyle='#b0703a';g.lineWidth=1.5;
+  g.beginPath();g.moveTo(cx-sw/2-32,218);g.lineTo(cx-sw/2-12,218);g.stroke();
+  g.beginPath();g.moveTo(cx+sw/2+12,218);g.lineTo(cx+sw/2+32,218);g.stroke();
+
+  // 星级
+  g.font='40px '+CN;
+  for(let i=0;i<3;i++){
+    g.fillStyle=i<star?'#c8912f':'rgba(138,83,38,0.3)';
+    g.fillText(i<star?'★':'☆',cx+(i-1)*50,306);
+  }
+
+  // 荣誉称号（铜边药丸）
+  g.font='bold 24px '+CN;
+  const hw=g.measureText(honor).width, pw=hw+56, ph=48, px=cx-pw/2, py=364;
+  roundRect(g,px,py,pw,ph,24);
+  g.fillStyle='rgba(200,145,47,0.15)';g.fill();
+  g.lineWidth=2;g.strokeStyle='#8a5326';g.stroke();
+  g.fillStyle='#274060';g.fillText(honor,cx,py+ph/2+1);
+
+  // 祝贺语
+  g.fillStyle='#3b587c';g.font='19px '+CN;
+  g.fillText(cong[0],cx,480);g.fillText(cong[1],cx,514);
+
+  // 得分
+  g.fillStyle='#8a5326';g.font='bold 22px '+CN;
+  g.fillText('得分  '+score+' / '+full,cx,590);
+
+  // 底部主题祝语
+  g.fillStyle='#8a7a58';g.font='italic 17px '+CN;
+  g.fillText(flav,cx,694);
+
+  $('cardImg').src=cv.toDataURL('image/png');
+}
 
 function hintFor(form){
   if(form==='m')  return '目标：<b>全部化成分</b>。点度托盘的「拆开↓」，拨出要拆的度数，直到度为 0。';
