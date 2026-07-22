@@ -566,51 +566,53 @@ function drawCard(star,score,full){
   g.textAlign='center';g.textBaseline='middle';
 
   // 四角星饰
-  g.fillStyle='#b0703a';g.font='18px '+CN;
+  g.fillStyle='#b0703a';g.font='20px '+CN;
   g.fillText('✦',56,56);g.fillText('✦',W-56,56);
   g.fillText('✦',56,H-56);g.fillText('✦',W-56,H-56);
 
   // 望远镜
-  g.font='64px "Apple Color Emoji","Segoe UI Emoji",'+CN;
-  g.fillText('🔭',cx,122);
+  g.font='74px "Apple Color Emoji","Segoe UI Emoji",'+CN;
+  g.fillText('🔭',cx,132);
 
-  // 标题
-  g.fillStyle='#274060';g.font='bold 30px '+CN;
-  g.fillText('天文观测台 · 荣誉认证',cx,186);
+  // 标题（按卡宽自适应，尽量放大填满）
+  g.fillStyle='#274060';
+  const TT='天文观测台 · 荣誉认证';
+  let ts=46;do{g.font='bold '+ts+'px '+CN;if(g.measureText(TT).width<=512)break;ts-=1;}while(ts>24);
+  g.fillText(TT,cx,202);
 
   // 副标题 + 两侧短线
-  g.fillStyle='#8a7a58';g.font='15px '+CN;
-  const sub='刻度校准所 · 结业纪念';g.fillText(sub,cx,218);
+  g.fillStyle='#8a7a58';g.font='18px '+CN;
+  const sub='刻度校准所 · 结业纪念';g.fillText(sub,cx,242);
   const sw=g.measureText(sub).width;g.strokeStyle='#b0703a';g.lineWidth=1.5;
-  g.beginPath();g.moveTo(cx-sw/2-32,218);g.lineTo(cx-sw/2-12,218);g.stroke();
-  g.beginPath();g.moveTo(cx+sw/2+12,218);g.lineTo(cx+sw/2+32,218);g.stroke();
+  g.beginPath();g.moveTo(cx-sw/2-34,242);g.lineTo(cx-sw/2-12,242);g.stroke();
+  g.beginPath();g.moveTo(cx+sw/2+12,242);g.lineTo(cx+sw/2+34,242);g.stroke();
 
   // 星级
-  g.font='40px '+CN;
+  g.font='48px '+CN;
   for(let i=0;i<3;i++){
     g.fillStyle=i<star?'#c8912f':'rgba(138,83,38,0.3)';
-    g.fillText(i<star?'★':'☆',cx+(i-1)*50,306);
+    g.fillText(i<star?'★':'☆',cx+(i-1)*56,332);
   }
 
   // 荣誉称号（铜边药丸）
-  g.font='bold 24px '+CN;
-  const hw=g.measureText(honor).width, pw=hw+56, ph=48, px=cx-pw/2, py=364;
-  roundRect(g,px,py,pw,ph,24);
+  g.font='bold 28px '+CN;
+  const hw=g.measureText(honor).width, pw=hw+64, ph=56, px=cx-pw/2, py=378;
+  roundRect(g,px,py,pw,ph,26);
   g.fillStyle='rgba(200,145,47,0.15)';g.fill();
   g.lineWidth=2;g.strokeStyle='#8a5326';g.stroke();
   g.fillStyle='#274060';g.fillText(honor,cx,py+ph/2+1);
 
   // 祝贺语
-  g.fillStyle='#3b587c';g.font='19px '+CN;
-  g.fillText(cong[0],cx,480);g.fillText(cong[1],cx,514);
+  g.fillStyle='#3b587c';g.font='22px '+CN;
+  g.fillText(cong[0],cx,504);g.fillText(cong[1],cx,544);
 
   // 得分
-  g.fillStyle='#8a5326';g.font='bold 22px '+CN;
-  g.fillText('得分  '+score+' / '+full,cx,590);
+  g.fillStyle='#8a5326';g.font='bold 27px '+CN;
+  g.fillText('得分  '+score+' / '+full,cx,626);
 
   // 底部主题祝语
-  g.fillStyle='#8a7a58';g.font='italic 17px '+CN;
-  g.fillText(flav,cx,694);
+  g.fillStyle='#8a7a58';g.font='italic 20px '+CN;
+  g.fillText(flav,cx,716);
 
   $('cardImg').src=cv.toDataURL('image/png');
 }
