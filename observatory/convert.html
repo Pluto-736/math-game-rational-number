@@ -46,7 +46,19 @@ body{background:
 .task .goal b{color:var(--ink)}
 .task .goal .big{font-size:23px}
 
-.stageSpace{flex:1;min-height:6px}
+.stageSpace{flex:1;min-height:6px;display:flex;align-items:center;justify-content:center;width:100%;padding:0 14px}
+
+/* 每关校准成功卡片（夹在题目框与托盘之间，不遮答案） */
+.result{opacity:0;transform:scale(.92);transition:opacity .25s,transform .25s;text-align:center;max-width:420px;
+  background:rgba(242,230,201,.98);border:2px solid var(--copper-d);border-radius:14px;padding:11px 20px;
+  box-shadow:0 6px 16px rgba(58,35,15,.22)}
+.result:empty{display:none}
+.result.show{opacity:1;transform:scale(1)}
+.result.perfect{border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,145,47,.35),0 6px 16px rgba(58,35,15,.22)}
+.result .grade{font-size:19px;font-weight:700;color:var(--good);margin-bottom:2px}
+.result.perfect .grade{color:var(--gold)}
+.result .detail{font-size:13px;color:var(--ink2);line-height:1.6}
+.result .detail b{color:var(--copper-d)}
 
 /* 三托盘 */
 .trays{display:flex;gap:10px;justify-content:center;align-items:stretch;margin:14px auto 0;
@@ -142,7 +154,7 @@ body{background:
     <div class="goal" id="goalText">把 <span class="big"><b>150′</b></span> 整理成规范的「度 分」写法</div>
   </div>
 
-  <div class="stageSpace"></div>
+  <div class="stageSpace"><div class="result" id="result"></div></div>
 
   <div class="trays" id="trays">
     <div class="tray" id="trayD">
@@ -268,12 +280,16 @@ const OPS={
   m_down:{label:'拆开：分 → 秒', unit:'每 1′ = 60″', max:12},
 };
 /* 各题型理论最少确认次数 */
-const MINCONF={A:1,B:1,C:2};
+const MINCONF={A:1,B:1,C:2,D:2};
+
+/* 秒 → 规范度分秒 */
+function toStd(totalSec){return {d:Math.floor(totalSec/3600),m:Math.floor((totalSec%3600)/60),s:totalSec%60};}
 
 /* 题型：
-   A 单位→标准：给全为分 → 目标标准(度分)          最少 1 次
-   B 标准→单位：给标准(度分) → 目标全为分           最少 1 次
-   C 带秒→标准：给全为秒 → 目标标准(度分秒)         最少 2 次（度=1，总秒≤6000）
+   A 单位→标准：给全为分 → 目标标准(度分)          最少 1 次  （分化度）
+   B 标准→单位：给标准(度分) → 目标全为分           最少 1 次  （度化分）
+   C 带秒→标准：给全为秒 → 目标标准(度分秒)         最少 2 次  （秒化度分，度=1，总秒≤6000）
+   D 整理归一：给不规范度分秒(分秒均≥60) → 规范写法  最少 2 次  （度分秒都有数据，整理进位）
 */
 function makeLevel(kind){
   if(kind==='A'){ // 全分 → 标准（度分，无秒）
@@ -288,6 +304,14 @@ function makeLevel(kind){
     return{kind,start:{d,m,s:0}, target:{d:0,m:totalMin,s:0}, targetForm:'m',
       q:`把 <span class="big"><b>${d}°${m}′</b></span> 全部换算成「分」`};
   }
+  if(kind==='D'){ // 不规范度分秒 → 规范（分、秒各进位一次）
+    const d0=1+Math.floor(Math.random()*3);       // 1..3
+    const m0=60+Math.floor(Math.random()*40);      // 60..99（需分收一次）
+    const s0=61+Math.floor(Math.random()*39);      // 61..99（需秒收一次）
+    const std=toStd(d0*3600+m0*60+s0);
+    return{kind,start:{d:d0,m:m0,s:s0}, target:std, targetForm:'dms',
+      q:`整理观测记录 <span class="big"><b>${d0}°${m0}′${s0}″</b></span>，让分、秒都小于 60`};
+  }
   // C 全秒 → 标准（度分秒）；度固定为 1、总秒 ≤ 6000″，确保秒收组数 61~99（＜杆量程 120）
   const d=1, m=1+Math.floor(Math.random()*39), s=1+Math.floor(Math.random()*59);
   const totalSec=d*3600+m*60+s;
@@ -295,8 +319,8 @@ function makeLevel(kind){
     q:`把 <span class="big"><b>${totalSec}″</b></span> 整理成规范的「度 分 秒」写法`};
 }
 function makePlan(){
-  // 按题型 A→B→C 递进：先度分合成、再度分拆分、最后带秒的度分秒
-  const kinds=['A','A','A','B','B','B','C','C'];
+  // 1-2 度化分(B) · 3-4 分化度(A) · 5-6 度分秒整理(D) · 7-8 秒化度分(C)
+  const kinds=['B','B','A','A','D','D','C','C'];
   return kinds.map(makeLevel);
 }
 let PLAN=makePlan();
@@ -388,6 +412,7 @@ const Game={
     $('dialer').classList.remove('show');
     $('idleBar').style.display='';
     $('banner').classList.remove('show','clickable','perfect');
+    $('result').className='result';$('result').innerHTML='';
     $('steps').innerHTML=PLAN.map((_,k)=>`<span class="dot ${k<lv?'done':k===lv?'now':''}"></span>`).join('');
     $('readout').innerHTML=hintFor(cur.targetForm);
     render();
@@ -414,13 +439,13 @@ const Game={
     const pts=perfect?15:10;
     score+=pts;$('score').textContent=score;
     render();
-    const b=$('banner');
-    b.className='banner'+(perfect?' perfect':'');
-    b.innerHTML=`<div class="grade">${perfect?'✦ 完美校准':'✧ 校准准确'}</div>`+
-      `<div class="detail">整理为 <b>${fmt(t.d,t.m,t.s)}</b><br>`+
-      `${perfect?'一步到位！':'用了'} <b>${confirms}</b> 次确认 &nbsp;+${pts} 分<br>`+
-      `<button class="btn" style="margin-top:10px;padding:8px 18px;font-size:14px" onclick="Game.next()">${lv>=ROUND-1?'看结果':'下一台 →'}</button></div>`;
-    b.classList.add('show','clickable');
+    const r=$('result');
+    r.className='result'+(perfect?' perfect':'');
+    r.innerHTML=`<div class="grade">${perfect?'✦ 完美校准':'✧ 校准准确'}</div>`+
+      `<div class="detail">整理为 <b>${fmt(t.d,t.m,t.s)}</b> · `+
+      `${perfect?'一步到位！':''}<b>${confirms}</b> 次确认 · +${pts} 分<br>`+
+      `<button class="btn" style="margin-top:8px;padding:7px 18px;font-size:14px" onclick="Game.next()">${lv>=ROUND-1?'看结果':'下一台 →'}</button></div>`;
+    requestAnimationFrame(()=>r.classList.add('show'));
   },
   next(){
     if(bannerTimer){clearTimeout(bannerTimer);bannerTimer=null;}
