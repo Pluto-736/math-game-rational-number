@@ -141,6 +141,8 @@ body{background:linear-gradient(180deg,#1a0f2e 0%,#241540 45%,#120a24 100%)}
 .revFinal{font-size:20px;font-weight:1000;color:var(--teal);margin:10px 0}
 .stars{font-size:40px;letter-spacing:6px;margin:12px 0;color:var(--gold)}
 .stars .off{color:#3a2f5c}
+.overCardImg{width:min(78vw,300px);max-height:62vh;object-fit:contain;border-radius:14px;box-shadow:0 12px 34px rgba(0,0,0,.6)}
+.cardHint{font-size:11px;color:#9c8fd0;opacity:.7;margin:8px 0 4px;letter-spacing:1px}
 /* keypad — 底部抽屉，紧凑不挡题目 */
 #kpMask{background:rgba(8,4,18,.35);align-items:flex-end;padding:0}
 #kpMask .modal{max-width:520px;border-radius:16px 16px 0 0;border-bottom:0;padding:12px 14px calc(12px + env(safe-area-inset-bottom));animation:sheetUp .22s ease}
@@ -162,9 +164,16 @@ body{background:linear-gradient(180deg,#1a0f2e 0%,#241540 45%,#120a24 100%)}
 .fillLine{font-size:19px;margin:10px 0 2px}#board{padding:6px 4px}
 }
 </style>
-<!-- 51.la 访问统计 -->
-<script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
-<script>LA.init({id:"3QacsvaHgKQ6M8cx",ck:"3QacsvaHgKQ6M8cx"})</script>
+<!-- 51.la 访问统计（异步加载，不阻塞页面） -->
+<script>
+(function(){
+  var s=document.createElement('script');
+  s.async=true; s.charset='UTF-8'; s.id='LA_COLLECT';
+  s.src='//sdk.51.la/js-sdk-pro.min.js';
+  s.onload=function(){ LA.init({id:"3QacsvaHgKQ6M8cx",ck:"3QacsvaHgKQ6M8cx"}); };
+  document.head.appendChild(s);
+})();
+</script>
 </head>
 <body>
 <div id="app">
@@ -499,6 +508,110 @@ function unlocked(){return Math.max(1,parseInt(localStorage.getItem('et_unlocked
 function setUnlocked(v){if(v>unlocked())localStorage.setItem('et_unlocked',String(v))}
 function getStars(f){return parseInt(localStorage.getItem('et_star'+f)||'0',10)}
 function setStars(f,s){if(s>getStars(f))localStorage.setItem('et_star'+f,String(s))}
+
+/* ===== 结算纪念卡 · 封魔证书（只在第2层通关出；纯canvas魔幻塔战风） ===== */
+const ResultCard={
+  TITLES:['见习驱魔师','方程骑士','封魔大师'],
+  // 按星级取档：★1=铜 ★2=银 ★3=金
+  THEME:[
+    null,
+    {c1:'#2a1c14',c2:'#160e08',accent:'#c97f3c',tint:'#f0d0a8',metal:'#cd7f32',pill:'#a86a2e'},
+    {c1:'#1f2740',c2:'#0e1424',accent:'#9fb2d8',tint:'#e2ecff',metal:'#c3ccdd',pill:'#7686a8'},
+    {c1:'#2a1f42',c2:'#150e28',accent:'#f5c542',tint:'#ffeeb0',metal:'#f5c542',pill:'#8b5cf6'}
+  ],
+  BLESS:[
+    ['初登魔塔，护甲已破。','多加修炼，晋升方程骑士。'],
+    ['移项变号，一路削甲封魔。','再攀高塔，冲封魔大师！'],
+    ['零失误封魔，解方程如探囊取物。','魔塔之巅，唯你封神！']
+  ],
+  roundRect(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();},
+  // 护盾徽章 + 中心★
+  shield(g,cx,cy,s,metal,dark,accent){
+    g.save(); g.translate(cx,cy);
+    g.beginPath();
+    g.moveTo(0,-s); g.lineTo(s*0.82,-s*0.62); g.lineTo(s*0.82,s*0.18);
+    g.quadraticCurveTo(s*0.82,s*0.86,0,s*1.12);
+    g.quadraticCurveTo(-s*0.82,s*0.86,-s*0.82,s*0.18);
+    g.lineTo(-s*0.82,-s*0.62); g.closePath();
+    g.fillStyle=metal; g.fill();
+    g.lineWidth=s*0.09; g.strokeStyle=dark; g.stroke();
+    // 内嵌十字纹
+    g.strokeStyle=dark; g.lineWidth=s*0.12; g.lineCap='round';
+    g.beginPath(); g.moveTo(0,-s*0.5); g.lineTo(0,s*0.7); g.stroke();
+    g.beginPath(); g.moveTo(-s*0.55,s*0.02); g.lineTo(s*0.55,s*0.02); g.stroke();
+    // 中心★
+    g.fillStyle=accent; g.font='700 '+Math.round(s*0.7)+'px Georgia,serif';
+    g.textAlign='center'; g.textBaseline='middle';
+    g.fillText('★',0,s*0.06);
+    g.restore(); g.textBaseline='alphabetic';
+  },
+  render(opts){
+    const {star,floorName,mistakes,reveal,best}=opts;
+    const th=this.THEME[star];
+    const dpr=Math.min(window.devicePixelRatio||1,3);
+    const W=480,H=650;
+    const cv=document.createElement('canvas');
+    cv.width=W*dpr; cv.height=H*dpr;
+    const g=cv.getContext('2d'); g.scale(dpr,dpr); g.textAlign='center';
+    // 背景渐变
+    const bg=g.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0,th.c1); bg.addColorStop(1,th.c2);
+    g.fillStyle=bg; g.fillRect(0,0,W,H);
+    // 背景塔砖纹
+    g.strokeStyle='rgba(255,255,255,.04)'; g.lineWidth=2;
+    for(let yy=60;yy<H;yy+=34){ g.beginPath(); g.moveTo(30,yy); g.lineTo(W-30,yy); g.stroke(); }
+    for(let yy=60,r=0;yy<H;yy+=34,r++){ const off=r%2?40:0; for(let xx=30+off;xx<W-30;xx+=80){ g.beginPath(); g.moveTo(xx,yy); g.lineTo(xx,yy+34); g.stroke(); } }
+    // 外框
+    g.strokeStyle=th.accent; g.lineWidth=6;
+    this.roundRect(g,16,16,W-32,H-32,20); g.stroke();
+    g.strokeStyle='rgba(255,255,255,.5)'; g.lineWidth=2;
+    this.roundRect(g,25,25,W-50,H-50,14); g.stroke();
+    // 标题
+    g.fillStyle=th.tint;
+    g.font="900 30px 'Songti SC',Georgia,serif";
+    g.fillText('🗼 方程魔塔', W/2, 84);
+    g.font="700 18px 'Songti SC',Georgia,serif";
+    g.fillText('封 魔 证 书', W/2, 114);
+    let y=160;
+    g.fillStyle=th.tint; g.font="700 20px 'Songti SC',Georgia,serif";
+    g.fillText('第 2 层 · '+floorName+' · 已封魔', W/2, y);
+    y+=32;
+    g.font='26px Georgia,serif';
+    g.fillText('⭐'.repeat(star)+'☆'.repeat(3-star), W/2, y);
+    y+=44;
+    // 主视觉：护盾徽章
+    this.shield(g, W/2, y+52, 50, th.metal, th.c2, th.accent);
+    y=y+52+86;
+    // 称号药丸
+    const honor=this.TITLES[star-1];
+    g.font="900 25px 'Songti SC',Georgia,serif";
+    const pw=g.measureText(honor).width+62;
+    this.roundRect(g,(W-pw)/2,y-28,pw,46,23);
+    g.fillStyle=th.pill; g.fill();
+    g.fillStyle='#fff'; g.textBaseline='middle';
+    g.fillText(honor, W/2, y-4);
+    g.textBaseline='alphabetic';
+    y+=50;
+    // 寄语
+    g.fillStyle=th.tint; g.font="17px 'Songti SC',Georgia,serif";
+    const bless=this.BLESS[star-1];
+    g.fillText(bless[0], W/2, y); y+=27;
+    g.fillText(bless[1], W/2, y); y+=40;
+    // 数据行
+    g.fillStyle=th.accent; g.font="900 21px 'Songti SC',Georgia,serif";
+    g.fillText('本层失误 '+mistakes+' 次'+(reveal?' · 看过解法':''), W/2, y); y+=30;
+    g.fillStyle=th.tint; g.font="15px 'Songti SC',Georgia,serif";
+    g.fillText('历史最少失误 '+best+' 次', W/2, y);
+    // 尾注
+    g.fillStyle='rgba(255,255,255,.4)'; g.font="italic 14px 'Songti SC',Georgia,serif";
+    g.fillText('～ 移项变号，系数化一，一击封魔 ～', W/2, H-30);
+    return cv;
+  },
+  build(opts){
+    const cv=this.render(opts);
+    try{ return cv.toDataURL('image/png'); }catch(e){ return ''; }
+  }
+};
 
 const UI={
   show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));document.getElementById(id).classList.add('show')},
@@ -860,14 +973,28 @@ const B={
     let nextUnlocked=false;
     if(this.floor<MAXF&&unlocked()<this.floor+1){setUnlocked(this.floor+1);nextUnlocked=true}
     SFX.win();
-    const starHTML=`<span class="stars">${'★'.repeat(stars)}<span class="off">${'★'.repeat(3-stars)}</span></span>`;
-    let h=`<h2>🏆 第 ${this.floor} 层已封魔</h2>${starHTML}`
-      +`<p>失误 ${this.fMist} 次${this.fReveal?' · 看过解法':''}</p>`;
-    if(nextUnlocked)h+=`<p style="color:#37e0b8;font-weight:900">🔓 解锁第 ${this.floor+1} 层！</p>`;
-    h+=`<div style="margin-top:12px">`;
-    if(this.floor<MAXF&&unlocked()>=this.floor+1)h+=`<button class="btn gold" onclick="B.overGo(${this.floor+1})">挑战下一层</button>`;
-    h+=`<button class="btn" onclick="B.overGo(${this.floor})">重打本层</button>`
-      +`<button class="btn ghost" onclick="B.overHome()">返回魔塔</button></div>`;
+    let h;
+    if(this.floor>=MAXF){
+      // 最后一层封魔：出封魔证书纪念卡
+      const prev=localStorage.getItem('et_best_mistakes');
+      const best=prev===null?this.fMist:Math.min(+prev,this.fMist);
+      if(prev===null||this.fMist<+prev)localStorage.setItem('et_best_mistakes',this.fMist);
+      const url=ResultCard.build({star:stars,floorName:FLOORS[this.floor].name,mistakes:this.fMist,reveal:this.fReveal,best});
+      h=url?`<img class="overCardImg" src="${url}" alt="封魔证书">`
+           :`<h2>🏆 全塔封魔！</h2>`;
+      h+=`<div class="cardHint">长按卡片可保存纪念图</div>`;
+      h+=`<div style="margin-top:4px"><button class="btn" onclick="B.overGo(${this.floor})">重打本层</button>`
+        +`<button class="btn ghost" onclick="B.overHome()">返回魔塔</button></div>`;
+    }else{
+      const starHTML=`<span class="stars">${'★'.repeat(stars)}<span class="off">${'★'.repeat(3-stars)}</span></span>`;
+      h=`<h2>🏆 第 ${this.floor} 层已封魔</h2>${starHTML}`
+        +`<p>失误 ${this.fMist} 次${this.fReveal?' · 看过解法':''}</p>`;
+      if(nextUnlocked)h+=`<p style="color:#37e0b8;font-weight:900">🔓 解锁第 ${this.floor+1} 层！</p>`;
+      h+=`<div style="margin-top:12px">`;
+      if(unlocked()>=this.floor+1)h+=`<button class="btn gold" onclick="B.overGo(${this.floor+1})">挑战下一层</button>`;
+      h+=`<button class="btn" onclick="B.overGo(${this.floor})">重打本层</button>`
+        +`<button class="btn ghost" onclick="B.overHome()">返回魔塔</button></div>`;
+    }
     document.getElementById('overBody').innerHTML=h;document.getElementById('overMask').classList.add('show');
   },
   overGo(f){document.getElementById('overMask').classList.remove('show');this.startFloor(f)},
