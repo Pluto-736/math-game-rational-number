@@ -6,12 +6,14 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>正负对决 · 有理数加减</title>
+<title>正负捕鱼 · 有理数加减</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 :root{
   --neg:#2a6cf0; --neg2:#0a3a9c; --pos:#f0432a; --pos2:#9c1a0a;
-  --ink:#0b1020; --cream:#f6f8ff; --gold:#ffd23f;
+  --zero:#ffd23f; --zero2:#b8860b;
+  --ink:#06121f; --cream:#f6f8ff; --gold:#ffd23f;
+  --water:#0e5a7a; --water2:#08344a;
 }
 html,body{
   height:100%; overflow:hidden;
@@ -34,8 +36,8 @@ html,body{
 .btn.ghost{ background:rgba(255,255,255,.16); color:#fff; box-shadow:0 5px 0 rgba(0,0,0,.3); }
 
 /* 入口页 */
-#entry{ background:linear-gradient(135deg,var(--neg2) 0%,#1a1f3a 50%,var(--pos2) 100%); }
-#entry .title{ font-size:46px; font-weight:900; letter-spacing:3px; margin-bottom:10px;
+#entry{ background:linear-gradient(135deg,var(--neg2) 0%,#0a2540 50%,var(--pos2) 100%); }
+#entry .title{ font-size:44px; font-weight:900; letter-spacing:3px; margin-bottom:10px;
   text-shadow:3px 3px 0 rgba(0,0,0,.4); }
 #entry .title .b{ color:#6fa8ff; } #entry .title .r{ color:#ff8a6f; }
 #entry .sub{ font-size:15px; opacity:.85; margin-bottom:40px; }
@@ -62,99 +64,142 @@ html,body{
 .mask{ position:absolute; inset:0; background:rgba(0,0,0,.78); display:none;
   align-items:center; justify-content:center; z-index:50; padding:24px; }
 .mask.show{ display:flex; }
-.modal{ background:#1a2142; border:3px solid var(--gold); border-radius:18px;
-  padding:26px; max-width:380px; width:100%; }
+.modal{ background:#0f2a3a; border:3px solid var(--gold); border-radius:18px;
+  padding:26px; max-width:390px; width:100%; max-height:86vh; overflow-y:auto; }
 .modal h2{ font-size:20px; color:var(--gold); margin-bottom:16px; text-align:center; }
 .modal p{ font-size:14px; line-height:1.9; margin-bottom:10px; }
 .modal .hl{ color:var(--gold); } .modal .nb{ color:#6fa8ff; } .modal .pr{ color:#ff8a6f; }
-
-/* 游戏页 */
+</style>
+<style>
+/* ===== 游戏页 ===== */
 #game{ display:none; }
 #game.show{ display:block; }
-.half{ position:absolute; top:0; bottom:0; width:50%; display:flex;
-  flex-direction:column; align-items:center; justify-content:flex-start;
-  padding-top:80px; font-size:60px; font-weight:900; opacity:.9; z-index:1; }
-#negZone{ left:0; background:linear-gradient(180deg,var(--neg) 0%,var(--neg2) 100%); }
-#posZone{ right:0; background:linear-gradient(180deg,var(--pos) 0%,var(--pos2) 100%); }
-.half .lbl{ font-size:26px; letter-spacing:2px; margin-top:6px; opacity:.85; }
-.half.flash{ animation:zoneflash .4s ease; }
-@keyframes zoneflash{ 0%,100%{ filter:brightness(1);} 50%{ filter:brightness(1.8);} }
+#game{ background:linear-gradient(180deg,#0a3550 0%,var(--water) 45%,var(--water2) 100%); }
 
+/* 水面波纹装饰 */
+.wave{ position:absolute; left:0; right:0; height:2px; background:rgba(255,255,255,.08); z-index:1; }
+
+/* HUD */
 #hud{ position:absolute; top:0; left:0; right:0; display:flex; justify-content:space-between;
   align-items:center; padding:12px 16px; z-index:20; font-size:15px; text-shadow:1px 1px 2px #000; }
-#hud .hearts span{ font-size:20px; margin-right:2px; } #hud .hearts span.lost{ opacity:.25; }
-#hud .mid{ font-weight:bold; color:var(--gold); } #hud .right{ display:flex; gap:12px; align-items:center; }
 #hud .left{ display:flex; gap:10px; align-items:center; }
-#lobbyBtn, #muteBtn{ background:none; border:none; font-size:20px; cursor:pointer; }
-#levelLbl{ font-size:13px; opacity:.85; }
+#hud .right{ display:flex; gap:12px; align-items:center; }
+#lobbyBtn, #muteBtn{ background:none; border:none; font-size:20px; cursor:pointer; color:#fff; }
+#scoreLbl{ font-weight:bold; color:var(--gold); font-size:17px; }
+#levelLbl{ position:absolute; top:46px; left:0; right:0; text-align:center; z-index:20; font-size:13px; opacity:.85; text-shadow:1px 1px 2px #000; }
 
-/* 式子卡片 */
-#cardWrap{ position:absolute; left:0; right:0; top:42%; display:flex; justify-content:center;
-  z-index:10; pointer-events:none; transition:top .25s; }
-#card{ background:var(--cream); color:var(--ink); border-radius:18px;
-  padding:26px 34px; font-size:44px; font-weight:900; min-width:160px; text-align:center;
-  box-shadow:0 8px 24px rgba(0,0,0,.5); transition:none; }
-#card.toNeg{ animation:flyNeg .35s forwards; } #card.toPos{ animation:flyPos .35s forwards; }
-#card.toZero{ animation:flyZero .35s forwards; }
-@keyframes flyNeg{ to{ transform:translateX(-60vw) rotate(-20deg); opacity:0; } }
-@keyframes flyPos{ to{ transform:translateX(60vw) rotate(20deg); opacity:0; } }
-@keyframes flyZero{ to{ transform:translateY(-50vh) scale(.4); opacity:0; } }
+/* 网数（3张网图标） */
+#nets{ font-size:22px; }
+#nets .net{ margin-left:1px; transition:opacity .3s, transform .3s; }
+#nets .net.used{ opacity:.22; transform:scale(.8) rotate(-15deg); }
 
-/* 第3关：算得数模式——隐藏红蓝分区，暖调柔和背景，算式上移 */
-#game.calc #negZone, #game.calc #posZone{ display:none; }
-#game.calc{ background:linear-gradient(165deg,#3a2e1a 0%,#5a4326 45%,#7a5a30 100%); }
-#game.calc #cardWrap{ top:30%; }
-#hintBar{ position:absolute; left:0; right:0; top:34%; text-align:center; z-index:11;
-  font-size:15px; color:var(--gold); height:20px; }
-#game.calc #hintBar{ top:20%; }
+/* 计时条 */
+#timeWrap{ position:absolute; top:72px; left:22px; right:22px; height:12px; z-index:20;
+  background:rgba(0,0,0,.35); border-radius:8px; overflow:hidden; border:1px solid rgba(255,255,255,.2); }
+#timeBar{ height:100%; width:100%; background:linear-gradient(90deg,#4be08a,#ffd23f); transition:width .25s linear; }
+#timeBar.low{ background:linear-gradient(90deg,#ff5a3a,#ff8a3a); }
 
-/* 零按钮 */
-#zeroBtn{ position:absolute; left:50%; transform:translateX(-50%); top:14%;
-  background:rgba(255,255,255,.2); border:2px solid var(--gold); color:var(--gold);
-  border-radius:50%; width:64px; height:64px; font-size:24px; font-weight:900; z-index:15; cursor:pointer; }
-#zeroBtn .z2{ font-size:10px; display:block; }
+/* 当前网大牌：圆形捕鱼网(网格纹) + 大符号 */
+#netBadge{ position:absolute; top:90px; left:50%; transform:translateX(-50%); z-index:19;
+  display:flex; flex-direction:column; align-items:center; gap:4px; pointer-events:none; }
+#netBadge .netSign{ position:relative; width:84px; height:84px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:46px; font-weight:900; color:#fff;
+  border:4px solid #fff; box-shadow:0 4px 16px rgba(0,0,0,.55);
+  text-shadow:0 2px 4px rgba(0,0,0,.6);
+  transition:background .3s, transform .2s; overflow:hidden; }
+/* 网眼：两组对角重复线交叉成网格 */
+#netBadge .netSign::before{ content:''; position:absolute; inset:0; border-radius:50%; opacity:.55;
+  background-image:
+    repeating-linear-gradient(45deg, rgba(255,255,255,.7) 0 1.5px, transparent 1.5px 11px),
+    repeating-linear-gradient(-45deg, rgba(255,255,255,.7) 0 1.5px, transparent 1.5px 11px); }
+#netBadge .netSign > span{ position:relative; z-index:1; }
+#netBadge .netSign.pos{ background:radial-gradient(circle at 35% 30%, #ff7a5a, var(--pos)); }
+#netBadge .netSign.neg{ background:radial-gradient(circle at 35% 30%, #5a95ff, var(--neg)); }
+#netBadge .netTxt{ font-size:13px; font-weight:bold; opacity:.95; text-shadow:1px 1px 2px #000;
+  background:rgba(0,0,0,.35); padding:2px 10px; border-radius:10px; }
+#netBadge.flip .netSign{ animation:netFlip .5s ease; }
+@keyframes netFlip{ 0%{ transform:rotateY(0) scale(1);} 50%{ transform:rotateY(90deg) scale(1.25);} 100%{ transform:rotateY(0) scale(1);} }
 
-/* 数字键盘（第3关） */
-#numpad{ position:absolute; left:0; right:0; bottom:0; z-index:30;
-  background:rgba(11,16,32,.92); padding:10px; display:none; grid-template-columns:repeat(6,1fr); gap:6px; }
-#numpad.show{ display:grid; }
-#numpad .nkey{ font-family:inherit; font-size:20px; font-weight:bold; padding:16px 0;
-  border:none; border-radius:8px; background:var(--cream); color:var(--ink); cursor:pointer; }
-#numpad .nkey:active{ transform:translateY(2px); }
-#numpad .nkey.ok{ background:var(--gold); grid-column:span 2; }
-#numInput{ grid-column:span 6; text-align:center; font-size:30px; font-weight:900;
-  color:var(--gold); padding:6px; min-height:42px; }
+/* 鱼层 */
+#pond{ position:absolute; inset:0; z-index:10; overflow:hidden; }
+.fish{ position:absolute; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; z-index:10; will-change:transform; }
+.fish .body{ position:relative; padding:11px 18px; border-radius:44% 44% 44% 44% / 50%;
+  font-size:22px; font-weight:900; color:#fff; white-space:nowrap;
+  box-shadow:inset -4px -4px 0 rgba(0,0,0,.18), 0 3px 8px rgba(0,0,0,.4);
+  border:2px solid rgba(255,255,255,.4);
+  text-shadow:0 1px 2px rgba(0,0,0,.45); }
+/* 尾巴（默认在右，鱼头朝左；.rtl 时尾巴在左、鱼头朝右）——只动尾巴与眼睛，文字永远正向 */
+/* 尾巴摆动：绕鱼身内侧根部旋转，模拟甩尾 */
+.fish .body::after{ content:''; position:absolute; right:-19px; top:50%;
+  border:18px solid transparent; border-left-color:inherit; border-right:0;
+  transform-origin:left center; animation:tailR 0.5s ease-in-out infinite; animation-delay:var(--td,0s); }
+.fish.rtl .body::after{ right:auto; left:-19px; border-left:0; border-right:18px solid transparent; border-right-color:inherit;
+  transform-origin:right center; animation:tailL 0.5s ease-in-out infinite; animation-delay:var(--td,0s); }
+@keyframes tailR{ 0%,100%{ transform:translateY(-50%) rotate(-16deg);} 50%{ transform:translateY(-50%) rotate(16deg);} }
+@keyframes tailL{ 0%,100%{ transform:translateY(-50%) rotate(16deg);} 50%{ transform:translateY(-50%) rotate(-16deg);} }
+.fish .eye{ position:absolute; left:10px; top:6px; width:11px; height:11px; border-radius:50%;
+  background:#fff; box-shadow:0 0 0 2px rgba(0,0,0,.3); }
+.fish .eye::after{ content:''; position:absolute; left:3px; top:3px; width:5px; height:5px; border-radius:50%; background:#111; }
+.fish.rtl .eye{ left:auto; right:10px; }
+/* 随机配色（与正负无关，不泄露答案）。用 border-color 让尾巴 inherit 到同色 */
+.fish.c0 .body{ background:linear-gradient(160deg,#ff8a5a,#e8622e); border-color:#e8622e; }
+.fish.c1 .body{ background:linear-gradient(160deg,#5aa0ff,#2b6cd8); border-color:#2b6cd8; }
+.fish.c2 .body{ background:linear-gradient(160deg,#5ad8a0,#1f9e6e); border-color:#1f9e6e; }
+.fish.c3 .body{ background:linear-gradient(160deg,#c99aff,#8a4fd8); border-color:#8a4fd8; }
+.fish.c4 .body{ background:linear-gradient(160deg,#ffd25a,#d89a1f); border-color:#d89a1f; color:#5a4300; text-shadow:0 1px 2px rgba(255,255,255,.4); }
+.fish.c5 .body{ background:linear-gradient(160deg,#ff7aa8,#d83f77); border-color:#d83f77; }
 
-/* 第3关答错提示（需点继续，不自动消失） */
-#calcWrong{ position:absolute; inset:0; z-index:50; display:none;
-  align-items:center; justify-content:center; background:rgba(8,10,24,.82); }
-#calcWrong.show{ display:flex; }
-#calcWrong .cw-box{ background:var(--cream); color:var(--ink); border-radius:20px;
-  padding:30px 34px; text-align:center; box-shadow:0 12px 40px rgba(0,0,0,.6);
-  border:4px solid #e0413c; min-width:240px; animation:cwPop .25s ease; }
-@keyframes cwPop{ from{ transform:scale(.8); opacity:0; } to{ transform:scale(1); opacity:1; } }
-#calcWrong .cw-x{ font-size:24px; font-weight:900; color:#e0413c; margin-bottom:14px; }
-#calcWrong .cw-eq{ font-size:30px; font-weight:900; margin-bottom:8px; }
-#calcWrong .cw-ans{ font-size:18px; margin-bottom:22px; }
-#calcWrong .cw-ans b{ font-size:38px; color:#e0413c; display:inline-block; margin-left:4px; }
-#calcWrong .btn{ margin:0; }
+/* 捞上来 / 废网 动画 */
+.fish.caught{ animation:fishCaught .45s ease forwards; pointer-events:none; }
+@keyframes fishCaught{ to{ transform:translateY(-160px) scale(.3) rotate(20deg); opacity:0; } }
+.fish.escape{ animation:fishEscape .4s ease forwards; pointer-events:none; }
+@keyframes fishEscape{ 0%{ filter:brightness(2);} to{ transform:scale(.2); opacity:0; } }
+
+/* 命中红光/绿光一闪 */
+#flash{ position:absolute; inset:0; z-index:18; pointer-events:none; opacity:0; }
+#flash.bad{ background:radial-gradient(circle,rgba(255,60,40,.5),transparent 70%); animation:flashOnce .5s ease; }
+#flash.good{ background:radial-gradient(circle,rgba(60,255,140,.4),transparent 70%); animation:flashOnce .4s ease; }
+@keyframes flashOnce{ 0%{ opacity:1;} 100%{ opacity:0;} }
+
+/* 答错提示弹窗 */
+#wrongBox{ position:absolute; inset:0; z-index:55; display:none;
+  align-items:center; justify-content:center; background:rgba(6,12,24,.82); }
+#wrongBox.show{ display:flex; }
+#wrongBox .wb{ background:var(--cream); color:var(--ink); border-radius:20px;
+  padding:28px 32px; text-align:center; box-shadow:0 12px 40px rgba(0,0,0,.6);
+  border:4px solid #e0413c; min-width:250px; max-width:88vw; animation:wbPop .25s ease; }
+@keyframes wbPop{ from{ transform:scale(.8); opacity:0;} to{ transform:scale(1); opacity:1;} }
+#wrongBox .wb-x{ font-size:22px; font-weight:900; color:#e0413c; margin-bottom:14px; }
+#wrongBox .wb-eq{ font-size:30px; font-weight:900; margin-bottom:6px; }
+#wrongBox .wb-eq b{ color:#e0413c; }
+#wrongBox .wb-why{ font-size:15px; margin-bottom:22px; line-height:1.6; color:#333; }
+#wrongBox .btn{ margin:0; }
 
 /* 结算页 */
-#over{ background:rgba(8,10,24,.95); z-index:60; }
-#over .title{ font-size:30px; color:var(--gold); margin-bottom:20px; }
-#over .stats{ font-size:17px; line-height:2.3; text-align:center; margin-bottom:26px; }
-#over .stats b{ color:var(--gold); }
+#over{ background:rgba(6,12,24,.95); z-index:60; }
+#overCard{ max-width:min(94vw,420px); max-height:72vh; max-height:72dvh; width:auto; height:auto;
+  border-radius:16px; box-shadow:0 12px 36px rgba(0,0,0,.55); margin-bottom:12px; }
+#over .card-hint{ font-size:12px; color:rgba(255,255,255,.6); letter-spacing:1px; margin-bottom:18px; }
 </style>
-<!-- 51.la 访问统计 -->
-<script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
-<script>LA.init({id:"3QacsvaHgKQ6M8cx",ck:"3QacsvaHgKQ6M8cx"})</script>
+<!-- 51.la 访问统计（异步加载，不阻塞页面） -->
+<script>
+(function(){
+  var s=document.createElement('script');
+  s.async=true; s.charset='UTF-8'; s.id='LA_COLLECT';
+  s.src='//sdk.51.la/js-sdk-pro.min.js';
+  s.onload=function(){ LA.init({id:"3QacsvaHgKQ6M8cx",ck:"3QacsvaHgKQ6M8cx"}); };
+  document.head.appendChild(s);
+})();
+</script>
 </head>
 <body>
 <div id="app">
   <!-- 入口页 -->
   <div id="entry" class="screen show">
-    <div class="title"><span class="b">正</span>负<span class="r">对决</span></div>
-    <div class="sub">看符号，拼直觉 · 有理数加减</div>
+    <div class="title"><span class="b">正</span>负<span class="r">捕鱼</span></div>
+    <div class="sub">看符号，下对网 · 有理数加减</div>
     <div id="levelMenu"></div>
     <button class="btn ghost" onclick="UI.help(true)">玩法说明</button>
     <div class="entry-foot"><a href="../index.html">← 返回游戏厅</a></div>
@@ -163,34 +208,33 @@ html,body{
   <!-- 玩法说明 -->
   <div id="helpMask" class="mask">
     <div class="modal">
-      <h2>玩法说明</h2>
-      <p>游戏有 <span class="hl">三个关卡</span>，从标题页选关进入，<span class="hl">每关答对 8 题过关</span>，解锁下一关。每关 3 条命，错完重来。</p>
-      <p><span class="hl">第1、2关</span>：判断式子结果是正还是负——结果<span class="nb">负</span>滑左（蓝）或按 ←，结果<span class="pr">正</span>滑右（红）或按 →，结果 <span class="hl">0</span> 点中间按钮或按 ↑。</p>
-      <p><span class="hl">第3关</span>：直接算出式子的<span class="hl">得数</span>，用数字键盘输入。</p>
-      <p>判对得分、连击加速；判错扣一颗心。</p>
+      <h2>🎣 玩法说明</h2>
+      <p>你是渔夫，手里有一张<span class="hl">网</span>，网分 <span class="pr">＋正网</span> 和 <span class="nb">−负网</span>，屏幕正中会显示当前是哪种。</p>
+      <p>河里的鱼身上都驮着一个<span class="hl">加减式子</span>。先心算结果：结果是<span class="pr">正</span>的就是<span class="pr">正鱼</span>，是<span class="nb">负</span>的就是<span class="nb">负鱼</span>。</p>
+      <p>点鱼下网：网和鱼<span class="hl">同号</span>就能捞上来！<span class="hl">异号</span>（正网捞负鱼）或捞到结果为 <span class="hl">0 的金鱼</span>（0 既不正也不负，谁都捞不上），网和鱼都会消失，<span class="hl">废掉一张网</span>。</p>
+      <p>你有 <span class="hl">3 张网</span> 和一段 <span class="hl">时间</span>，网用完或时间到就收工，比谁捞的鱼多！</p>
+      <p><span class="nb">第1关</span>网的符号整局固定；<span class="pr">第2关</span>网会<span class="hl">定时翻转</span>正负，要盯紧！</p>
       <button class="btn" style="display:block;margin:18px auto 0" onclick="UI.help(false)">明白啦</button>
     </div>
   </div>
 
   <!-- 游戏页 -->
   <div id="game" class="screen">
-    <div id="negZone" class="half">−<span class="lbl">负</span></div>
-    <div id="posZone" class="half">＋<span class="lbl">正</span></div>
     <div id="hud">
-      <div class="left"><button id="lobbyBtn" onclick="UI.toLobby()">🏠</button><button id="muteBtn" onclick="SFX.toggleMute()">🔊</button></div>
-      <div class="mid" id="scoreLbl">0 分</div>
-      <div class="right"><span id="comboLbl"></span><span class="hearts" id="hearts"></span></div>
+      <div class="left"><button id="lobbyBtn" onclick="UI.toEntry()">🏠</button><button id="muteBtn" onclick="SFX.toggleMute()">🔊</button></div>
+      <div id="scoreLbl">🐟 0</div>
+      <div class="right"><span id="nets"></span></div>
     </div>
-    <div id="levelLbl" style="position:absolute;top:44px;left:0;right:0;text-align:center;z-index:20;"></div>
-    <button id="zeroBtn" onclick="Game.judge('zero')">0<span class="z2">等于零</span></button>
-    <div id="hintBar"></div>
-    <div id="cardWrap"><div id="card">-8 + 5</div></div>
-    <div id="numpad"></div>
-    <div id="calcWrong">
-      <div class="cw-box">
-        <div class="cw-x">✗ 答错了</div>
-        <div class="cw-eq" id="cwEq"></div>
-        <div class="cw-ans">正确答案是 <b id="cwVal"></b></div>
+    <div id="levelLbl"></div>
+    <div id="timeWrap"><div id="timeBar"></div></div>
+    <div id="netBadge"><div class="netSign pos"><span>＋</span></div><div class="netTxt">正网 · 捞正鱼</div></div>
+    <div id="pond"></div>
+    <div id="flash"></div>
+    <div id="wrongBox">
+      <div class="wb">
+        <div class="wb-x">✗ 网破了</div>
+        <div class="wb-eq" id="wbEq"></div>
+        <div class="wb-why" id="wbWhy"></div>
         <button class="btn" onclick="Game.contAfterWrong()">继续 →</button>
       </div>
     </div>
@@ -198,69 +242,64 @@ html,body{
 
   <!-- 结算页 -->
   <div id="over" class="screen">
-    <div class="title" id="overTitle">游戏结束</div>
-    <div class="stats" id="overStats"></div>
-    <button class="btn" onclick="Game.startLevel(Game.level)">↺ 再玩本关</button>
+    <img id="overCard" alt="正负捕鱼 · 渔获战报">
+    <div class="card-hint">长按卡片可保存战报图</div>
+    <button class="btn" onclick="Game.startLevel(Game.level)">↺ 再来一次</button>
     <button class="btn ghost" onclick="UI.toEntry()">选关卡</button>
   </div>
 </div>
 <script>
-/* ============ 出题引擎 ============ */
+/* ============ 出题引擎：产出一条鱼 {display, value, sign} ============ */
 const Quiz = {
   rnd(min,max){ return Math.floor(Math.random()*(max-min+1))+min; },
-  // 按关卡生成 {display, value}
-  // level 1: 不带括号 a±b；level 2: 带括号(减负/加负)；level 3: 同2但要算得数
-  make(level, range){
-    const R = range || 9;
-    let a, b, op, value, display, allowZero = true;
-    // 是否做成结果为0的彩蛋（约12%）
-    const wantZero = Math.random() < 0.12;
+  fmt(n){ return n<0 ? ('-'+Math.abs(n)) : String(n); },
 
-    if(level === 1){
-      // a ± b，a,b 为正整数，首项可带负号
+  // level: 1/2（关卡）；prog: 0~1 关内进度，越大越难（后段出带括号）
+  // wantZero: 是否强制生成零鱼
+  make(level, prog, wantZero){
+    const R = 9 + Math.round(prog*6);       // 数值范围随进度 9→15
+    const bracket = Math.random() < (0.35 + prog*0.5); // 括号更早出现：起步35%→后期85%
+    let a, b, op, value, display;
+
+    if(!bracket){
+      // 不带括号 a ± b，首项可带负号
       let signA = Math.random()<0.5 ? -1 : 1;
       a = signA * this.rnd(1, R);
       op = Math.random()<0.5 ? '+' : '-';
       b = this.rnd(1, R);
+      // 减少"正数+正数"：若 a>0 且抽到加法，多数情况改成减法，让题目更多涉及负数运算
+      if(a>0 && op==='+' && Math.random()<0.7){ op='-'; }
       if(wantZero){
-        // 让结果为0：a + (-a) 形式 -> 用 op 调整
-        if(op==='+'){ b = Math.abs(a); a = -b; }   // -b + b = 0
-        else { b = a; if(a<0){ /* a - a */ } a = a; b = a; } // a - a = 0
-        // 重新规范：用统一构造
         const k = this.rnd(1,R);
-        if(Math.random()<0.5){ a=-k; op='+'; b=k; } else { a=k; op='-'; b=k; }
+        if(Math.random()<0.5){ a=-k; op='+'; b=k; }   // -k + k = 0
+        else { a=k; op='-'; b=k; }                     //  k - k = 0
       }
-      value = op==='+' ? a + b : a - b;
+      value = op==='+' ? a+b : a-b;
       display = this.fmt(a) + ' ' + op + ' ' + b;
     } else {
-      // 带括号：a ± (±b)
-      let signA = Math.random()<0.5 ? -1 : 1;
-      a = signA * this.rnd(1, R);
+      // 带括号 a ± (±b)
+      let a0 = (Math.random()<0.5?-1:1) * this.rnd(1, R);
       op = Math.random()<0.5 ? '+' : '-';
-      let signB = Math.random()<0.5 ? -1 : 1;
-      b = signB * this.rnd(1, R);
-      // 第3关：排除"正+正""正-正"（即 a>0 且 b>0 的情形），让每题都涉及负数
-      if(level >= 3 && a > 0 && b > 0){ b = -b; }
+      let b0 = (Math.random()<0.5?-1:1) * this.rnd(1, R);
       if(wantZero){
         const k = this.rnd(1,R);
-        // a op (sb) = 0 的几种：k - (k)、 -k + (k)、 k + (-k)、 -k - (-k)
-        let forms = [
+        const forms = [
           {a:k, op:'-', b:k}, {a:-k, op:'+', b:k},
           {a:k, op:'+', b:-k}, {a:-k, op:'-', b:-k}
         ];
-        // 第3关排除"正-正"那种（k - (k)）
-        if(level >= 3) forms = forms.filter(f=>!(f.a>0 && f.b>0));
         const f = forms[this.rnd(0,forms.length-1)];
-        a=f.a; op=f.op; b=f.b;
+        a0=f.a; op=f.op; b0=f.b;
       }
-      value = op==='+' ? a + b : a - b;
+      a=a0; b=b0;
+      value = op==='+' ? a+b : a-b;
       display = b < 0
         ? this.fmt(a) + ' ' + op + ' (' + this.fmt(b) + ')'
         : this.fmt(a) + ' ' + op + ' ' + b;
     }
+    // 非零鱼却算出0，兜底重生一次
+    if(!wantZero && value===0){ return this.make(level, prog, false); }
     return { display, value, sign: value<0?'neg':(value>0?'pos':'zero') };
-  },
-  fmt(n){ return n<0 ? ('-'+Math.abs(n)) : String(n); }
+  }
 };
 
 /* ============ 8-bit 音效 ============ */
@@ -273,24 +312,24 @@ const SFX = {
   slide(f1,f2,d,t,v){ if(this.muted||!this.ctx) return; const c=this.ctx,n=c.currentTime,o=c.createOscillator(),g=c.createGain();
     o.type=t||'square'; o.frequency.setValueAtTime(f1,n); o.frequency.exponentialRampToValueAtTime(f2,n+d); g.gain.setValueAtTime(v||0.12,n); g.gain.exponentialRampToValueAtTime(0.001,n+d);
     o.connect(g); g.connect(c.destination); o.start(n); o.stop(n+d); },
-  right(){ this.slide(660,1100,0.12,'square',0.12); },
-  wrong(){ this.slide(300,90,0.25,'sawtooth',0.16); },
+  catch(){ this.slide(660,1180,0.14,'square',0.13); this.beep(880,0.1,'triangle',0.08); },
+  waste(){ this.slide(320,90,0.28,'sawtooth',0.16); },
+  flip(){ this.slide(500,900,0.16,'square',0.12); },
   level(){ [523,659,784].forEach((f,i)=>setTimeout(()=>this.beep(f,0.18,'square',0.12),i*120)); },
   over(){ [392,330,262,196].forEach((f,i)=>setTimeout(()=>this.beep(f,0.3,'square',0.14),i*170)); },
   tap(){ this.beep(700,0.04,'square',0.06); },
-  // 循环 BGM（方波琶音 + 低音）
   bgmTimer:null, bgmStep:0,
   startBGM(){
     if(this.bgmTimer || !this.ctx) return;
-    const notes=[330,392,494,392, 349,440,523,440, 330,392,494,587, 494,392,349,330];
+    const notes=[262,330,392,330, 294,349,440,349, 262,392,330,262, 349,294,262,196];
     this.bgmStep=0;
     this.bgmTimer=setInterval(()=>{
       if(this.muted||!this.ctx) return;
       const f=notes[this.bgmStep%notes.length];
-      this.beep(f,0.15,'square',0.04);
-      if(this.bgmStep%2===0) this.beep(f/2,0.17,'triangle',0.045);
+      this.beep(f,0.15,'triangle',0.045);
+      if(this.bgmStep%4===0) this.beep(f/2,0.2,'sine',0.05);
       this.bgmStep++;
-    },230);
+    },260);
   },
   stopBGM(){ if(this.bgmTimer){ clearInterval(this.bgmTimer); this.bgmTimer=null; } },
   toggleMute(){ this.muted=!this.muted; const b=document.getElementById('muteBtn'); if(b) b.textContent=this.muted?'🔇':'🔊'; }
@@ -304,172 +343,455 @@ const UI = {
   toLobby(){ Game.stop(); window.location.href='../index.html'; }
 };
 
+/* ============ 渔获战报卡（海洋证书风·纯canvas） ============ */
+const ResultCard = {
+  // 按捞鱼数分档：<8 铜 / 8-15 银 / >=16 金
+  tierOf(n){ if(n>=16) return 2; if(n>=8) return 1; return 0; },
+  TITLES: ['小渔匠', '捕鱼好手', '深海神捕'],
+  THEME: [
+    { c1:'#eaf4fb', c2:'#c7e2f2', accent:'#3a86b8', tint:'#245676', ribbon:'#c8792e' },
+    { c1:'#e6f1fb', c2:'#bcd8ef', accent:'#2b7bb0', tint:'#1f5f8c', ribbon:'#8a9aa8' },
+    { c1:'#e2f0fc', c2:'#b2d2ee', accent:'#1f6fa8', tint:'#134a72', ribbon:'#d8a11f' }
+  ],
+  BLESS: [
+    ['初出茅庐，收获满满，', '正负判断已经有模有样啦！'],
+    ['眼疾手快，弹无虚发，', '正负加减越来越有手感！'],
+    ['海中蛟龙，一网打尽，', '正负加减已被你彻底拿下！']
+  ],
+
+  roundRect(g,x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y);
+    g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r);
+    g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); },
+
+  // 一条小鱼（朝右），bodyColor 鱼身色
+  fish(g,cx,cy,s,color){
+    g.save();
+    g.fillStyle=color;
+    // 身体椭圆
+    g.beginPath(); g.ellipse(cx,cy,s,s*0.62,0,0,Math.PI*2); g.fill();
+    // 尾巴
+    g.beginPath(); g.moveTo(cx-s*0.9,cy); g.lineTo(cx-s*1.5,cy-s*0.6);
+    g.lineTo(cx-s*1.5,cy+s*0.6); g.closePath(); g.fill();
+    // 眼睛
+    g.fillStyle='#fff'; g.beginPath(); g.arc(cx+s*0.45,cy-s*0.12,s*0.22,0,Math.PI*2); g.fill();
+    g.fillStyle='#111'; g.beginPath(); g.arc(cx+s*0.5,cy-s*0.12,s*0.1,0,Math.PI*2); g.fill();
+    g.restore();
+  },
+
+  // 手抄渔网：木柄 + 椭圆网口 + 下垂网袋(菱形网格)
+  fishingNet(g, cx, topY, rw, netColor, woodColor){
+    g.save();
+    const rimY=topY, rh=rw*0.42;      // 网口椭圆半宽rw、半高rh
+    const bagBottom=topY+rw*1.7;      // 网袋底
+    // 木柄（从网口左下斜向左下）
+    g.strokeStyle=woodColor; g.lineWidth=7; g.lineCap='round';
+    g.beginPath(); g.moveTo(cx-rw*0.7, rimY+rh*0.5); g.lineTo(cx-rw*1.5, rimY+rh*1.7); g.stroke();
+    // 网袋轮廓（U形）
+    g.beginPath();
+    g.moveTo(cx-rw, rimY);
+    g.quadraticCurveTo(cx-rw*0.8, bagBottom, cx, bagBottom);
+    g.quadraticCurveTo(cx+rw*0.8, bagBottom, cx+rw, rimY);
+    g.strokeStyle=netColor; g.lineWidth=3; g.stroke();
+    // 裁剪进网袋区域画网格
+    g.save();
+    g.beginPath();
+    g.moveTo(cx-rw, rimY);
+    g.quadraticCurveTo(cx-rw*0.8, bagBottom, cx, bagBottom);
+    g.quadraticCurveTo(cx+rw*0.8, bagBottom, cx+rw, rimY);
+    g.lineTo(cx-rw, rimY); g.closePath(); g.clip();
+    g.strokeStyle=netColor; g.globalAlpha=0.55; g.lineWidth=1.4;
+    const step=11;
+    for(let d=-rw*2; d<rw*2; d+=step){   // 两组对角线交叉成菱形网眼
+      g.beginPath(); g.moveTo(cx+d, rimY-10); g.lineTo(cx+d+rw*2, bagBottom+10); g.stroke();
+      g.beginPath(); g.moveTo(cx+d, rimY-10); g.lineTo(cx+d-rw*2, bagBottom+10); g.stroke();
+    }
+    g.restore();
+    // 网口圆环（画在网格之上，更突出）
+    g.strokeStyle=woodColor; g.lineWidth=5;
+    g.beginPath(); g.ellipse(cx, rimY, rw, rh, 0, 0, Math.PI*2); g.stroke();
+    g.restore();
+  },
+
+  render(opts){
+    const { tier, caught, level, best, passed } = opts;
+    const th=this.THEME[tier];
+    const dpr=Math.min(window.devicePixelRatio||1,3);
+    const W=480, H=640;
+    const cv=document.createElement('canvas');
+    cv.width=W*dpr; cv.height=H*dpr;
+    const g=cv.getContext('2d'); g.scale(dpr,dpr); g.textAlign='center';
+
+    // 背景水蓝渐变
+    const bg=g.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0,th.c1); bg.addColorStop(1,th.c2);
+    g.fillStyle=bg; g.fillRect(0,0,W,H);
+    // 波浪线装饰
+    g.strokeStyle='rgba(255,255,255,.5)'; g.lineWidth=2;
+    for(let wy=0; wy<3; wy++){
+      const yy=150+wy*180;
+      g.beginPath();
+      for(let x=0;x<=W;x+=12){ const y=yy+Math.sin(x/28+wy)*6; if(x===0)g.moveTo(x,y); else g.lineTo(x,y); }
+      g.stroke();
+    }
+
+    // 外框
+    g.strokeStyle=th.accent; g.lineWidth=6;
+    this.roundRect(g,16,16,W-32,H-32,24); g.stroke();
+    g.strokeStyle='rgba(255,255,255,.6)'; g.lineWidth=2;
+    this.roundRect(g,25,25,W-50,H-50,18); g.stroke();
+
+    // 顶部色带
+    this.roundRect(g,25,25,W-50,96,18); g.fillStyle=th.accent; g.fill();
+    g.fillStyle='#fff';
+    g.font="700 30px 'Songti SC',Georgia,serif";
+    g.fillText('🎣 正负捕鱼', W/2, 66);
+    g.font="700 22px 'Songti SC',Georgia,serif";
+    g.save(); g.globalAlpha=.95; g.fillText('渔 获 战 报', W/2, 100); g.restore();
+
+    let y=160;
+    // 关卡行
+    g.fillStyle=th.tint; g.font="700 22px 'Songti SC',Georgia,serif";
+    g.fillText('第 '+level+' 关 · '+(passed?'达标通关':'今日收工'), W/2, y);
+    y+=34;
+
+    // 星级
+    const star=tier+1;
+    g.font='26px Georgia,serif';
+    g.fillText('⭐'.repeat(star)+'☆'.repeat(3-star), W/2, y+4);
+    y+=44;
+
+    // 渔获展示框：一张网 + 几条鱼
+    const boxX=54, boxW=W-108, boxY=y, boxH=128;
+    this.roundRect(g,boxX,boxY,boxW,boxH,16);
+    g.fillStyle='rgba(255,255,255,.55)'; g.fill();
+    g.strokeStyle=th.accent; g.lineWidth=2;
+    this.roundRect(g,boxX,boxY,boxW,boxH,16); g.stroke();
+    // 手抄渔网（左侧）
+    g.save();
+    this.roundRect(g,boxX+6,boxY+6,boxW-12,boxH-12,12); g.clip();
+    this.fishingNet(g, boxX+66, boxY+30, 40, th.accent, th.ribbon);
+    g.restore();
+    // 几条鱼（数量随捞鱼数，1~6 条示意，右侧网格排布避开渔网）
+    const fishColors=['#e8622e','#2b6cd8','#1f9e6e','#8a4fd8','#d83f77','#e0a020'];
+    const nFish=Math.max(1,Math.min(6,Math.round(caught/2)));
+    for(let i=0;i<nFish;i++){
+      const fx=boxX+150+ (i%3)*88;
+      const fy=boxY+42+ Math.floor(i/3)*66;
+      this.fish(g,fx,fy,17,fishColors[i%fishColors.length]);
+    }
+    y=boxY+boxH+40;
+
+    // 称号药丸
+    const honor=this.TITLES[tier];
+    g.font="700 26px 'Songti SC',Georgia,serif";
+    const pw=g.measureText(honor).width+64;
+    this.roundRect(g,(W-pw)/2,y-30,pw,46,23);
+    g.fillStyle=th.accent; g.fill();
+    g.fillStyle='#fff'; g.fillText(honor, W/2, y+2);
+    y+=58;
+
+    // 祝福语两行
+    g.fillStyle=th.tint; g.font="18px 'Songti SC',Georgia,serif";
+    const bless=this.BLESS[tier];
+    g.fillText(bless[0], W/2, y); y+=28;
+    g.fillText(bless[1], W/2, y); y+=40;
+
+    // 数据行
+    g.fillStyle=th.accent; g.font="700 23px 'Songti SC',Georgia,serif";
+    g.fillText('🐟 本局捞鱼 '+caught+' 条', W/2, y); y+=32;
+    g.fillStyle=th.tint; g.font="16px 'Songti SC',Georgia,serif";
+    g.fillText('历史最多 '+best+' 条', W/2, y);
+
+    // 尾注
+    g.fillStyle='rgba(0,0,0,.4)'; g.font="italic 14px 'Songti SC',Georgia,serif";
+    g.fillText('～ 看符号，下对网 ～', W/2, H-30);
+
+    return cv;
+  },
+
+  build(opts){
+    const cv=this.render(opts);
+    let url;
+    try{ url=cv.toDataURL('image/png'); }catch(e){ url=''; }
+    if(url) document.getElementById('overCard').src=url;
+  }
+};
+
 /* ============ 游戏主体 ============ */
 const Game = {
-  lives:3, score:0, combo:0, maxCombo:0, correct:0, total:0,
-  level:1, range:9, goal:5,
-  cur:null, running:false, awaitNum:false, numStr:'',
+  level:1, nets:3, caught:0, running:false, paused:false,
+  netSign:'pos',              // 当前网符号 'pos' / 'neg'
+  duration:60, timeLeft:60,   // 秒
+  fishes:[], fishId:0,
+  lastTs:0, spawnAcc:0, flipAcc:0, raf:0,
   unlocked: Math.max(1, +(localStorage.getItem('zf_unlocked')||1)),
   best: +(localStorage.getItem('zf_best')||0),
 
   LV:[ null,
-    {name:'判正负', desc:'不带括号，看结果是正是负', range:9},
-    {name:'带括号判正负', desc:'5-(-3) 这类，先去括号再判', range:12},
-    {name:'算得数', desc:'直接算出最后结果', range:20}
+    { name:'固定网', desc:'整局网符号不变，专心判正负捞鱼', dur:60, flip:0,  spawn:0.75, zeroRate:0.16 },
+    { name:'翻转网', desc:'网每隔几秒翻转正负，盯紧再下网', dur:70, flip:5,  spawn:0.7,  zeroRate:0.20 }
   ],
 
-  // 进入指定关卡
   startLevel(lv){
-    if(lv > this.unlocked) return;
+    if(lv > this.unlocked || lv > 2) return;
     SFX.ensure(); SFX.startBGM();
-    this.level=lv; this.range=this.LV[lv].range; this.goal=8;
-    this.lives=3; this.score=0; this.combo=0; this.maxCombo=0; this.correct=0; this.total=0;
-    this.running=true; this.awaitNum=false; this.numStr='';
+    const cfg = this.LV[lv];
+    this.level=lv; this.nets=3; this.caught=0;
+    this.duration=cfg.dur; this.timeLeft=cfg.dur;
+    this.running=true; this.paused=false;
+    this.fishes=[]; this.fishId=0;
+    this.spawnAcc=0; this.flipAcc=0; this.lastTs=0;
+    this.netSign = Math.random()<0.5 ? 'pos' : 'neg';
     UI.help(false); UI.show('game');
-    // 第3关：算得数模式，切换背景/隐藏红蓝分区/隐藏零按钮
-    document.getElementById('game').classList.toggle('calc', lv>=3);
-    document.getElementById('zeroBtn').style.display = (lv<3)?'block':'none';
-    document.getElementById('numpad').classList.remove('show');
-    this.buildNumpad(); this.updateHud(); this.next();
-  },
-  stop(){ this.running=false; SFX.stopBGM(); },
-
-  next(){
-    if(!this.running) return;
-    this.cur = Quiz.make(this.level, this.range);
-    this.awaitNum=false; this.numStr='';
-    const card=document.getElementById('card');
-    card.className=''; card.textContent=this.cur.display;
-    document.getElementById('hintBar').textContent='';
-    document.getElementById('numpad').classList.remove('show');
-    const ni=document.getElementById('numInput'); if(ni) ni.textContent='';
-    // 第3关直接进入算得数
-    if(this.level>=3){ setTimeout(()=>this.askNumber(), 50); }
+    document.getElementById('pond').innerHTML='';
+    this.buildLanes();
+    this.renderNets(); this.renderNetBadge(false); this.updateHud(); this.updateTimeBar();
+    // 预放几条鱼（不超过泳道数）
+    const preload=Math.min(4, this.lanes.length);
+    for(let i=0;i<preload;i++) this.spawnFish(true);
+    cancelAnimationFrame(this.raf);
+    this.raf = requestAnimationFrame(ts=>this.loop(ts));
   },
 
-  judge(choice){
-    if(!this.running || this.awaitNum || this.level>=3) return;
-    SFX.tap();
-    const correctSign = this.cur.sign;
-    if(choice === correctSign){
-      const card=document.getElementById('card');
-      card.className = choice==='neg'?'toNeg':(choice==='pos'?'toPos':'toZero');
-      this.scoreRight(); setTimeout(()=>this.next(), 320);
+  stop(){ this.running=false; cancelAnimationFrame(this.raf); SFX.stopBGM(); },
+
+  prog(){ return 1 - (this.timeLeft / this.duration); }, // 0→1
+
+  // ---- 网符号 ----
+  flipNet(){
+    this.netSign = this.netSign==='pos' ? 'neg' : 'pos';
+    SFX.flip();
+    this.renderNetBadge(true);
+  },
+  renderNetBadge(anim){
+    const badge=document.getElementById('netBadge');
+    const sign=badge.querySelector('.netSign');
+    const txt=badge.querySelector('.netTxt');
+    sign.className='netSign '+this.netSign;
+    sign.innerHTML = '<span>' + (this.netSign==='pos' ? '＋' : '−') + '</span>';
+    txt.textContent = this.netSign==='pos' ? '正网 · 捞正鱼' : '负网 · 捞负鱼';
+    if(anim){ badge.classList.remove('flip'); void badge.offsetWidth; badge.classList.add('flip'); }
+  },
+  renderNets(){
+    const el=document.getElementById('nets'); el.innerHTML='';
+    for(let i=0;i<3;i++){
+      const s=document.createElement('span');
+      s.className='net'+(i>=this.nets?' used':''); s.textContent='🕸️';
+      el.appendChild(s);
+    }
+  },
+  updateHud(){
+    document.getElementById('scoreLbl').textContent='🐟 '+this.caught;
+    document.getElementById('levelLbl').textContent='第 '+this.level+' 关 · '+this.LV[this.level].name;
+  },
+  updateTimeBar(){
+    const bar=document.getElementById('timeBar');
+    const pct=Math.max(0,this.timeLeft/this.duration*100);
+    bar.style.width=pct+'%';
+    bar.classList.toggle('low', pct<25);
+  },
+
+  // ---- 泳道：把水域纵向切成若干行道，防止鱼上下重叠 ----
+  buildLanes(){
+    const pond=document.getElementById('pond');
+    const H=pond.clientHeight;
+    const top=150, bottom=Math.max(top+120, H-110);
+    const laneH=76;
+    const n=Math.max(3, Math.floor((bottom-top)/laneH));
+    this.lanes=[];
+    for(let i=0;i<n;i++){ this.lanes.push(top + i*((bottom-top)/n) + 8); }
+  },
+
+  // 场上是否已有"当前网能捞"的同号鱼
+  hasCatchable(){
+    return this.fishes.some(f=>!f.dead && f.q.sign===this.netSign);
+  },
+
+  // ---- 鱼 ----
+  spawnFish(initial){
+    const pond=document.getElementById('pond');
+    const cfg=this.LV[this.level];
+    if(!this.lanes || !this.lanes.length) this.buildLanes();
+    let wantZero = Math.random() < cfg.zeroRate;
+    // 若场上没有可捞的同号鱼，这条必须生成为同号（非零），避免"无鱼可收"
+    const mustCatchable = !initial && !this.hasCatchable();
+    if(mustCatchable) wantZero = false;
+    let q = Quiz.make(this.level, this.prog(), wantZero);
+    if(mustCatchable){
+      let guard=0;
+      while(q.sign!==this.netSign && guard<40){ q = Quiz.make(this.level, this.prog(), false); guard++; }
+    }
+
+    const dir = Math.random()<0.5 ? 1 : -1;   // 1=向右, -1=向左
+    const el=document.createElement('div');
+    const color = 'c'+this.rnd(0,5);           // 随机配色，与正负无关
+    el.className='fish '+color+(dir>0?' rtl':'');
+    el.style.setProperty('--td', (-Math.random()*0.5).toFixed(2)+'s'); // 摆尾相位错开
+    // 文字始终正向：整条鱼不做 scaleX，靠 .rtl 只翻尾巴与眼睛
+    el.innerHTML='<div class="body"><span class="eye"></span>'+q.display+'</div>';
+    pond.appendChild(el);
+
+    const w = el.offsetWidth || 90;
+    const Wp = pond.clientWidth;
+
+    // 选一条"入场端此刻没有鱼挡住"的泳道，避免重叠
+    let y, tries=0, laneIdx;
+    do{
+      laneIdx=this.rnd(0,this.lanes.length-1);
+      y=this.lanes[laneIdx];
+      tries++;
+    } while(tries<8 && this.laneBlocked(laneIdx, y, dir, Wp, w, initial));
+
+    let x = dir>0 ? -w-10 : Wp+10;
+    if(initial){ x = this.rnd(20, Math.max(40, Wp-w-20)); }
+    const speed = (42 + this.prog()*80 + Math.random()*16) * dir; // px/s，前期稳、后期明显加快
+
+    const fish={ id:++this.fishId, el, x, y, w, dir, speed, q, dead:false, lane:laneIdx };
+    el.style.left='0'; el.style.top='0';
+    el.style.transform='translate('+x+'px,'+y+'px)';
+    el.addEventListener('click', ()=>this.tapFish(fish));
+    el.addEventListener('touchstart', e=>{ e.preventDefault(); this.tapFish(fish); }, {passive:false});
+    this.fishes.push(fish);
+  },
+  // 同泳道里，入场侧附近是否已有鱼（防止刚生成就叠在一起）
+  laneBlocked(laneIdx, y, dir, Wp, w, initial){
+    for(const f of this.fishes){
+      if(f.lane!==laneIdx) continue;
+      if(initial){ return true; } // 开局每道最多一条
+      // 新鱼从 dir 的入场端进入，检查该端 gap 内有没有同道鱼
+      if(dir>0 && f.x < w+70) return true;
+      if(dir<0 && f.x > Wp-w-70) return true;
+    }
+    return false;
+  },
+  rnd(a,b){ return Math.floor(Math.random()*(b-a+1))+a; },
+
+  tapFish(fish){
+    if(!this.running || this.paused || fish.dead) return;
+    const sign=fish.q.sign;
+    if(sign!=='zero' && sign===this.netSign){
+      // 同号：捞上来
+      fish.dead=true; SFX.catch(); this.caught++;
+      fish.el.classList.add('caught');
+      this.flash('good');
+      setTimeout(()=>{ if(fish.el.parentNode) fish.el.remove(); }, 460);
+      this.fishes=this.fishes.filter(f=>f!==fish);
+      this.updateHud();
     } else {
-      this.scoreWrong(correctSign);
+      // 异号 或 零鱼：废网 + 弹答案
+      fish.dead=true; SFX.waste();
+      fish.el.classList.add('escape');
+      this.flash('bad');
+      setTimeout(()=>{ if(fish.el.parentNode) fish.el.remove(); }, 400);
+      this.fishes=this.fishes.filter(f=>f!==fish);
+      this.nets--; this.renderNets();
+      this.showWrong(fish.q);
     }
   },
 
-  askNumber(){
-    this.awaitNum=true; this.numStr='';
-    const card=document.getElementById('card');
-    card.className=''; card.textContent=this.cur.display+' = ?';
-    document.getElementById('hintBar').textContent='输入得数，按 确认 提交';
-    document.getElementById('numpad').classList.add('show');
-    document.getElementById('numInput').textContent='';
+  flash(kind){
+    const f=document.getElementById('flash');
+    f.className=''; void f.offsetWidth; f.classList.add(kind);
   },
 
-  buildNumpad(){
-    const np=document.getElementById('numpad'); np.innerHTML='';
-    const disp=document.createElement('div'); disp.id='numInput'; np.appendChild(disp);
-    ['-','1','2','3','4','5','6','7','8','9','0'].forEach(k=>{
-      const b=document.createElement('button'); b.className='nkey'; b.textContent=k;
-      b.onclick=()=>this.numKey(k); np.appendChild(b);
-    });
-    const del=document.createElement('button'); del.className='nkey'; del.textContent='⌫'; del.onclick=()=>this.numKey('del'); np.appendChild(del);
-    const ok=document.createElement('button'); ok.className='nkey ok'; ok.textContent='确认'; ok.onclick=()=>this.numSubmit(); np.appendChild(ok);
-  },
-  numKey(k){
-    if(!this.awaitNum) return; SFX.tap();
-    if(k==='del'){ this.numStr=this.numStr.slice(0,-1); }
-    else if(k==='-'){ this.numStr = this.numStr.startsWith('-')? this.numStr.slice(1) : '-'+this.numStr; }
-    else { if(this.numStr.replace('-','').length<3) this.numStr+=k; }
-    document.getElementById('numInput').textContent=this.numStr||'';
-  },
-  numSubmit(){
-    if(!this.awaitNum) return;
-    if(this.numStr===''||this.numStr==='-'){ SFX.wrong(); return; }
-    const v=parseInt(this.numStr,10);
-    if(v===this.cur.value){ SFX.right(); this.awaitNum=false; document.getElementById('numpad').classList.remove('show'); this.scoreRight(); setTimeout(()=>this.next(),200); }
-    else { SFX.wrong(); this.awaitNum=false; document.getElementById('numpad').classList.remove('show');
-      this.showCalcWrong(); }
-  },
-  // 第3关答错：弹出醒目提示，扣分扣命，点"继续"才进入下一题或结算
-  showCalcWrong(){
-    this.total++; this.combo=0; this.lives--; this.updateHud();
-    document.getElementById('cwEq').textContent = this.cur.display + ' =';
-    document.getElementById('cwVal').textContent = this.cur.value;
-    document.getElementById('calcWrong').classList.add('show');
+  // 捞错：暂停鱼与计时，弹答案提示
+  showWrong(q){
+    this.paused=true;
+    const val=q.value;
+    const eq=document.getElementById('wbEq');
+    const why=document.getElementById('wbWhy');
+    eq.innerHTML = q.display + ' = <b>' + val + '</b>';
+    const netTxt = this.netSign==='pos' ? '正网只能捞正鱼' : '负网只能捞负鱼';
+    if(q.sign==='zero'){
+      why.innerHTML = '结果是 <b>0</b>，0 既不是正数也不是负数，<br>任何网都捞不上它，是陷阱鱼！';
+    } else {
+      const isNeg = q.sign==='neg';
+      why.innerHTML = '这是一条<b>'+(isNeg?'负':'正')+'鱼</b>（结果'+(isNeg?'小于':'大于')+'0），<br>'+netTxt+'哦。';
+    }
+    document.getElementById('wrongBox').classList.add('show');
   },
   contAfterWrong(){
-    document.getElementById('calcWrong').classList.remove('show');
-    if(this.lives<=0){ this.over(); return; }
-    this.next();
+    document.getElementById('wrongBox').classList.remove('show');
+    if(this.nets<=0){ this.over(); return; }
+    if(this.timeLeft<=0){ this.over(); return; }
+    this.paused=false;
+    this.lastTs=0; // 避免暂停期间的大 dt 跳跃
   },
 
-  scoreRight(){
-    this.correct++; this.total++; this.combo++; if(this.combo>this.maxCombo) this.maxCombo=this.combo;
-    this.score += 10 + Math.max(0,this.combo-1)*2;
-    this.updateHud();
-    if(this.correct >= this.goal){ this.win(); }
-  },
-  scoreWrong(correctSign){
-    this.total++; this.combo=0; this.lives--; SFX.wrong();
-    if(correctSign && correctSign!=='zero'){
-      const zone=document.getElementById(correctSign==='neg'?'negZone':'posZone');
-      zone.classList.add('flash'); setTimeout(()=>zone.classList.remove('flash'),400);
+  // ---- 主循环 ----
+  loop(ts){
+    if(!this.running) return;
+    if(!this.lastTs) this.lastTs=ts;
+    let dt=(ts-this.lastTs)/1000; this.lastTs=ts;
+    if(dt>0.1) dt=0.1;
+
+    if(!this.paused){
+      // 计时
+      this.timeLeft-=dt;
+      if(this.timeLeft<=0){ this.timeLeft=0; this.updateTimeBar(); this.over(); return; }
+      this.updateTimeBar();
+
+      // 网翻转（第2关）
+      const flip=this.LV[this.level].flip;
+      if(flip>0){
+        this.flipAcc+=dt;
+        if(this.flipAcc>=flip){ this.flipAcc=0; this.flipNet(); }
+      }
+
+      // 生成鱼：间隔随进度缩短、在场上限随进度提高（前期就密、后期更密）
+      const p=this.prog();
+      this.spawnAcc+=dt;
+      const interval=this.LV[this.level].spawn * (1 - p*0.5);   // 后期约为初期的一半
+      const cap=Math.min(this.lanes.length, Math.round(6 + p*3)); // 在场上限 6→9
+      if(this.spawnAcc>=interval && this.fishes.length<cap){
+        this.spawnAcc=0; this.spawnFish(false);
+      }
+      // 兜底：场上没有可捞的鱼时，立刻补一条（不等间隔）
+      if(!this.hasCatchable() && this.fishes.length<cap){
+        this.spawnFish(false);
+      }
+
+      // 鱼游动
+      const Wp=document.getElementById('pond').clientWidth;
+      for(const f of [...this.fishes]){
+        f.x += f.speed*dt;
+        // 游出屏幕则回收
+        if((f.dir>0 && f.x>Wp+40) || (f.dir<0 && f.x<-f.w-40)){
+          if(f.el.parentNode) f.el.remove();
+          this.fishes=this.fishes.filter(x=>x!==f);
+          continue;
+        }
+        f.el.style.transform='translate('+f.x+'px,'+f.y+'px)';
+      }
     }
-    this.updateHud();
-    if(this.lives<=0){ this.over(); return; }
-    setTimeout(()=>this.next(), correctSign? 600 : 850);
+    this.raf=requestAnimationFrame(t=>this.loop(t));
   },
 
-  updateHud(){
-    const h=document.getElementById('hearts'); h.innerHTML='';
-    for(let i=0;i<3;i++){ const s=document.createElement('span'); s.textContent='❤'; if(i>=this.lives) s.className='lost'; h.appendChild(s); }
-    document.getElementById('scoreLbl').textContent=this.score+' 分';
-    document.getElementById('comboLbl').textContent=this.combo>1?(this.combo+' 连击 '):'';
-    document.getElementById('levelLbl').textContent='第 '+this.level+' 关 · '+this.LV[this.level].name+'　'+Math.min(this.correct,this.goal)+'/'+this.goal;
-  },
-
-  // 过关
-  win(){
-    this.stop(); SFX.level();
-    if(this.score>this.best){ this.best=this.score; localStorage.setItem('zf_best', this.best); }
-    // 解锁下一关
-    let newly=false;
-    if(this.level < 3 && this.unlocked < this.level+1){
-      this.unlocked = this.level+1; localStorage.setItem('zf_unlocked', this.unlocked); newly=true;
-    }
-    const next = this.level<3 ? ('解锁第 '+(this.level+1)+' 关：'+this.LV[this.level+1].name+'！') : '你已通关全部关卡，太强了！';
-    document.getElementById('overStats').innerHTML=
-      '<b>第 '+this.level+' 关 · 通关！</b><br>'+
-      '答对 <b>'+this.correct+'</b> 题，得分 <b>'+this.score+'</b><br>'+
-      '最高连击：<b>'+this.maxCombo+'</b><br><br>'+
-      (newly? '<span style="color:var(--gold)">'+next+'</span>' : next);
-    document.getElementById('overTitle').textContent='🎉 过关';
-    setTimeout(()=>UI.show('over'), 500);
-  },
-
-  // 该关失败（命用完）
+  // ---- 收工结算 ----
   over(){
-    this.stop(); SFX.over();
-    if(this.score>this.best){ this.best=this.score; localStorage.setItem('zf_best', this.best); }
-    const acc = this.total? Math.round(this.correct/this.total*100):0;
-    document.getElementById('overTitle').textContent='游戏结束';
-    document.getElementById('overStats').innerHTML=
-      '第 '+this.level+' 关 · '+this.LV[this.level].name+'<br>'+
-      '答对：<b>'+this.correct+'</b> / '+this.goal+' 题<br>'+
-      '正确率：<b>'+acc+'%</b>　得分：<b>'+this.score+'</b><br>'+
-      '历史最高：<b>'+this.best+'</b> 分<br><br>'+
-      '<span style="opacity:.8">差一点点，再试一次！</span>';
+    this.stop();
+    // 清场
+    document.getElementById('wrongBox').classList.remove('show');
+    SFX.over();
+    if(this.caught>this.best){ this.best=this.caught; localStorage.setItem('zf_best', this.best); }
+
+    // 过关判定：捞够目标即解锁下一关（第1关目标8条，第2关10条）
+    const goal = this.level===1 ? 8 : 10;
+    const passed = this.caught >= goal;
+    if(passed && this.level<2 && this.unlocked<this.level+1){
+      this.unlocked=this.level+1; localStorage.setItem('zf_unlocked', this.unlocked);
+    }
+
+    // 生成渔获战报卡
+    const tier=ResultCard.tierOf(this.caught);
+    ResultCard.build({ tier, caught:this.caught, level:this.level, best:this.best, passed });
     setTimeout(()=>UI.show('over'), 500);
   },
 
-  // 渲染关卡菜单
+  // ---- 关卡菜单 ----
   renderMenu(){
     const menu=document.getElementById('levelMenu'); menu.innerHTML='';
-    for(let lv=1; lv<=3; lv++){
+    for(let lv=1; lv<=2; lv++){
       const locked = lv > this.unlocked;
       const c=document.createElement('div');
       c.className='lvCard'+(locked?' locked':'');
@@ -482,36 +804,6 @@ const Game = {
     }
   }
 };
-
-/* ============ 输入绑定 ============ */
-document.addEventListener('keydown', e=>{
-  if(!Game.running) return;
-  if(Game.awaitNum){
-    if(e.key>='0'&&e.key<='9') Game.numKey(e.key);
-    else if(e.key==='-') Game.numKey('-');
-    else if(e.key==='Backspace') Game.numKey('del');
-    else if(e.key==='Enter') Game.numSubmit();
-    return;
-  }
-  if(e.key==='ArrowLeft') Game.judge('neg');
-  else if(e.key==='ArrowRight') Game.judge('pos');
-  else if(e.key==='ArrowUp') Game.judge('zero');
-});
-document.getElementById('negZone').addEventListener('click', ()=>Game.judge('neg'));
-document.getElementById('posZone').addEventListener('click', ()=>Game.judge('pos'));
-(function(){
-  let sx=0, sy=0, tracking=false;
-  const wrap=document.getElementById('game');
-  wrap.addEventListener('touchstart', e=>{ if(Game.awaitNum) return; const t=e.touches[0]; sx=t.clientX; sy=t.clientY; tracking=true; }, {passive:true});
-  wrap.addEventListener('touchend', e=>{
-    if(!tracking||Game.awaitNum) return; tracking=false;
-    const t=e.changedTouches[0]; const dx=t.clientX-sx, dy=t.clientY-sy;
-    if(Math.abs(dx)<30 && Math.abs(dy)<30) return;
-    if(Math.abs(dy) > Math.abs(dx) && dy < -40){ Game.judge('zero'); }
-    else if(dx < 0){ Game.judge('neg'); }
-    else { Game.judge('pos'); }
-  }, {passive:true});
-})();
 
 /* 初始渲染关卡菜单 */
 Game.renderMenu();
