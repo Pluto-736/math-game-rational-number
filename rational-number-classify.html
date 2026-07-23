@@ -434,6 +434,8 @@ body.light-theme .animal-label { background: rgba(0,0,0,0.06); color: #333; box-
 #result-page.show { display: flex; }
 #result-page h2 { font-size: 2em; margin-bottom: 20px; }
 #result-page .stats { font-size: 1.2em; margin-bottom: 30px; text-align: center; line-height: 2; }
+#result-page .result-card { max-width: min(84vw, 340px); max-height: 62vh; max-height: 62dvh; width: auto; height: auto; border-radius: 18px; box-shadow: 0 14px 34px rgba(0,0,0,0.5); }
+#result-page .result-hint { font-size: 0.85em; opacity: 0.85; letter-spacing: 1px; margin: 12px 0 18px; }
 
 </style>
 <!-- 51.la 访问统计 -->
@@ -560,8 +562,8 @@ body.light-theme .animal-label { background: rgba(0,0,0,0.06); color: #333; box-
 
 <!-- 结算页 -->
 <div id="result-page">
-  <h2 id="result-title"></h2>
-  <div class="stats" id="result-stats"></div>
+  <img id="result-card" class="result-card" alt="有理数大冒险 · 荣誉饲养证书">
+  <div class="result-hint">长按卡片可保存纪念图</div>
   <button class="btn btn-primary" onclick="startGame()">再来一局</button>
   <button class="btn btn-secondary" onclick="showEntry()" style="margin-top:10px;">选择世界</button>
 </div>
@@ -1052,18 +1054,184 @@ function showCategoryComplete(animalIdx, emojiEl) {
 }
 
 // ===== 检查胜利 =====
+// ===== 荣誉饲养证书（纪念卡） =====
+const CARD_THEME = {
+  mammal:  { c1:'#eaf6e4', c2:'#cfe9c2', accent:'#4e8b3a', tint:'#3c6e2c' },
+  ocean:   { c1:'#e2f1fb', c2:'#c2e0f4', accent:'#2b7bb0', tint:'#1f5f8c' },
+  flying:  { c1:'#e6f2fb', c2:'#c9e4f6', accent:'#3a86b8', tint:'#2b6c96' },
+  reptile: { c1:'#f7edd6', c2:'#ecd9ac', accent:'#b0813a', tint:'#8a6326' }
+};
+const CARD_TITLES = ['见习饲养员', '熟练饲养员', '金牌饲养员'];
+const CARD_CONG = [
+  ['你陪伴动物们认清了每一类数字，', '它们在你手中华丽变身！'],
+  ['分类精准，配合默契，', '动物伙伴们焕然一新、光彩夺目！'],
+  ['零失误的完美饲养，', '全场动物在你手中绽放最美形态！']
+];
+
+function cardRoundRect(g, x, y, w, h, r) {
+  g.beginPath();
+  g.moveTo(x + r, y);
+  g.arcTo(x + w, y, x + w, y + h, r);
+  g.arcTo(x + w, y + h, x, y + h, r);
+  g.arcTo(x, y + h, x, y, r);
+  g.arcTo(x, y, x + w, y, r);
+  g.closePath();
+}
+
+function cardDrawContain(g, img, x, y, w, h) {
+  const ir = img.width / img.height, br = w / h;
+  let dw, dh;
+  if (ir > br) { dw = w; dh = w / ir; } else { dh = h; dw = h * ir; }
+  g.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+}
+
+function loadCardImages(srcs, cb) {
+  const out = new Array(srcs.length).fill(null);
+  let left = srcs.length;
+  if (!left) { cb(out); return; }
+  srcs.forEach((s, i) => {
+    if (!s) { if (--left === 0) cb(out); return; }
+    const im = new Image();
+    im.onload = () => { out[i] = im; if (--left === 0) cb(out); };
+    im.onerror = () => { if (--left === 0) cb(out); };
+    im.src = s;
+  });
+}
+
+function renderResultCard(opts) {
+  const { world, tier, elapsed, combo, images, noImages } = opts;
+  const th = CARD_THEME[world.id] || CARD_THEME.mammal;
+  const dpr = Math.min(window.devicePixelRatio || 1, 3);
+  const W = 680, H = 820;
+  const cv = document.createElement('canvas');
+  cv.width = W * dpr; cv.height = H * dpr;
+  const g = cv.getContext('2d');
+  g.scale(dpr, dpr);
+
+  // 背景
+  const bg = g.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, th.c1); bg.addColorStop(1, th.c2);
+  g.fillStyle = bg; g.fillRect(0, 0, W, H);
+
+  // 外描边
+  g.strokeStyle = th.accent; g.lineWidth = 6;
+  cardRoundRect(g, 16, 16, W - 32, H - 32, 26); g.stroke();
+  g.strokeStyle = 'rgba(255,255,255,.6)'; g.lineWidth = 2;
+  cardRoundRect(g, 26, 26, W - 52, H - 52, 20); g.stroke();
+
+  // 顶部色带
+  cardRoundRect(g, 26, 26, W - 52, 118, 20);
+  g.fillStyle = th.accent; g.fill();
+  g.textAlign = 'center';
+  g.fillStyle = '#fff';
+  g.font = '700 34px Georgia, "Songti SC", serif';
+  g.fillText('🌍 有理数大冒险', W / 2, 78);
+  g.font = '700 26px Georgia, "Songti SC", serif';
+  g.save(); g.globalAlpha = .95;
+  g.fillText('荣 誉 饲 养 证 书', W / 2, 116);
+  g.restore();
+
+  let y = 188;
+  // 世界行
+  g.fillStyle = th.tint;
+  g.font = '700 27px Georgia, "Songti SC", serif';
+  g.fillText(`${world.icon} ${world.name} · 华丽变身`, W / 2, y);
+  y += 40;
+
+  // 星星
+  const star = Math.max(1, Math.min(3, tier + 1));
+  g.font = '30px Georgia, serif';
+  g.fillText('⭐'.repeat(star) + '☆'.repeat(3 - star), W / 2, y + 6);
+  y += 52;
+
+  // 变身动物图片行
+  const padY = y, padH = 150;
+  const imgs = (images || []).filter(Boolean);
+  const n = Math.max(imgs.length, 1);
+  const gap = 16, side = 60;
+  const cellW = Math.min(150, (W - side * 2 - gap * (n - 1)) / n);
+  const totalW = cellW * n + gap * (n - 1);
+  let px = (W - totalW) / 2;
+  for (let i = 0; i < n; i++) {
+    cardRoundRect(g, px, padY, cellW, padH, 16);
+    g.fillStyle = 'rgba(255,255,255,.55)'; g.fill();
+    g.strokeStyle = th.accent; g.lineWidth = 2;
+    cardRoundRect(g, px, padY, cellW, padH, 16); g.stroke();
+    if (!noImages && imgs[i]) {
+      g.save();
+      cardRoundRect(g, px + 6, padY + 6, cellW - 12, padH - 12, 12); g.clip();
+      cardDrawContain(g, imgs[i], px + 8, padY + 8, cellW - 16, padH - 16);
+      g.restore();
+    } else {
+      g.fillStyle = th.tint;
+      g.font = '54px Georgia, serif';
+      g.fillText('🐾', px + cellW / 2, padY + padH / 2 + 18);
+    }
+    px += cellW + gap;
+  }
+  y = padY + padH + 52;
+
+  // 称号药丸
+  const honor = CARD_TITLES[tier];
+  g.font = '700 27px Georgia, "Songti SC", serif';
+  const pw = g.measureText(honor).width + 60;
+  cardRoundRect(g, (W - pw) / 2, y - 30, pw, 44, 22);
+  g.fillStyle = th.accent; g.fill();
+  g.fillStyle = '#fff';
+  g.fillText(honor, W / 2, y);
+  y += 58;
+
+  // 寄语两行
+  g.fillStyle = th.tint;
+  g.font = '22px Georgia, "Songti SC", serif';
+  const cong = CARD_CONG[tier];
+  g.fillText(cong[0], W / 2, y); y += 32;
+  g.fillText(cong[1], W / 2, y); y += 50;
+
+  // 用时 · 连击
+  g.fillStyle = th.accent;
+  g.font = '700 25px Georgia, "Songti SC", serif';
+  g.fillText(`⏱ 用时 ${elapsed}″      ⚡ 最高连击 ${combo}`, W / 2, y);
+  y += 46;
+
+  // flavor
+  g.fillStyle = 'rgba(0,0,0,.42)';
+  g.font = 'italic 19px Georgia, "Songti SC", serif';
+  g.fillText('✧ 继续收集，解锁更多变身 ✧', W / 2, y);
+
+  return cv;
+}
+
+function buildResultCard(elapsed, done) {
+  const world = currentWorld || WORLDS[0];
+  const tier = Math.min(2, Math.max(0, state.lives - 1));
+  const srcs = state.animals.map((_, idx) => {
+    const el = document.getElementById('animal-' + idx);
+    return el ? el.src : null;
+  });
+  const setImg = (cv) => {
+    let url;
+    try { url = cv.toDataURL('image/png'); }
+    catch (e) {
+      const cv2 = renderResultCard({ world, tier, elapsed, combo: state.maxCombo, images: [], noImages: true });
+      url = cv2.toDataURL('image/png');
+    }
+    document.getElementById('result-card').src = url;
+    if (done) done();
+  };
+  loadCardImages(srcs, (images) => {
+    const cv = renderResultCard({ world, tier, elapsed, combo: state.maxCombo, images });
+    setImg(cv);
+  });
+}
+
 function checkWin() {
   if (state.completedCats.length === state.categories.length) {
     const elapsed = Math.round((Date.now() - state.startTime) / 1000);
     setTimeout(() => {
-      const resultPage = document.getElementById('result-page');
-      document.getElementById('result-title').textContent = '🎉 全部完成！';
-      document.getElementById('result-stats').innerHTML = `
-        用时：${elapsed}秒<br>
-        最高连击：${state.maxCombo}<br>
-        剩余生命：${'❤️'.repeat(state.lives)}
-      `;
-      resultPage.classList.add('show');
+      buildResultCard(elapsed, () => {
+        document.getElementById('result-page').classList.add('show');
+      });
     }, 2000);
   }
 }
