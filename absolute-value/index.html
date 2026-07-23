@@ -197,10 +197,27 @@ html, body {
 #over .stats { font-size: 12px; line-height: 2.4; text-align: center; margin-bottom: 28px; }
 #over .stats b { color: var(--gold); }
 #over .pbtn { margin-bottom: 14px; }
+#overCard {
+  max-width: min(94vw, 420px);
+  max-height: 74vh; max-height: 74dvh;
+  width: auto; height: auto;
+  image-rendering: pixelated; image-rendering: crisp-edges;
+  border: 3px solid var(--gold);
+  box-shadow: 6px 6px 0 rgba(0,0,0,0.5);
+  margin-bottom: 12px;
+}
+#over .card-hint { font-size: 8px; color: rgba(255,255,255,0.6); letter-spacing: 1px; margin-bottom: 20px; }
 </style>
-<!-- 51.la 访问统计 -->
-<script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
-<script>LA.init({id:"3QacsvaHgKQ6M8cx",ck:"3QacsvaHgKQ6M8cx"})</script>
+<!-- 51.la 访问统计（异步加载，不阻塞页面） -->
+<script>
+(function(){
+  var s=document.createElement('script');
+  s.async=true; s.charset='UTF-8'; s.id='LA_COLLECT';
+  s.src='//sdk.51.la/js-sdk-pro.min.js';
+  s.onload=function(){ LA.init({id:"3QacsvaHgKQ6M8cx",ck:"3QacsvaHgKQ6M8cx"}); };
+  document.head.appendChild(s);
+})();
+</script>
 </head>
 <body>
 <div id="app">
@@ -248,8 +265,8 @@ html, body {
 
   <!-- 结算页 -->
   <div id="over" class="screen">
-    <div class="title">游戏结束</div>
-    <div class="stats" id="overStats"></div>
+    <img id="overCard" alt="化简大作战 · 战绩纪念卡">
+    <div class="card-hint">长按卡片可保存战绩图</div>
     <button class="pbtn green" onclick="Game.start()">↺ 再来一次</button>
     <button class="pbtn" onclick="UI.toEntry()">返回标题</button>
   </div>
@@ -410,6 +427,189 @@ const UI = {
 
 /* 像素炮手（用 emoji 占位的像素风小人，外加像素帽） */
 const CANNON_SVG = '🤖';
+
+/* ===================== 战绩纪念卡（像素风·纯canvas） ===================== */
+const ResultCard = {
+  // 按击落数分档：<8 铜 / 8-16 银 / >=17 金
+  tierOf(kills){
+    if(kills >= 17) return 2;
+    if(kills >= 8)  return 1;
+    return 0;
+  },
+  TITLES: ['数字新兵', '白银老兵', '王牌炮手'],
+  // 勋章配色（暗/主/亮）
+  MEDALS: [
+    { dark:'#7a4a1a', main:'#c8792e', lite:'#f0b070', label:'铜' },
+    { dark:'#707888', main:'#b8c0cc', lite:'#eef2f8', label:'银' },
+    { dark:'#a07800', main:'#fcd000', lite:'#fff3a0', label:'金' }
+  ],
+  BLESS: [
+    ['稳住准心，一发入魂！', '新兵也有大将之风，继续练！'],
+    ['连消带打，弹无虚发！', '老兵手感火热，再上一层楼！'],
+    ['神乎其技，弹幕退散！', '王牌炮手，全场无一漏网！']
+  ],
+
+  px(g, x, y, w, h, color){ g.fillStyle = color; g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); },
+
+  // 像素描边矩形（外深内亮的立体块感）
+  block(g, x, y, w, h, main, dark, lite){
+    this.px(g, x, y, w, h, dark);
+    this.px(g, x+4, y+4, w-8, h-8, main);
+    this.px(g, x+4, y+4, w-8, 4, lite);      // 上高光
+    this.px(g, x+4, y+4, 4, h-8, lite);      // 左高光
+  },
+
+  // 像素勋章：八角奖章 + 星星 + 缎带
+  medal(g, cx, cy, r, m){
+    // 缎带
+    this.px(g, cx-14, cy+r-6, 10, 30, m.dark);
+    this.px(g, cx+4,  cy+r-6, 10, 30, m.dark);
+    this.px(g, cx-12, cy+r-6, 6, 26, m.main);
+    this.px(g, cx+6,  cy+r-6, 6, 26, m.main);
+    // 奖章主体（用同心方阶近似圆）
+    const steps = [ [r,10],[r-6,4],[r-10,4] ];
+    this.px(g, cx-r, cy-r+6, r*2, r*2-12, m.dark);
+    this.px(g, cx-r+6, cy-r, r*2-12, r*2, m.dark);
+    this.px(g, cx-r+3, cy-r+9, r*2-6, r*2-18, m.main);
+    this.px(g, cx-r+9, cy-r+3, r*2-18, r*2-6, m.main);
+    // 高光
+    this.px(g, cx-r+9, cy-r+9, 8, 8, m.lite);
+    // 中央星星（用字体绘制，居中）
+    g.save();
+    g.textAlign='center'; g.textBaseline='middle';
+    g.fillStyle = m.dark;
+    g.font = Math.round(r*1.1)+'px serif';
+    g.fillText('★', cx+1, cy+1);
+    g.fillStyle = m.lite;
+    g.fillText('★', cx, cy);
+    g.restore();
+  },
+
+  // 像素炮手机器人：中间机器人，左右各一根朝上的炮管
+  robot(g, cx, baseY){
+    const P = (x,y,w,h,c)=>this.px(g,x,y,w,h,c);
+    // 炮台基座（砖红台阶）
+    P(cx-46, baseY, 92, 12, '#7a2a00');
+    P(cx-46, baseY, 92, 4, '#e06a2a');
+    P(cx-34, baseY-9, 68, 11, '#7a2a00');
+    P(cx-34, baseY-9, 68, 4, '#c84c0c');
+    // 左右朝上的炮管（深灰管身+金口+高光）
+    [[-40,-1],[28,1]].forEach(([ox])=>{
+      const bx = cx+ox;
+      P(bx, baseY-42, 12, 40, '#3a3a4a');   // 管身
+      P(bx, baseY-42, 4, 40, '#5a5a70');    // 左高光
+      P(bx-2, baseY-46, 16, 8, '#fcd000');  // 炮口
+      P(bx-2, baseY-46, 16, 3, '#fff3a0');  // 炮口高光
+    });
+    // 机器人本体（emoji，够可爱又统一）
+    g.save();
+    g.textAlign='center'; g.textBaseline='alphabetic';
+    g.font='68px serif';
+    g.fillText('🤖', cx, baseY-10);
+    g.restore();
+  },
+
+  render(opts){
+    const { tier, sec, kills, maxCombo, score } = opts;
+    const m = this.MEDALS[tier];
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    const W = 480, H = 620;
+    const cv = document.createElement('canvas');
+    cv.width = W*dpr; cv.height = H*dpr;
+    const g = cv.getContext('2d');
+    g.scale(dpr, dpr);
+    g.imageSmoothingEnabled = false;
+    g.textAlign = 'center';
+
+    // 背景：天空渐变 + 草地（呼应游戏页）
+    const sky = g.createLinearGradient(0,0,0,H);
+    sky.addColorStop(0, '#5c94fc'); sky.addColorStop(0.62,'#6ba8ff');
+    sky.addColorStop(0.62,'#00a800'); sky.addColorStop(1,'#008800');
+    g.fillStyle = sky; g.fillRect(0,0,W,H);
+    // 像素云
+    g.fillStyle = 'rgba(255,255,255,0.85)';
+    [[70,90,44],[360,140,54],[300,70,36]].forEach(([x,y,w])=>{
+      g.fillRect(x,y,w,14); g.fillRect(x+10,y-8,w-20,10);
+    });
+
+    // 外像素边框（金色双层）
+    this.px(g, 0,0,W,10,'#a07800'); this.px(g,0,H-10,W,10,'#a07800');
+    this.px(g, 0,0,10,H,'#a07800'); this.px(g,W-10,0,10,H,'#a07800');
+    this.px(g, 10,10,W-20,4,'#fcd000'); this.px(g,10,H-14,W-20,4,'#fcd000');
+    this.px(g, 10,10,4,H-20,'#fcd000'); this.px(g,W-14,10,4,H-20,'#fcd000');
+
+    g.fillStyle = '#fff';
+    g.font = "24px 'Press Start 2P', monospace";
+    g.save(); g.shadowColor='#0a0a1a'; g.shadowOffsetX=3; g.shadowOffsetY=3;
+    g.fillText('化简大作战', W/2, 62);
+    g.font = "13px 'Press Start 2P', monospace";
+    g.fillStyle = '#fcd000';
+    g.fillText('战 绩 纪 念 卡', W/2, 94);
+    g.restore();
+
+    // 机器人 + 勋章
+    this.robot(g, W/2 - 100, 258);
+    this.medal(g, W/2 + 100, 214, 50, m);
+
+    // 称号药丸
+    const honor = this.TITLES[tier];
+    g.font = "18px 'Press Start 2P', monospace";
+    const pw = g.measureText(honor).width + 52;
+    this.block(g, (W-pw)/2, 296, pw, 52, m.main, m.dark, m.lite);
+    g.fillStyle = tier===1 ? '#0a0a1a' : '#fff';
+    g.save(); g.textBaseline='middle';
+    g.fillText(honor, W/2, 323);
+    g.restore();
+
+    // 祝福语两行
+    const bless = this.BLESS[tier];
+    g.fillStyle = '#fff';
+    g.font = "12px 'Press Start 2P', monospace";
+    g.save(); g.shadowColor='#0a0a1a'; g.shadowOffsetX=2; g.shadowOffsetY=2;
+    g.fillText(bless[0], W/2, 382);
+    g.fillText(bless[1], W/2, 410);
+    g.restore();
+
+    // 数据面板（深底像素框）
+    const px0 = 44, pw0 = W-88, py0 = 434, ph0 = 156;
+    this.px(g, px0, py0, pw0, ph0, '#0a0a1a');
+    this.px(g, px0+4, py0+4, pw0-8, ph0-8, 'rgba(255,255,255,0.08)');
+    const rows = [
+      ['坚持时长', sec + ' 秒'],
+      ['击落方块', kills + ' 个'],
+      ['最高连击', maxCombo + ' 连'],
+      ['总得分',   score + ' 分']
+    ];
+    g.font = "13px 'Press Start 2P', monospace";
+    g.textBaseline = 'middle';
+    rows.forEach((r,i)=>{
+      const ry = py0 + 28 + i*34;
+      g.fillStyle = '#a8c8ff';
+      g.textAlign = 'left';
+      g.fillText(r[0], px0+22, ry);
+      g.fillStyle = '#fcd000';
+      g.textAlign = 'right';
+      g.fillText(r[1], px0+pw0-22, ry);
+    });
+    g.textAlign = 'center';
+
+    // 尾注
+    g.fillStyle = 'rgba(255,255,255,0.7)';
+    g.font = "9px 'Press Start 2P', monospace";
+    g.fillText('✧ 再战一局，冲击王牌炮手 ✧', W/2, H-24);
+
+    return cv;
+  },
+
+  build(g_stats, done){
+    const cv = this.render(g_stats);
+    let url;
+    try { url = cv.toDataURL('image/png'); } catch(e){ url = ''; }
+    const img = document.getElementById('overCard');
+    if(url) img.src = url;
+    if(done) done();
+  }
+};
 
 /* ===================== 游戏主体 ===================== */
 const Game = {
@@ -694,11 +894,8 @@ const Game = {
     Audio8.stopBGM();
     Audio8.gameover();
     const sec=Math.round(this.elapsed);
-    document.getElementById('overStats').innerHTML=
-      '坚持时长：<b>'+sec+'</b> 秒<br>'+
-      '击落方块：<b>'+this.kills+'</b> 个<br>'+
-      '最高连击：<b>'+this.maxCombo+'</b><br>'+
-      '总得分：<b>'+this.score+'</b>';
+    const tier=ResultCard.tierOf(this.kills);
+    ResultCard.build({ tier, sec, kills:this.kills, maxCombo:this.maxCombo, score:this.score });
     setTimeout(()=>UI.show('over'), 400);
   }
 };
