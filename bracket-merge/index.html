@@ -179,6 +179,10 @@ body{background:linear-gradient(160deg,#0b1220 0%,#16233f 55%,#0a1120 100%)}
 .msnPocket{position:absolute;left:0;right:0;bottom:0;height:58%;z-index:3;border-radius:0 0 10px 10px;background:linear-gradient(165deg,#dfc995,#caa869);clip-path:polygon(0 26%,50% 0,100% 26%,100% 100%,0 100%);box-shadow:0 -3px 8px rgba(60,40,15,.25)}
 .msnBtns{display:flex;gap:10px;animation:msnFade .45s ease 1.35s both}
 @keyframes msnFade{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:translateY(0)}}
+.msnCard{display:none;width:min(84vw,330px);max-height:64vh;object-fit:contain;border-radius:16px;box-shadow:0 14px 40px rgba(0,0,0,.6)}
+.msnWrap.carded .msnEnv{display:none}
+.msnWrap.carded .msnCard{display:block;animation:cardReveal .5s cubic-bezier(.2,1.3,.4,1)}
+@keyframes cardReveal{0%{opacity:0;transform:scale(.7)}100%{opacity:1;transform:scale(1)}}
 /* 手机窄屏：压缩齿轮模块，保证 1 张已知卡 + 3 个齿轮同排不换行 */
 @media(max-width:480px){
   #row{gap:7px}
@@ -245,9 +249,16 @@ body{background:linear-gradient(160deg,#0b1220 0%,#16233f 55%,#0a1120 100%)}
 .stats b{color:var(--teal)}
 @media(max-height:660px){.logo{font-size:36px}#plate{font-size:18px}.card{min-width:68px;min-height:60px;font-size:17px}}
 </style>
-<!-- 51.la 访问统计 -->
-<script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
-<script>LA.init({id:"3QacsvaHgKQ6M8cx",ck:"3QacsvaHgKQ6M8cx"})</script>
+<!-- 51.la 访问统计（异步加载，不阻塞页面） -->
+<script>
+(function(){
+  var s=document.createElement('script');
+  s.async=true; s.charset='UTF-8'; s.id='LA_COLLECT';
+  s.src='//sdk.51.la/js-sdk-pro.min.js';
+  s.onload=function(){ LA.init({id:"3QacsvaHgKQ6M8cx",ck:"3QacsvaHgKQ6M8cx"}); };
+  document.head.appendChild(s);
+})();
+</script>
 </head>
 <body><div id="app">
 
@@ -316,7 +327,7 @@ body{background:linear-gradient(160deg,#0b1220 0%,#16233f 55%,#0a1120 100%)}
 </div></div>
 
 <div id="missionMask" class="mask"><div class="msnWrap">
-  <div class="msnEnv">
+  <div class="msnEnv" id="msnEnv">
     <div class="msnDoc">
       <div class="msnSeal">任务完成<small>MISSION CLEAR</small></div>
       <h2>机密卷宗·破解完成</h2>
@@ -325,6 +336,7 @@ body{background:linear-gradient(160deg,#0b1220 0%,#16233f 55%,#0a1120 100%)}
     </div>
     <div class="msnPocket"></div>
   </div>
+  <img id="msnCard" class="msnCard" alt="特工结案档案卡">
   <div class="msnBtns">
     <button class="btn" onclick="LFlow.retry()">↺ 再玩一次</button>
     <button class="btn ghost" onclick="UI.toEntry()">选关卡</button>
@@ -640,6 +652,126 @@ const L1E={tiles:[],sel:null,busy:false,
   }
 };
 
+/* ===== 结算纪念卡 · 特工结案档案（只在第2关结束、卷宗动画后翻出；纯canvas牛皮纸风） ===== */
+const ResultCard={
+  TITLES:['实习特工','行动特工','首席特工'],
+  // 按星级取档：★1=铜 ★2=银 ★3=金
+  THEME:[
+    null,
+    {paper1:'#e8d6ac',paper2:'#c8a86b',ink:'#5a3d1c',sub:'#8a6835',seal:'#b22a26',pill:'#a97c3f',metal:'#cd7f32'},
+    {paper1:'#eef1e8',paper2:'#c3ccb8',ink:'#3c4a32',sub:'#6b7a5c',seal:'#b22a26',pill:'#8c9c78',metal:'#c3ccd8'},
+    {paper1:'#fdf1cf',paper2:'#e8c877',ink:'#6b4a12',sub:'#9c7a2e',seal:'#b22a26',pill:'#c9932e',metal:'#e8b93a'}
+  ],
+  BLESS:[
+    ['密钥已配对，括号已破解。','多加历练，晋升行动特工。'],
+    ['去括号定符号，一路见招拆招。','再接再厉，冲首席特工！'],
+    ['零失误破译全部机密，行动干净利落。','头号王牌，非你莫属！']
+  ],
+  roundRect(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();},
+  // 一把打开的挂锁：锁体 + 弹开的锁梁
+  padlock(g,cx,cy,s,metal,ink){
+    g.lineWidth=s*0.16; g.strokeStyle=metal; g.lineCap='round';
+    // 锁梁（打开：右侧脱出上扬）
+    g.beginPath();
+    g.arc(cx-s*0.05,cy-s*0.55,s*0.42,Math.PI*0.05,Math.PI*1.15,true);
+    g.stroke();
+    // 锁体
+    g.fillStyle=metal;
+    this.roundRect(g,cx-s*0.5,cy-s*0.12,s,s*0.86,s*0.14); g.fill();
+    // 高光
+    g.fillStyle='rgba(255,255,255,.25)';
+    this.roundRect(g,cx-s*0.42,cy-s*0.04,s*0.26,s*0.68,s*0.08); g.fill();
+    // 钥匙孔
+    g.fillStyle=ink;
+    g.beginPath(); g.arc(cx,cy+s*0.24,s*0.12,0,Math.PI*2); g.fill();
+    g.fillRect(cx-s*0.05,cy+s*0.24,s*0.10,s*0.30);
+  },
+  // 红色机密印章（旋转的双线圆章）
+  seal(g,cx,cy,r,color,txt){
+    g.save(); g.translate(cx,cy); g.rotate(-13*Math.PI/180);
+    g.strokeStyle=color; g.lineWidth=3;
+    g.beginPath(); g.arc(0,0,r,0,Math.PI*2); g.stroke();
+    g.beginPath(); g.arc(0,0,r-5,0,Math.PI*2); g.stroke();
+    g.fillStyle=color; g.textAlign='center'; g.textBaseline='middle';
+    g.font="900 "+Math.round(r*0.52)+"px 'KaiTi','STKaiti','Songti SC',serif";
+    g.fillText(txt,0,0);
+    g.restore(); g.textBaseline='alphabetic';
+  },
+  render(opts){
+    const {star,levelName,mistakes,reveals,best}=opts;
+    const th=this.THEME[star];
+    const dpr=Math.min(window.devicePixelRatio||1,3);
+    const W=480,H=650;
+    const cv=document.createElement('canvas');
+    cv.width=W*dpr; cv.height=H*dpr;
+    const g=cv.getContext('2d'); g.scale(dpr,dpr); g.textAlign='center';
+    // 牛皮纸背景
+    const bg=g.createLinearGradient(0,0,W,H);
+    bg.addColorStop(0,th.paper1); bg.addColorStop(1,th.paper2);
+    g.fillStyle=bg; g.fillRect(0,0,W,H);
+    // 纸纹横线
+    g.strokeStyle='rgba(90,60,30,.05)'; g.lineWidth=1;
+    for(let yy=40;yy<H;yy+=6){ g.beginPath(); g.moveTo(0,yy); g.lineTo(W,yy); g.stroke(); }
+    // 外框（双线卷宗）
+    g.strokeStyle=th.ink; g.lineWidth=3;
+    this.roundRect(g,18,18,W-36,H-36,16); g.stroke();
+    g.strokeStyle=th.sub; g.lineWidth=1;
+    this.roundRect(g,27,27,W-54,H-54,12); g.stroke();
+    // 顶部标题
+    g.fillStyle=th.ink;
+    g.font="900 30px 'KaiTi','STKaiti','Songti SC',serif";
+    g.fillText('🕵️ 开锁特工', W/2, 84);
+    g.font="700 17px 'Songti SC',serif";
+    g.fillText('机 密 结 案 档 案', W/2, 114);
+    g.fillStyle=th.sub;
+    g.font="12px 'Songti SC',serif";
+    g.fillText('CASE FILE · CLASSIFIED', W/2, 134);
+    // 关卡行
+    let y=172;
+    g.fillStyle=th.ink; g.font="700 20px 'Songti SC',serif";
+    g.fillText('第 2 关 · '+levelName+' · 破解完成', W/2, y);
+    y+=32;
+    // 星级
+    g.font='26px Georgia,serif';
+    g.fillText('⭐'.repeat(star)+'☆'.repeat(3-star), W/2, y);
+    y+=42;
+    // 主视觉：打开的挂锁 + 红印章
+    this.padlock(g, W/2-8, y+56, 52, th.metal, th.ink);
+    this.seal(g, W/2+96, y+34, 34, th.seal, '解密');
+    y=y+56+78;
+    // 称号药丸
+    const honor=this.TITLES[star-1];
+    g.font="900 25px 'Songti SC',serif";
+    const pw=g.measureText(honor).width+62;
+    this.roundRect(g,(W-pw)/2,y-28,pw,46,23);
+    g.fillStyle=th.pill; g.fill();
+    g.fillStyle='#fff8ec'; g.textBaseline='middle';
+    g.fillText(honor, W/2, y-4);
+    g.textBaseline='alphabetic';
+    y+=50;
+    // 寄语
+    g.fillStyle=th.ink; g.font="17px 'Songti SC',serif";
+    const bless=this.BLESS[star-1];
+    g.fillText(bless[0], W/2, y); y+=27;
+    g.fillText(bless[1], W/2, y); y+=40;
+    // 数据行
+    g.fillStyle=th.seal; g.font="900 21px 'Songti SC',serif";
+    g.fillText('答错 '+mistakes+' 次    看解法 '+reveals+' 次', W/2, y); y+=30;
+    g.fillStyle=th.sub; g.font="15px 'Songti SC',serif";
+    g.fillText('历史最少失误 '+best+' 次', W/2, y);
+    // 尾注
+    g.fillStyle='rgba(90,60,30,.42)'; g.font="italic 14px 'Songti SC',serif";
+    g.fillText('～ 看括号前的符号，定变不变号 ～', W/2, H-30);
+    return cv;
+  },
+  build(opts){
+    const cv=this.render(opts);
+    let url;
+    try{ url=cv.toDataURL('image/png'); }catch(e){ url=''; }
+    if(url) document.getElementById('msnCard').src=url;
+  }
+};
+
 /* ===== UI（screen 切换 / 关卡菜单） ===== */
 const UI={
   LV:[null,
@@ -682,8 +814,17 @@ const LFlow={level:1,qTotal:5,mistakes:0,reveals:0,
   showMission(star){
     document.getElementById('msnStars').textContent='⭐'.repeat(star)+'☆'.repeat(3-star);
     document.getElementById('msnStats').innerHTML='机密卷宗已全部破解<br>答错 <b>'+this.mistakes+'</b> 次 · 需要看解法 <b>'+this.reveals+'</b> 次';
-    document.getElementById('missionMask').classList.add('show');
+    const mm=document.getElementById('missionMask'),mw=mm.querySelector('.msnWrap');
+    mw.classList.remove('carded');
+    mm.classList.add('show');
     setTimeout(()=>SFX.click(),1250);   // 盖章音
+    // 历史最少失误（独立键，越少越好；首次或更少则更新）
+    const prev=localStorage.getItem('bm_best_mistakes');
+    const best=prev===null?this.mistakes:Math.min(+prev,this.mistakes);
+    if(prev===null||this.mistakes<+prev)localStorage.setItem('bm_best_mistakes',this.mistakes);
+    ResultCard.build({star,levelName:UI.LV[2].name,mistakes:this.mistakes,reveals:this.reveals,best});
+    // 卷宗开箱动画走完(约1.6s)后，翻出档案卡
+    setTimeout(()=>{mw.classList.add('carded');SFX.right()},1900);
   }
 };
 
