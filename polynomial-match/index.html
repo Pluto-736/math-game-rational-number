@@ -101,13 +101,10 @@ body{background:linear-gradient(160deg,#ffe6f0 0%,#fff3d6 45%,#d8f7ec 100%)}
 .modal p{font-size:14px;line-height:1.8;margin:9px 0;color:#6b4a35}
 .modal .hl{color:#c0577f;font-weight:900}
 /* OVER */
-#over{display:none}
+#over{display:none;overflow:auto}
 #over.show{display:flex}
-.overCard{background:var(--cream);border:4px solid #ffd34d;border-radius:26px;padding:28px 30px;text-align:center;max-width:380px;width:100%}
-.overTitle{font-size:28px;color:#e07d2a;font-weight:1000;margin-bottom:14px}
-.stars{font-size:34px;margin-bottom:10px}
-.stats{line-height:2.1;font-size:16px;color:#6b4a35;margin-bottom:18px}
-.stats b{color:#c0577f}
+.overCardImg{width:min(86vw,340px);max-height:66vh;object-fit:contain;border-radius:22px;box-shadow:0 12px 34px rgba(90,61,43,.32)}
+.cardHint{font-size:12px;color:#a05a3a;opacity:.7;margin:10px 0 4px;font-weight:700}
 @media(max-height:660px){.logo{font-size:38px}.tile{font-size:20px}.modal p{font-size:13px}}
 /* ===== 第1关 · 密码转盘 ===== */
 .pmDialWrap{display:flex;flex-direction:column;align-items:center;gap:12px}
@@ -190,9 +187,16 @@ body{background:linear-gradient(160deg,#ffe6f0 0%,#fff3d6 45%,#d8f7ec 100%)}
 .coinFly:after{content:'';position:absolute;inset:5px;border-radius:50%;border:2px solid rgba(150,95,10,.5)}
 @keyframes coinFly{0%{transform:translate(-50%,-90px) scale(.4) rotate(0);opacity:0}30%{opacity:1}100%{transform:translate(-50%,0) scale(1.1) rotate(300deg);opacity:0}}
 </style>
-<!-- 51.la 访问统计 -->
-<script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
-<script>LA.init({id:"3QacsvaHgKQ6M8cx",ck:"3QacsvaHgKQ6M8cx"})</script>
+<!-- 51.la 访问统计（异步加载，不阻塞页面） -->
+<script>
+(function(){
+  var s=document.createElement('script');
+  s.async=true; s.charset='UTF-8'; s.id='LA_COLLECT';
+  s.src='//sdk.51.la/js-sdk-pro.min.js';
+  s.onload=function(){ LA.init({id:"3QacsvaHgKQ6M8cx",ck:"3QacsvaHgKQ6M8cx"}); };
+  document.head.appendChild(s);
+})();
+</script>
 </head>
 <body><div id="app">
 <div id="entry" class="screen show">
@@ -229,14 +233,13 @@ body{background:linear-gradient(160deg,#ffe6f0 0%,#fff3d6 45%,#d8f7ec 100%)}
   <div id="soundHint" class="soundHint">🔊 关闭静音开关，拥有游戏声音</div>
 </div>
 
-<div id="over" class="screen"><div class="overCard">
-  <div id="stars" class="stars"></div>
-  <div id="overTitle" class="overTitle">过关！</div>
-  <div id="overStats" class="stats"></div>
+<div id="over" class="screen">
+  <img id="overCardImg" class="overCardImg" alt="糖果转盘纪念卡">
+  <div class="cardHint">长按卡片可保存纪念图</div>
   <button class="btn" onclick="Flow.next()">下一关 →</button>
   <button class="btn ghost" onclick="Flow.retry()">↺ 再玩</button>
   <button class="btn ghost" onclick="UI.toEntry()">选关卡</button>
-</div></div>
+</div>
 
 <div id="cele" class="mask"><div class="celeBox">
   <img id="celeImg" class="celeImg" alt="">
@@ -315,6 +318,116 @@ const UI={
   toEntry(){Flow.stop();this.renderMenu();this.show('entry')},
   renderMenu(){const m=document.getElementById('levelMenu');m.innerHTML='';for(let lv=1;lv<=2;lv++){const locked=lv>this.unlocked,c=document.createElement('div');c.className='lv'+(locked?' locked':'');c.innerHTML='<div class="lvNo">'+lv+'</div><div><div class="lvName">第'+lv+'关 · '+this.LV[lv].name+'</div><div class="lvDesc">'+this.LV[lv].desc+'</div><div class="lvTip">'+(locked?'通关上一关解锁':this.LV[lv].tip)+'</div></div>';if(!locked)c.onclick=()=>Flow.startLevel(lv);m.appendChild(c)}}
 };
+const ResultCard={
+  TITLES:['甜筒新秀','糖果达人','乐园之星'],
+  THEME:[
+    {c1:'#fff0f5',c2:'#ffe0c2',accent:'#e8843b',tint:'#b0632f',metal:'#cd7f32', pill:'#ff9a5a'},
+    {c1:'#eef6ff',c2:'#d9ecff',accent:'#5aa0e0',tint:'#3f6f9c',metal:'#9fb6cc',pill:'#7bb6e8'},
+    {c1:'#fff6e0',c2:'#ffe9b0',accent:'#e8a91e',tint:'#9c6b1e',metal:'#ffcf4a',pill:'#ffbf3a'}
+  ],
+  BLESS:[
+    ['转盘刚起步，甜筒已到手。','多转几圈，糖果罐等你装满。'],
+    ['项数次数分得清，转盘越转越顺。','再接再厉，冲乐园之星！'],
+    ['一眼看穿几次几项，转盘乐园头号明星。','这座游乐场，由你点亮！']
+  ],
+  // 8 扇糖果配色，取自游戏本体
+  WEDGE:['#ff6f93','#ff9a3d','#3fc795','#3aa6ff','#9b7bff','#ffb627','#ff8fb1','#5ad3a8'],
+  tierOf(lives){ return lives>=3?2 : lives>=2?1 : 0; },
+  roundRect(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();},
+  dial(g,cx,cy,r){
+    for(let i=0;i<8;i++){
+      const a0=(i*45-22.5-90)*Math.PI/180, a1=(i*45+22.5-90)*Math.PI/180;
+      g.beginPath(); g.moveTo(cx,cy); g.arc(cx,cy,r,a0,a1); g.closePath();
+      g.fillStyle=this.WEDGE[i]; g.fill();
+      g.strokeStyle='rgba(255,255,255,.85)'; g.lineWidth=2; g.stroke();
+    }
+    // 跑马灯小圆点
+    for(let i=0;i<12;i++){
+      const a=i/12*Math.PI*2, rr=r+11;
+      g.beginPath(); g.arc(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr,3.2,0,Math.PI*2);
+      g.fillStyle=i%2?'#ffe27a':'#fff'; g.fill();
+    }
+    // 中心圆 + ★
+    g.beginPath(); g.arc(cx,cy,r*0.30,0,Math.PI*2);
+    g.fillStyle='#fffdf7'; g.fill();
+    g.strokeStyle='#ffd34d'; g.lineWidth=3; g.stroke();
+    g.fillStyle='#ffb627'; g.font='700 '+Math.round(r*0.34)+'px Georgia,serif';
+    g.textAlign='center'; g.textBaseline='middle';
+    g.fillText('★',cx,cy+1);
+    g.textBaseline='alphabetic';
+  },
+  render(opts){
+    const {tier,level,levelName,score,lives,passed,best}=opts;
+    const th=this.THEME[tier];
+    const dpr=Math.min(window.devicePixelRatio||1,3);
+    const W=480,H=650;
+    const cv=document.createElement('canvas');
+    cv.width=W*dpr; cv.height=H*dpr;
+    const g=cv.getContext('2d'); g.scale(dpr,dpr); g.textAlign='center';
+    // 背景
+    const bg=g.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0,th.c1); bg.addColorStop(1,th.c2);
+    g.fillStyle=bg; g.fillRect(0,0,W,H);
+    // 背景泡泡
+    g.globalAlpha=.5;
+    [['#ffd0e0',70,540,54],['#cfe9ff',420,150,44],['#bff2df',430,540,36]].forEach(b=>{
+      g.beginPath(); g.arc(b[1],b[2],b[3],0,Math.PI*2); g.fillStyle=b[0]; g.fill();
+    });
+    g.globalAlpha=1;
+    // 外框
+    g.strokeStyle=th.accent; g.lineWidth=6;
+    this.roundRect(g,16,16,W-32,H-32,26); g.stroke();
+    g.strokeStyle='rgba(255,255,255,.7)'; g.lineWidth=2;
+    this.roundRect(g,25,25,W-50,H-50,20); g.stroke();
+    // 标题
+    g.fillStyle=th.tint;
+    g.font="700 30px 'Songti SC',Georgia,serif";
+    g.fillText('🎡 转动的整式', W/2, 82);
+    g.font="700 19px 'Songti SC',Georgia,serif";
+    g.fillText('糖 果 转 盘 纪 念 卡', W/2, 112);
+    let y=150;
+    g.fillStyle=th.tint; g.font="700 21px 'Songti SC',Georgia,serif";
+    g.fillText('第 '+level+' 关 · '+levelName+(passed?' · 过关':' · 心碎'), W/2, y);
+    y+=32;
+    const star=tier+1;
+    g.font='24px Georgia,serif';
+    g.fillText('⭐'.repeat(star)+'☆'.repeat(3-star), W/2, y);
+    y+=40;
+    // 主视觉：糖果转盘
+    this.dial(g, W/2, y+78, 74);
+    y=y+78+74+52;
+    // 称号药丸
+    const honor=this.TITLES[tier];
+    g.font="700 25px 'Songti SC',Georgia,serif";
+    const pw=g.measureText(honor).width+60;
+    this.roundRect(g,(W-pw)/2,y-28,pw,46,23);
+    g.fillStyle=th.pill; g.fill();
+    g.fillStyle='#fff'; g.textBaseline='middle';
+    g.fillText(honor, W/2, y-4);
+    g.textBaseline='alphabetic';
+    y+=48;
+    // 祝福语
+    g.fillStyle=th.tint; g.font="17px 'Songti SC',Georgia,serif";
+    const bless=this.BLESS[tier];
+    g.fillText(bless[0], W/2, y); y+=26;
+    g.fillText(bless[1], W/2, y); y+=38;
+    // 数据行
+    g.fillStyle=th.accent; g.font="700 22px 'Songti SC',Georgia,serif";
+    g.fillText('🍬 得分 '+score+'    ❤ 剩余 '+lives, W/2, y); y+=30;
+    g.fillStyle=th.tint; g.font="15px 'Songti SC',Georgia,serif";
+    g.fillText('历史最高 '+best+' 分', W/2, y);
+    // 尾注
+    g.fillStyle='rgba(90,61,43,.4)'; g.font="italic 14px 'Songti SC',Georgia,serif";
+    g.fillText('～ 转出整式，越转越懂 ～', W/2, H-30);
+    return cv;
+  },
+  build(opts){
+    const cv=this.render(opts);
+    let url;
+    try{ url=cv.toDataURL('image/png'); }catch(e){ url=''; }
+    if(url) document.getElementById('overCardImg').src=url;
+  }
+};
 const Flow={level:1,lives:3,score:0,
   startLevel(lv){if(lv>UI.unlocked)return;SFX.ensure();SFX.startBgm();this.level=lv;this.lives=3;this.score=0;UI.help(false);document.getElementById('toast').classList.remove('show');document.getElementById('slotDlg').classList.remove('show');UI.show('game');document.getElementById('tray').classList.toggle('show',false);document.getElementById('bInstr').classList.toggle('lv2big',lv===1);this.updateHud();const L=[null,L2,L3][lv];L.start()},
   stop(){SFX.stopBgm()},
@@ -326,8 +439,9 @@ const Flow={level:1,lives:3,score:0,
   addScore(n){this.score+=n;this.updateHud()},
   loseLife(){this.lives--;SFX.wrong();this.updateHud();if(this.lives<=0){this.over();return true}return false},
   updateHud(){const h=document.getElementById('hearts');h.innerHTML='';for(let i=0;i<3;i++){const s=document.createElement('span');s.textContent='❤';if(i>=this.lives)s.className='lost';h.appendChild(s)}document.getElementById('score').textContent=this.score+' 分'},
-  win(){SFX.stopBgm();SFX.win();if(this.level<2&&UI.unlocked<this.level+1){UI.unlocked=this.level+1;localStorage.setItem('pm_unlocked',UI.unlocked)}const star=this.lives;document.getElementById('stars').textContent='⭐'.repeat(star)+'☆'.repeat(3-star);document.getElementById('overTitle').textContent=this.level<2?'第'+this.level+'关 · 过关！':'全部通关！';document.getElementById('overStats').innerHTML='得分 <b>'+this.score+'</b>　剩余 <b>'+this.lives+'</b> ❤';setTimeout(()=>UI.show('over'),520)},
-  over(){SFX.stopBgm();SFX.over();document.getElementById('stars').textContent='💔';document.getElementById('overTitle').textContent='心碎啦';document.getElementById('overStats').innerHTML='第'+this.level+'关 · '+UI.LV[this.level].name+'<br>得分 <b>'+this.score+'</b>';setTimeout(()=>UI.show('over'),520)}
+  win(){SFX.stopBgm();SFX.win();if(this.level<2&&UI.unlocked<this.level+1){UI.unlocked=this.level+1;localStorage.setItem('pm_unlocked',UI.unlocked)}this.showCard(true)},
+  over(){SFX.stopBgm();SFX.over();this.showCard(false)},
+  showCard(passed){const best=Math.max(this.score,+(localStorage.getItem('pm_best')||0));if(this.score>+(localStorage.getItem('pm_best')||0))localStorage.setItem('pm_best',this.score);const tier=ResultCard.tierOf(this.lives);ResultCard.build({tier,level:this.level,levelName:UI.LV[this.level].name,score:this.score,lives:this.lives,passed,best});setTimeout(()=>UI.show('over'),520)}
 };
 /* ===== 同类项消消（已暂时移出关卡，代码保留待搬迁，当前不引用） ===== */
 const L1={tiles:[],sel:null,busy:false,
