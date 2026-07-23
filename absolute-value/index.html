@@ -459,29 +459,40 @@ const ResultCard = {
     this.px(g, x+4, y+4, 4, h-8, lite);      // 左高光
   },
 
-  // 像素勋章：八角奖章 + 星星 + 缎带
+  // 像素圆盘：用横条逼近圆
+  disc(g, cx, cy, r, color){
+    g.fillStyle = color;
+    for(let dy=-r; dy<=r; dy++){
+      const w = Math.floor(Math.sqrt(Math.max(0, r*r - dy*dy)));
+      g.fillRect(Math.round(cx-w), Math.round(cy+dy), w*2, 1);
+    }
+  },
+
+  // 像素勋章：齿边奖章 + 顶部挂环 + 中央星（无缎带支柱）
   medal(g, cx, cy, r, m){
-    // 缎带
-    this.px(g, cx-14, cy+r-6, 10, 30, m.dark);
-    this.px(g, cx+4,  cy+r-6, 10, 30, m.dark);
-    this.px(g, cx-12, cy+r-6, 6, 26, m.main);
-    this.px(g, cx+6,  cy+r-6, 6, 26, m.main);
-    // 奖章主体（用同心方阶近似圆）
-    const steps = [ [r,10],[r-6,4],[r-10,4] ];
-    this.px(g, cx-r, cy-r+6, r*2, r*2-12, m.dark);
-    this.px(g, cx-r+6, cy-r, r*2-12, r*2, m.dark);
-    this.px(g, cx-r+3, cy-r+9, r*2-6, r*2-18, m.main);
-    this.px(g, cx-r+9, cy-r+3, r*2-18, r*2-6, m.main);
-    // 高光
-    this.px(g, cx-r+9, cy-r+9, 8, 8, m.lite);
-    // 中央星星（用字体绘制，居中）
+    // 顶部挂环（先画，被主盘遮住下半，形成伸出感）
+    this.disc(g, cx, cy-r-5, 9, m.dark);
+    this.disc(g, cx, cy-r-5, 5, '#1a1a2e');
+    // 外圈齿边（8 方向小凸起）
+    for(let a=0; a<8; a++){
+      const ang = a*Math.PI/4;
+      this.px(g, cx+Math.cos(ang)*r-4, cy+Math.sin(ang)*r-4, 9, 9, m.dark);
+    }
+    // 主盘：深描边 → 主色 → 亮内环 → 主色盘心
+    this.disc(g, cx, cy, r, m.dark);
+    this.disc(g, cx, cy, r-3, m.main);
+    this.disc(g, cx, cy, r-8, m.lite);
+    this.disc(g, cx, cy, r-11, m.main);
+    // 左上高光点
+    this.px(g, cx-r+9, cy-r+9, 7, 7, m.lite);
+    // 中央星星
     g.save();
     g.textAlign='center'; g.textBaseline='middle';
     g.fillStyle = m.dark;
-    g.font = Math.round(r*1.1)+'px serif';
-    g.fillText('★', cx+1, cy+1);
+    g.font = Math.round(r*1.15)+'px serif';
+    g.fillText('★', cx+1, cy+2);
     g.fillStyle = m.lite;
-    g.fillText('★', cx, cy);
+    g.fillText('★', cx, cy+1);
     g.restore();
   },
 
@@ -547,27 +558,27 @@ const ResultCard = {
     g.fillText('战 绩 纪 念 卡', W/2, 94);
     g.restore();
 
-    // 机器人 + 勋章
-    this.robot(g, W/2 - 100, 258);
-    this.medal(g, W/2 + 100, 214, 50, m);
+    // 机器人 + 勋章（都相对缩小）
+    this.robot(g, W/2 - 96, 246);
+    this.medal(g, W/2 + 100, 210, 40, m);
 
-    // 称号药丸
+    // 称号药丸（放大）
     const honor = this.TITLES[tier];
-    g.font = "18px 'Press Start 2P', monospace";
-    const pw = g.measureText(honor).width + 52;
-    this.block(g, (W-pw)/2, 296, pw, 52, m.main, m.dark, m.lite);
+    g.font = "22px 'Press Start 2P', monospace";
+    const pw = g.measureText(honor).width + 60;
+    this.block(g, (W-pw)/2, 292, pw, 60, m.main, m.dark, m.lite);
     g.fillStyle = tier===1 ? '#0a0a1a' : '#fff';
     g.save(); g.textBaseline='middle';
     g.fillText(honor, W/2, 323);
     g.restore();
 
-    // 祝福语两行
+    // 祝福语两行（放大）
     const bless = this.BLESS[tier];
     g.fillStyle = '#fff';
-    g.font = "12px 'Press Start 2P', monospace";
+    g.font = "14px 'Press Start 2P', monospace";
     g.save(); g.shadowColor='#0a0a1a'; g.shadowOffsetX=2; g.shadowOffsetY=2;
-    g.fillText(bless[0], W/2, 382);
-    g.fillText(bless[1], W/2, 410);
+    g.fillText(bless[0], W/2, 386);
+    g.fillText(bless[1], W/2, 414);
     g.restore();
 
     // 数据面板（深底像素框）
@@ -596,7 +607,7 @@ const ResultCard = {
     // 尾注
     g.fillStyle = 'rgba(255,255,255,0.7)';
     g.font = "9px 'Press Start 2P', monospace";
-    g.fillText('✧ 再战一局，冲击王牌炮手 ✧', W/2, H-24);
+    g.fillText('◆ 符号再多，一眼看穿 ◆', W/2, H-24);
 
     return cv;
   },
