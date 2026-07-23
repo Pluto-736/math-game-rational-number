@@ -221,6 +221,8 @@ html,body{
 #overCard{ max-width:min(94vw,420px); max-height:72vh; max-height:72dvh; width:auto; height:auto;
   border-radius:16px; box-shadow:0 12px 36px rgba(0,0,0,.55); margin-bottom:12px; }
 #over .card-hint{ font-size:12px; color:rgba(255,255,255,.6); letter-spacing:1px; margin-bottom:18px; }
+#over .over-title{ font-size:30px; font-weight:900; color:#ffd15c; margin-bottom:14px; text-shadow:2px 2px 0 rgba(0,0,0,.4); }
+#over .over-stats{ font-size:17px; color:rgba(255,255,255,.85); margin-bottom:22px; }
 
 /* 提示气泡 */
 #toast{ position:absolute; top:30%; left:50%; transform:translateX(-50%); z-index:55;
@@ -315,8 +317,13 @@ html,body{
 
   <!-- 结算 -->
   <div id="over" class="screen">
+    <div id="overText" style="display:none">
+      <div id="overTitle" class="over-title"></div>
+      <div id="overStats" class="over-stats"></div>
+    </div>
     <img id="overCard" alt="正负狂飙 · 车手战报">
-    <div class="card-hint">长按卡片可保存战报图</div>
+    <div id="overHint" class="card-hint">长按卡片可保存战报图</div>
+    <button id="overNext" class="btn" style="display:none" onclick="Flow.next()">下一关 →</button>
     <button class="btn" onclick="Flow.retry()">↺ 再玩本关</button>
     <button class="btn ghost" onclick="UI.toEntry()">选关卡</button>
   </div>
@@ -808,6 +815,7 @@ const Flow = {
   },
   stop(){ Runner.stop(); L2.stop(); L3.stop(); },
   retry(){ this.startLevel(this.level); },
+  next(){ this.startLevel(Math.min(2,this.level+1)); },
 
   applyScene(i){
     this.scene=i%SCENES.length; const sc=SCENES[this.scene];
@@ -876,10 +884,24 @@ const Flow = {
     this.showCard(false);
   },
   showCard(passed){
-    const best=+(localStorage.getItem('zfkb_best')||0);
-    const tier=ResultCard.tierOf(this.score);
-    ResultCard.build({ tier, level:this.level, levelName:UI.LV[this.level].name,
-      score:this.score, maxCombo:this.maxCombo, passed, best });
+    const txt=document.getElementById('overText');
+    const card=document.getElementById('overCard');
+    const hint=document.getElementById('overHint');
+    const nextBtn=document.getElementById('overNext');
+    // 只有第2关结束才出战报卡；第1关给轻量文字屏
+    if(this.level>=2){
+      const best=+(localStorage.getItem('zfkb_best')||0);
+      const tier=ResultCard.tierOf(this.score);
+      ResultCard.build({ tier, level:this.level, levelName:UI.LV[this.level].name,
+        score:this.score, maxCombo:this.maxCombo, passed, best });
+      txt.style.display='none'; card.style.display=''; hint.style.display='';
+      nextBtn.style.display='none';
+    }else{
+      txt.style.display=''; card.style.display='none'; hint.style.display='none';
+      document.getElementById('overTitle').textContent=passed?'第 1 关 · 通关！':'挑战失败';
+      document.getElementById('overStats').textContent='得分 '+this.score+(passed?'　继续冲第 2 关':'　再来一次吧');
+      nextBtn.style.display=passed?'':'none';
+    }
     setTimeout(()=>UI.show('over'),500);
   },
 

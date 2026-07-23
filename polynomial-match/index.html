@@ -105,6 +105,8 @@ body{background:linear-gradient(160deg,#ffe6f0 0%,#fff3d6 45%,#d8f7ec 100%)}
 #over.show{display:flex}
 .overCardImg{width:min(86vw,340px);max-height:66vh;object-fit:contain;border-radius:22px;box-shadow:0 12px 34px rgba(90,61,43,.32)}
 .cardHint{font-size:12px;color:#a05a3a;opacity:.7;margin:10px 0 4px;font-weight:700}
+.overTitle{font-size:28px;font-weight:1000;color:#e07d2a;margin-bottom:12px}
+.overStats{font-size:16px;color:#7a4a30;margin-bottom:20px;font-weight:700}
 @media(max-height:660px){.logo{font-size:38px}.tile{font-size:20px}.modal p{font-size:13px}}
 /* ===== 第1关 · 密码转盘 ===== */
 .pmDialWrap{display:flex;flex-direction:column;align-items:center;gap:12px}
@@ -234,9 +236,13 @@ body{background:linear-gradient(160deg,#ffe6f0 0%,#fff3d6 45%,#d8f7ec 100%)}
 </div>
 
 <div id="over" class="screen">
+  <div id="overText" style="display:none">
+    <div id="overTitle" class="overTitle"></div>
+    <div id="overStats" class="overStats"></div>
+  </div>
   <img id="overCardImg" class="overCardImg" alt="糖果转盘纪念卡">
-  <div class="cardHint">长按卡片可保存纪念图</div>
-  <button class="btn" onclick="Flow.next()">下一关 →</button>
+  <div id="overHint" class="cardHint">长按卡片可保存纪念图</div>
+  <button id="overNext" class="btn" style="display:none" onclick="Flow.next()">下一关 →</button>
   <button class="btn ghost" onclick="Flow.retry()">↺ 再玩</button>
   <button class="btn ghost" onclick="UI.toEntry()">选关卡</button>
 </div>
@@ -441,7 +447,7 @@ const Flow={level:1,lives:3,score:0,
   updateHud(){const h=document.getElementById('hearts');h.innerHTML='';for(let i=0;i<3;i++){const s=document.createElement('span');s.textContent='❤';if(i>=this.lives)s.className='lost';h.appendChild(s)}document.getElementById('score').textContent=this.score+' 分'},
   win(){SFX.stopBgm();SFX.win();if(this.level<2&&UI.unlocked<this.level+1){UI.unlocked=this.level+1;localStorage.setItem('pm_unlocked',UI.unlocked)}this.showCard(true)},
   over(){SFX.stopBgm();SFX.over();this.showCard(false)},
-  showCard(passed){const best=Math.max(this.score,+(localStorage.getItem('pm_best')||0));if(this.score>+(localStorage.getItem('pm_best')||0))localStorage.setItem('pm_best',this.score);const tier=ResultCard.tierOf(this.lives);ResultCard.build({tier,level:this.level,levelName:UI.LV[this.level].name,score:this.score,lives:this.lives,passed,best});setTimeout(()=>UI.show('over'),520)}
+  showCard(passed){const txt=document.getElementById('overText'),card=document.getElementById('overCardImg'),hint=document.getElementById('overHint'),nextBtn=document.getElementById('overNext');if(this.level>=2){const best=Math.max(this.score,+(localStorage.getItem('pm_best')||0));if(this.score>+(localStorage.getItem('pm_best')||0))localStorage.setItem('pm_best',this.score);const tier=ResultCard.tierOf(this.lives);ResultCard.build({tier,level:this.level,levelName:UI.LV[this.level].name,score:this.score,lives:this.lives,passed,best});txt.style.display='none';card.style.display='';hint.style.display='';nextBtn.style.display='none'}else{txt.style.display='';card.style.display='none';hint.style.display='none';document.getElementById('overTitle').textContent=passed?'第 1 关 · 过关！':'心碎啦';document.getElementById('overStats').textContent='得分 '+this.score+(passed?'　继续冲第 2 关':'　再来一次吧');nextBtn.style.display=passed?'':'none'}setTimeout(()=>UI.show('over'),520)}
 };
 /* ===== 同类项消消（已暂时移出关卡，代码保留待搬迁，当前不引用） ===== */
 const L1={tiles:[],sel:null,busy:false,
