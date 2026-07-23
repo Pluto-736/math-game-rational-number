@@ -36,7 +36,9 @@ body{background:
   background:rgba(4,12,26,.72);backdrop-filter:blur(2px)}
 .overlay.show{display:flex}
 .ov-card{background:linear-gradient(180deg,#0e2949,#0a1c33);border:2px solid var(--good);border-radius:20px;
-  padding:26px 30px;text-align:center;max-width:320px;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+  padding:16px;text-align:center;max-width:330px;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.ovCardImg{width:min(76vw,290px);max-height:60vh;object-fit:contain;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.ovHint{font-size:11px;color:var(--muted);opacity:.75;margin:8px 0 12px}
 .ov-emo{font-size:52px;margin-bottom:6px}
 .ov-card h2{color:var(--good);font-size:22px;margin-bottom:6px}
 .ov-card p{color:#cfe8ff;font-size:13px;line-height:1.6;margin-bottom:18px}
@@ -112,9 +114,8 @@ body{background:
 
   <div class="overlay" id="overlay">
     <div class="ov-card">
-      <div class="ov-emo">🎉</div>
-      <h2>8 关全部完成！</h2>
-      <p>你把每个立体都搭对了，空间感真棒。</p>
+      <img id="ovCard" class="ovCardImg" alt="建筑师结业证">
+      <div class="ovHint">长按卡片可保存纪念图</div>
       <div class="ov-btns">
         <button class="btn" onclick="B.again()">↺ 再来一局</button>
         <button class="btn ghost" onclick="location.href='index.html'">🏠 回主页</button>
@@ -314,9 +315,75 @@ function rebuild(h){
 function animate(){requestAnimationFrame(animate);if(!world)return;
   world.rotation.y=yaw;world.rotation.x=pitch;renderer.render(scene,camera);}
 
+/* ============ 结业证纪念卡 · 小小建筑师（蓝图风·纯canvas，三子玩法通用） ============ */
+const ResultCard={
+  TITLES:['空间新手','立体能手','空间大师'],
+  THEME:[null,
+    {accent:'#cd7f32',pill:'#a86a2e',glow:'#e8a463'},
+    {accent:'#9fb2cc',pill:'#6b7a92',glow:'#c3d0e0'},
+    {accent:'#ffd34d',pill:'#c9932e',glow:'#ffe9a8'}
+  ],
+  roundRect(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();},
+  cube(g,cx,cy,s,top,left,right,edge){
+    g.beginPath();g.moveTo(cx,cy-s);g.lineTo(cx+s,cy-s/2);g.lineTo(cx,cy);g.lineTo(cx-s,cy-s/2);g.closePath();
+    g.fillStyle=top;g.fill();g.strokeStyle=edge;g.lineWidth=2;g.stroke();
+    g.beginPath();g.moveTo(cx-s,cy-s/2);g.lineTo(cx,cy);g.lineTo(cx,cy+s);g.lineTo(cx-s,cy+s/2);g.closePath();
+    g.fillStyle=left;g.fill();g.stroke();
+    g.beginPath();g.moveTo(cx+s,cy-s/2);g.lineTo(cx,cy);g.lineTo(cx,cy+s);g.lineTo(cx+s,cy+s/2);g.closePath();
+    g.fillStyle=right;g.fill();g.stroke();
+  },
+  render(opts){
+    const {tier,sub,statLine,best}=opts;
+    const th=this.THEME[tier];
+    const dpr=Math.min(window.devicePixelRatio||1,3);
+    const W=480,H=650;
+    const cv=document.createElement('canvas');cv.width=W*dpr;cv.height=H*dpr;
+    const g=cv.getContext('2d');g.scale(dpr,dpr);g.textAlign='center';
+    const bg=g.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0,'#0e2949');bg.addColorStop(.6,'#0b2038');bg.addColorStop(1,'#0a1c33');
+    g.fillStyle=bg;g.fillRect(0,0,W,H);
+    g.strokeStyle='rgba(120,180,255,.10)';g.lineWidth=1;
+    for(let x=0;x<=W;x+=30){g.beginPath();g.moveTo(x,0);g.lineTo(x,H);g.stroke();}
+    for(let y=0;y<=H;y+=30){g.beginPath();g.moveTo(0,y);g.lineTo(W,y);g.stroke();}
+    g.strokeStyle=th.accent;g.lineWidth=6;this.roundRect(g,16,16,W-32,H-32,20);g.stroke();
+    g.strokeStyle='rgba(127,208,255,.5)';g.lineWidth=2;this.roundRect(g,25,25,W-50,H-50,14);g.stroke();
+    g.fillStyle='#ffd34d';g.font="900 30px 'Songti SC',Georgia,serif";
+    g.fillText('🏗️ 立体几何工坊',W/2,86);
+    g.fillStyle='#7fd0ff';g.font="700 17px 'Songti SC',Georgia,serif";
+    g.fillText('小小建筑师 · 结业证',W/2,116);
+    let y=150;
+    g.fillStyle='#cfe8ff';g.font="700 19px 'Songti SC',Georgia,serif";
+    g.fillText(sub,W/2,y);y+=30;
+    const star=tier;
+    g.font='26px Georgia,serif';g.fillStyle='#ffd34d';
+    g.fillText('⭐'.repeat(star)+'☆'.repeat(3-star),W/2,y);y+=48;
+    this.cube(g,W/2-46,y+40,26,th.glow,th.pill,th.accent,'#0a1c33');
+    this.cube(g,W/2+46,y+40,26,th.glow,th.pill,th.accent,'#0a1c33');
+    this.cube(g,W/2,y+8,26,th.glow,th.pill,th.accent,'#0a1c33');
+    y=y+40+70;
+    const honor=this.TITLES[tier-1];
+    g.font="900 25px 'Songti SC',Georgia,serif";
+    const pw=g.measureText(honor).width+62;
+    this.roundRect(g,(W-pw)/2,y-28,pw,46,23);g.fillStyle=th.pill;g.fill();
+    g.fillStyle='#fff';g.textBaseline='middle';g.fillText(honor,W/2,y-4);g.textBaseline='alphabetic';
+    y+=52;
+    g.fillStyle=th.accent;g.font="900 22px 'Songti SC',Georgia,serif";
+    g.fillText(statLine,W/2,y);y+=30;
+    if(best){g.fillStyle='#8fb4d6';g.font="15px 'Songti SC',Georgia,serif";g.fillText(best,W/2,y);y+=8;}
+    g.fillStyle='rgba(127,208,255,.45)';g.font="italic 14px 'Songti SC',Georgia,serif";
+    g.fillText('～ 三视图 · 展开与折叠 · 玩转空间 ～',W/2,H-30);
+    return cv;
+  },
+  build(imgId,opts){
+    const cv=this.render(opts);
+    let url;try{url=cv.toDataURL('image/png');}catch(e){url='';}
+    if(url)document.getElementById(imgId).src=url;
+  }
+};
+
 /* ================== 游戏 ================== */
 const $=id=>document.getElementById(id);
-let lv=0, H, target, PS=3;
+let lv=0, H, target, PS=3, clears=0;
 const B={
   load(){
     const def=LEVELS[lv]; const nh=normH(def.h); target=views(nh); // 目标视图按归一化显示：只表达形状，不限定位置
@@ -372,17 +439,23 @@ const B={
     Audio8.sfx.win();
     $('nextBtn').style.display='block';
   },
-  clear(){H=[[0,0,0],[0,0,0],[0,0,0]];this.renderPad();rebuild(H);this.renderViews();
+  clear(){H=[[0,0,0],[0,0,0],[0,0,0]];clears++;this.renderPad();rebuild(H);this.renderViews();
     $('nextBtn').style.display='none';},
   next(){
-    if(lv+1>=LEVELS.length){ $('overlay').classList.add('show'); Audio8.sfx.win(); return; } // 走完8关，弹通关框
+    if(lv+1>=LEVELS.length){ // 走完8关，弹结业证卡：按“清空重搭次数”分档
+      const tier=clears===0?3:clears<=3?2:1;
+      $('overlay').classList.add('show'); Audio8.sfx.win();
+      ResultCard.build('ovCard',{tier,sub:'照图搭建 · 由图搭形',
+        statLine:'🧱 '+LEVELS.length+' 关全部还原',best:'清空重搭 '+clears+' 次'});
+      return;
+    }
     lv++;
     this.load();
   },
-  again(){ LEVELS=makeLevels(); lv=0; $('overlay').classList.remove('show'); this.load(); },
+  again(){ LEVELS=makeLevels(); lv=0; clears=0; $('overlay').classList.remove('show'); this.load(); },
   rotateHint(){yaw+=Math.PI/6;},
   start(){if(!window.THREE){$('err').style.display='flex';return;}
-    if(!threeReady){initThree();threeReady=true;}this.load();}
+    clears=0;if(!threeReady){initThree();threeReady=true;}this.load();}
 };
 
 /* 拖动转视角 */

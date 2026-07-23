@@ -63,7 +63,9 @@ body{background:
   background:rgba(4,12,26,.72);backdrop-filter:blur(2px)}
 .overlay.show{display:flex}
 .ov-card{background:linear-gradient(180deg,#0e2949,#0a1c33);border:2px solid var(--good);border-radius:20px;
-  padding:26px 30px;text-align:center;max-width:320px;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+  padding:16px;text-align:center;max-width:330px;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.ovCardImg{width:min(76vw,290px);max-height:60vh;object-fit:contain;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.ovHint{font-size:11px;color:var(--muted);opacity:.75;margin:8px 0 12px}
 .ov-emo{font-size:52px;margin-bottom:6px}
 .ov-card h2{color:var(--good);font-size:22px;margin-bottom:6px}
 .ov-card p{color:#cfe8ff;font-size:13px;line-height:1.6;margin-bottom:18px}
@@ -109,9 +111,8 @@ body{background:
 
   <div class="overlay" id="overlay">
     <div class="ov-card">
-      <div class="ov-emo">🎉</div>
-      <h2>8 关全部完成！</h2>
-      <p>每个立体的三视图你都画对了，太厉害了。</p>
+      <img id="ovCard" class="ovCardImg" alt="建筑师结业证">
+      <div class="ovHint">长按卡片可保存纪念图</div>
       <div class="ov-btns">
         <button class="btn" onclick="R.again()">↺ 再来一局</button>
         <button class="btn ghost" onclick="location.href='index.html'">🏠 回主页</button>
@@ -321,6 +322,86 @@ function rebuild(h){
 function animate(){requestAnimationFrame(animate);if(!world)return;
   world.rotation.y=yaw;world.rotation.x=pitch;renderer.render(scene,camera);}
 
+/* ============ 结业证纪念卡 · 小小建筑师（蓝图风·纯canvas，三子玩法通用） ============ */
+const ResultCard={
+  TITLES:['空间新手','立体能手','空间大师'],
+  THEME:[null,
+    {accent:'#cd7f32',pill:'#a86a2e',glow:'#e8a463'},   // 铜
+    {accent:'#9fb2cc',pill:'#6b7a92',glow:'#c3d0e0'},   // 银
+    {accent:'#ffd34d',pill:'#c9932e',glow:'#ffe9a8'}    // 金
+  ],
+  roundRect(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();},
+  // 等距小方块（3D 立方体图标）
+  cube(g,cx,cy,s,top,left,right,edge){
+    // 顶面
+    g.beginPath();g.moveTo(cx,cy-s);g.lineTo(cx+s,cy-s/2);g.lineTo(cx,cy);g.lineTo(cx-s,cy-s/2);g.closePath();
+    g.fillStyle=top;g.fill();g.strokeStyle=edge;g.lineWidth=2;g.stroke();
+    // 左面
+    g.beginPath();g.moveTo(cx-s,cy-s/2);g.lineTo(cx,cy);g.lineTo(cx,cy+s);g.lineTo(cx-s,cy+s/2);g.closePath();
+    g.fillStyle=left;g.fill();g.stroke();
+    // 右面
+    g.beginPath();g.moveTo(cx+s,cy-s/2);g.lineTo(cx,cy);g.lineTo(cx,cy+s);g.lineTo(cx+s,cy+s/2);g.closePath();
+    g.fillStyle=right;g.fill();g.stroke();
+  },
+  // opts: {tier, sub(玩法名), statLine(成绩行), best(历史行,可空)}
+  render(opts){
+    const {tier,sub,statLine,best}=opts;
+    const th=this.THEME[tier];
+    const dpr=Math.min(window.devicePixelRatio||1,3);
+    const W=480,H=650;
+    const cv=document.createElement('canvas');
+    cv.width=W*dpr;cv.height=H*dpr;
+    const g=cv.getContext('2d');g.scale(dpr,dpr);g.textAlign='center';
+    // 蓝图深蓝底
+    const bg=g.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0,'#0e2949');bg.addColorStop(.6,'#0b2038');bg.addColorStop(1,'#0a1c33');
+    g.fillStyle=bg;g.fillRect(0,0,W,H);
+    // 蓝图网格
+    g.strokeStyle='rgba(120,180,255,.10)';g.lineWidth=1;
+    for(let x=0;x<=W;x+=30){g.beginPath();g.moveTo(x,0);g.lineTo(x,H);g.stroke();}
+    for(let y=0;y<=H;y+=30){g.beginPath();g.moveTo(0,y);g.lineTo(W,y);g.stroke();}
+    // 外框
+    g.strokeStyle=th.accent;g.lineWidth=6;this.roundRect(g,16,16,W-32,H-32,20);g.stroke();
+    g.strokeStyle='rgba(127,208,255,.5)';g.lineWidth=2;this.roundRect(g,25,25,W-50,H-50,14);g.stroke();
+    // 标题
+    g.fillStyle='#ffd34d';g.font="900 30px 'Songti SC',Georgia,serif";
+    g.fillText('🏗️ 立体几何工坊',W/2,86);
+    g.fillStyle='#7fd0ff';g.font="700 17px 'Songti SC',Georgia,serif";
+    g.fillText('小小建筑师 · 结业证',W/2,116);
+    let y=150;
+    g.fillStyle='#cfe8ff';g.font="700 19px 'Songti SC',Georgia,serif";
+    g.fillText(sub,W/2,y);y+=30;
+    const star=tier;
+    g.font='26px Georgia,serif';g.fillStyle='#ffd34d';
+    g.fillText('⭐'.repeat(star)+'☆'.repeat(3-star),W/2,y);y+=48;
+    // 主视觉：等距立方体三连
+    this.cube(g,W/2-46,y+40,26,th.glow,th.pill,th.accent,'#0a1c33');
+    this.cube(g,W/2+46,y+40,26,th.glow,th.pill,th.accent,'#0a1c33');
+    this.cube(g,W/2,y+8,26,th.glow,th.pill,th.accent,'#0a1c33');
+    y=y+40+70;
+    // 称号药丸
+    const honor=this.TITLES[tier-1];
+    g.font="900 25px 'Songti SC',Georgia,serif";
+    const pw=g.measureText(honor).width+62;
+    this.roundRect(g,(W-pw)/2,y-28,pw,46,23);g.fillStyle=th.pill;g.fill();
+    g.fillStyle='#fff';g.textBaseline='middle';g.fillText(honor,W/2,y-4);g.textBaseline='alphabetic';
+    y+=52;
+    // 成绩行
+    g.fillStyle=th.accent;g.font="900 22px 'Songti SC',Georgia,serif";
+    g.fillText(statLine,W/2,y);y+=30;
+    if(best){g.fillStyle='#8fb4d6';g.font="15px 'Songti SC',Georgia,serif";g.fillText(best,W/2,y);y+=8;}
+    // 尾注
+    g.fillStyle='rgba(127,208,255,.45)';g.font="italic 14px 'Songti SC',Georgia,serif";
+    g.fillText('～ 三视图 · 展开与折叠 · 玩转空间 ～',W/2,H-30);
+    return cv;
+  },
+  build(imgId,opts){
+    const cv=this.render(opts);
+    let url;try{url=cv.toDataURL('image/png');}catch(e){url='';}
+    if(url)document.getElementById(imgId).src=url;
+  }
+};
+
 /* ============ 游戏 ============ */
 const $=id=>document.getElementById(id);
 const VKEYS=[['front','正面看'],['left','左面看'],['top','上面看']];
@@ -396,7 +477,12 @@ const R={
     $('tip').innerHTML='🎉 三视图全部画对！';
     Audio8.sfx.win();
     $('banner').classList.add('show');
-    if(lv+1>=LEVELS.length){ // 走完8关，弹通关框
+    if(lv+1>=LEVELS.length){ // 走完8关，弹结业证卡
+      const full=LEVELS.length*30, tier=score>=full?3:score>=full*0.7?2:1;
+      const prev=+(localStorage.getItem('fw_read_best')||0);
+      if(score>prev)localStorage.setItem('fw_read_best',score);
+      const best=Math.max(score,prev);
+      ResultCard.build('ovCard',{tier,sub:'画三视图 · 由形画图',statLine:'✏️ 得分 '+score+' / '+full,best:'历史最高 '+best+' 分'});
       setTimeout(()=>{$('banner').classList.remove('show');$('overlay').classList.add('show');},1200);
       return;
     }

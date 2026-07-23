@@ -80,7 +80,9 @@ body{background:
 
 /* 结算 */
 #result{justify-content:center;padding:22px}
-.result-box{text-align:center;background:rgba(8,22,45,.8);border:2px solid rgba(127,208,255,.3);border-radius:22px;padding:26px 24px;max-width:360px}
+.result-box{text-align:center;background:rgba(8,22,45,.8);border:2px solid rgba(127,208,255,.3);border-radius:22px;padding:16px;max-width:340px}
+.rCardImg{width:min(76vw,290px);max-height:60vh;object-fit:contain;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.rHint{font-size:11px;color:var(--muted);opacity:.75;margin:8px 0 12px}
 .result-box .big{font-size:48px}
 .result-box h2{color:var(--glow);margin:8px 0}
 .result-box p{color:#cfe8ff;line-height:1.8;font-size:14px;margin-bottom:6px}
@@ -138,10 +140,8 @@ body{background:
 <!-- ================= 结算页 ================= -->
 <div id="result" class="screen">
   <div class="result-box">
-    <div class="big">🏗️</div>
-    <h2 id="rTitle">工坊验收</h2>
-    <div class="stars" id="rStars"></div>
-    <p id="rText"></p>
+    <img id="rCard" class="rCardImg" alt="建筑师结业证">
+    <div class="rHint">长按卡片可保存纪念图</div>
     <button class="btn" style="margin-top:6px" onclick="Game.start()">再折一轮</button>
     <button class="btn ghost small" style="margin-top:10px" onclick="Game.toEntry()">返回首页</button>
   </div>
@@ -334,6 +334,72 @@ function setRed(id,on){
 function animate(){requestAnimationFrame(animate);if(!world)return;
   world.rotation.y=yaw;world.rotation.x=pitch;renderer.render(scene,camera);}
 
+/* ============ 结业证纪念卡 · 小小建筑师（蓝图风·纯canvas，三子玩法通用） ============ */
+const ResultCard={
+  TITLES:['空间新手','立体能手','空间大师'],
+  THEME:[null,
+    {accent:'#cd7f32',pill:'#a86a2e',glow:'#e8a463'},
+    {accent:'#9fb2cc',pill:'#6b7a92',glow:'#c3d0e0'},
+    {accent:'#ffd34d',pill:'#c9932e',glow:'#ffe9a8'}
+  ],
+  roundRect(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();},
+  cube(g,cx,cy,s,top,left,right,edge){
+    g.beginPath();g.moveTo(cx,cy-s);g.lineTo(cx+s,cy-s/2);g.lineTo(cx,cy);g.lineTo(cx-s,cy-s/2);g.closePath();
+    g.fillStyle=top;g.fill();g.strokeStyle=edge;g.lineWidth=2;g.stroke();
+    g.beginPath();g.moveTo(cx-s,cy-s/2);g.lineTo(cx,cy);g.lineTo(cx,cy+s);g.lineTo(cx-s,cy+s/2);g.closePath();
+    g.fillStyle=left;g.fill();g.stroke();
+    g.beginPath();g.moveTo(cx+s,cy-s/2);g.lineTo(cx,cy);g.lineTo(cx,cy+s);g.lineTo(cx+s,cy+s/2);g.closePath();
+    g.fillStyle=right;g.fill();g.stroke();
+  },
+  render(opts){
+    const {tier,sub,statLine,best}=opts;
+    const th=this.THEME[tier];
+    const dpr=Math.min(window.devicePixelRatio||1,3);
+    const W=480,H=650;
+    const cv=document.createElement('canvas');cv.width=W*dpr;cv.height=H*dpr;
+    const g=cv.getContext('2d');g.scale(dpr,dpr);g.textAlign='center';
+    const bg=g.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0,'#0e2949');bg.addColorStop(.6,'#0b2038');bg.addColorStop(1,'#0a1c33');
+    g.fillStyle=bg;g.fillRect(0,0,W,H);
+    g.strokeStyle='rgba(120,180,255,.10)';g.lineWidth=1;
+    for(let x=0;x<=W;x+=30){g.beginPath();g.moveTo(x,0);g.lineTo(x,H);g.stroke();}
+    for(let y=0;y<=H;y+=30){g.beginPath();g.moveTo(0,y);g.lineTo(W,y);g.stroke();}
+    g.strokeStyle=th.accent;g.lineWidth=6;this.roundRect(g,16,16,W-32,H-32,20);g.stroke();
+    g.strokeStyle='rgba(127,208,255,.5)';g.lineWidth=2;this.roundRect(g,25,25,W-50,H-50,14);g.stroke();
+    g.fillStyle='#ffd34d';g.font="900 30px 'Songti SC',Georgia,serif";
+    g.fillText('🏗️ 立体几何工坊',W/2,86);
+    g.fillStyle='#7fd0ff';g.font="700 17px 'Songti SC',Georgia,serif";
+    g.fillText('小小建筑师 · 结业证',W/2,116);
+    let y=150;
+    g.fillStyle='#cfe8ff';g.font="700 19px 'Songti SC',Georgia,serif";
+    g.fillText(sub,W/2,y);y+=30;
+    const star=tier;
+    g.font='26px Georgia,serif';g.fillStyle='#ffd34d';
+    g.fillText('⭐'.repeat(star)+'☆'.repeat(3-star),W/2,y);y+=48;
+    this.cube(g,W/2-46,y+40,26,th.glow,th.pill,th.accent,'#0a1c33');
+    this.cube(g,W/2+46,y+40,26,th.glow,th.pill,th.accent,'#0a1c33');
+    this.cube(g,W/2,y+8,26,th.glow,th.pill,th.accent,'#0a1c33');
+    y=y+40+70;
+    const honor=this.TITLES[tier-1];
+    g.font="900 25px 'Songti SC',Georgia,serif";
+    const pw=g.measureText(honor).width+62;
+    this.roundRect(g,(W-pw)/2,y-28,pw,46,23);g.fillStyle=th.pill;g.fill();
+    g.fillStyle='#fff';g.textBaseline='middle';g.fillText(honor,W/2,y-4);g.textBaseline='alphabetic';
+    y+=52;
+    g.fillStyle=th.accent;g.font="900 22px 'Songti SC',Georgia,serif";
+    g.fillText(statLine,W/2,y);y+=30;
+    if(best){g.fillStyle='#8fb4d6';g.font="15px 'Songti SC',Georgia,serif";g.fillText(best,W/2,y);y+=8;}
+    g.fillStyle='rgba(127,208,255,.45)';g.font="italic 14px 'Songti SC',Georgia,serif";
+    g.fillText('～ 三视图 · 展开与折叠 · 玩转空间 ～',W/2,H-30);
+    return cv;
+  },
+  build(imgId,opts){
+    const cv=this.render(opts);
+    let url;try{url=cv.toDataURL('image/png');}catch(e){url='';}
+    if(url)document.getElementById(imgId).src=url;
+  }
+};
+
 /* ===================== 关卡流程 ===================== */
 const $=id=>document.getElementById(id);
 const ROUND=8;
@@ -413,11 +479,12 @@ const Game={
   toEntry(){UI.show('entry');},
   finish(){
     UI.show('result');Audio8.sfx.win();
-    const full=ROUND*10, star=score>=full?3:score>=full*0.7?2:1;
-    $('rStars').textContent='★★★'.slice(0,star)+'☆☆☆'.slice(0,3-star);
-    $('rTitle').textContent=star===3?'完美验收！':star===2?'验收合格！':'继续加油！';
-    $('rText').innerHTML=`本轮得分 <b style="color:var(--glow)">${score}</b> / ${full}。<br>`+
-      (star===3?'你已经能一眼看出展开图能不能折成正方体啦！':'多折几张，慢慢就有手感了。');
+    const full=ROUND*10, tier=score>=full?3:score>=full*0.7?2:1;
+    const prev=+(localStorage.getItem('fw_fold_best')||0);
+    if(score>prev)localStorage.setItem('fw_fold_best',score);
+    const best=Math.max(score,prev);
+    ResultCard.build('rCard',{tier,sub:'折叠工坊 · 展开与折叠',
+      statLine:'📐 得分 '+score+' / '+full,best:'历史最高 '+best+' 分'});
   }
 };
 
