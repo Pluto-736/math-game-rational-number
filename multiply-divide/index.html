@@ -218,9 +218,9 @@ html,body{
 
 /* 结算 */
 #over{ background:rgba(8,10,24,.95); z-index:60; }
-#over .title{ font-size:30px; color:var(--gold); margin-bottom:18px; }
-#over .stats{ font-size:17px; line-height:2.2; text-align:center; margin-bottom:24px; }
-#over .stats b{ color:var(--gold); }
+#overCard{ max-width:min(94vw,420px); max-height:72vh; max-height:72dvh; width:auto; height:auto;
+  border-radius:16px; box-shadow:0 12px 36px rgba(0,0,0,.55); margin-bottom:12px; }
+#over .card-hint{ font-size:12px; color:rgba(255,255,255,.6); letter-spacing:1px; margin-bottom:18px; }
 
 /* 提示气泡 */
 #toast{ position:absolute; top:30%; left:50%; transform:translateX(-50%); z-index:55;
@@ -228,9 +228,16 @@ html,body{
 #toast.show{ animation:toast .8s forwards; }
 @keyframes toast{ 0%{ opacity:0; transform:translateX(-50%) scale(.6);} 30%{ opacity:1; transform:translateX(-50%) scale(1.1);} 100%{ opacity:0; transform:translateX(-50%) translateY(-30px);} }
 </style>
-<!-- 51.la 访问统计 -->
-<script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
-<script>LA.init({id:"3QacsvaHgKQ6M8cx",ck:"3QacsvaHgKQ6M8cx"})</script>
+<!-- 51.la 访问统计（异步加载，不阻塞页面） -->
+<script>
+(function(){
+  var s=document.createElement('script');
+  s.async=true; s.charset='UTF-8'; s.id='LA_COLLECT';
+  s.src='//sdk.51.la/js-sdk-pro.min.js';
+  s.onload=function(){ LA.init({id:"3QacsvaHgKQ6M8cx",ck:"3QacsvaHgKQ6M8cx"}); };
+  document.head.appendChild(s);
+})();
+</script>
 </head>
 <body>
 <div id="app">
@@ -308,8 +315,8 @@ html,body{
 
   <!-- 结算 -->
   <div id="over" class="screen">
-    <div class="title" id="overTitle">游戏结束</div>
-    <div class="stats" id="overStats"></div>
+    <img id="overCard" alt="正负狂飙 · 车手战报">
+    <div class="card-hint">长按卡片可保存战报图</div>
     <button class="btn" onclick="Flow.retry()">↺ 再玩本关</button>
     <button class="btn ghost" onclick="UI.toEntry()">选关卡</button>
   </div>
@@ -615,6 +622,165 @@ const UI = {
   }
 };
 
+/* ============ 车手战报卡（赛车冠军证书风·纯canvas） ============ */
+const ResultCard = {
+  // 按得分分档：<80 铜 / 80-159 银 / >=160 金
+  tierOf(score){ if(score>=160) return 2; if(score>=80) return 1; return 0; },
+  TITLES: ['新手上路', '疾风车手', '冠军车神'],
+  THEME: [
+    { c1:'#fbeee2', c2:'#efd6be', accent:'#b06a2e', tint:'#8a4f22', metal:'#c8792e' }, // 铜
+    { c1:'#eef1f5', c2:'#d2dae4', accent:'#68788c', tint:'#4a5666', metal:'#aab4c2' }, // 银
+    { c1:'#fdf3d6', c2:'#f4e0a6', accent:'#c79a1f', tint:'#8a6614', metal:'#f5c518' }  // 金
+  ],
+  BLESS: [
+    ['起步稳稳，方向感十足，', '正负乘除的路你已经上道啦！'],
+    ['风驰电掣，符号判断利落，', '正负乘除越跑越顺手！'],
+    ['一骑绝尘，全程零失误，', '正负乘除已被你彻底征服！']
+  ],
+
+  roundRect(g,x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y);
+    g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r);
+    g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); },
+
+  // 棋格旗带（横向），用于顶部装饰
+  checkerRow(g,x,y,w,h,cols){
+    const cw=w/cols, rows=2, ch=h/rows;
+    for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+      g.fillStyle=((r+c)%2===0)?'#1a1a2e':'#f6f8ff';
+      g.fillRect(x+c*cw, y+r*ch, cw+0.5, ch+0.5);
+    }
+  },
+
+  // 奖杯
+  trophy(g,cx,cy,s,metal){
+    g.fillStyle=metal;
+    // 杯身
+    g.beginPath();
+    g.moveTo(cx-s*0.6,cy-s);
+    g.lineTo(cx+s*0.6,cy-s);
+    g.lineTo(cx+s*0.42,cy+s*0.2);
+    g.lineTo(cx-s*0.42,cy+s*0.2);
+    g.closePath(); g.fill();
+    // 双耳
+    g.lineWidth=s*0.16; g.strokeStyle=metal;
+    g.beginPath(); g.arc(cx-s*0.6,cy-s*0.55,s*0.34,Math.PI*0.5,Math.PI*1.5,true); g.stroke();
+    g.beginPath(); g.arc(cx+s*0.6,cy-s*0.55,s*0.34,Math.PI*1.5,Math.PI*0.5,true); g.stroke();
+    // 底座
+    g.fillRect(cx-s*0.12,cy+s*0.2,s*0.24,s*0.35);
+    g.fillRect(cx-s*0.5,cy+s*0.55,s*1.0,s*0.22);
+    // 高光星
+    g.fillStyle='rgba(255,255,255,.7)';
+    g.font='700 '+Math.round(s*0.7)+'px Georgia,serif'; g.textAlign='center'; g.textBaseline='middle';
+    g.fillText('★',cx,cy-s*0.34);
+  },
+
+  render(opts){
+    const { tier, level, levelName, score, maxCombo, passed, best } = opts;
+    const th=this.THEME[tier];
+    const dpr=Math.min(window.devicePixelRatio||1,3);
+    const W=480, H=650;
+    const cv=document.createElement('canvas');
+    cv.width=W*dpr; cv.height=H*dpr;
+    const g=cv.getContext('2d'); g.scale(dpr,dpr); g.textAlign='center';
+
+    // 背景渐变
+    const bg=g.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0,th.c1); bg.addColorStop(1,th.c2);
+    g.fillStyle=bg; g.fillRect(0,0,W,H);
+    // 斜向速度线装饰
+    g.strokeStyle='rgba(0,0,0,.05)'; g.lineWidth=8;
+    for(let i=-2;i<10;i++){ g.beginPath(); g.moveTo(i*70,0); g.lineTo(i*70-120,H); g.stroke(); }
+
+    // 外框
+    g.strokeStyle=th.accent; g.lineWidth=6;
+    this.roundRect(g,16,16,W-32,H-32,24); g.stroke();
+    g.strokeStyle='rgba(255,255,255,.6)'; g.lineWidth=2;
+    this.roundRect(g,25,25,W-50,H-50,18); g.stroke();
+
+    // 顶部棋格旗带
+    g.save();
+    this.roundRect(g,25,25,W-50,30,0); g.clip();
+    this.checkerRow(g,25,25,W-50,30,16);
+    g.restore();
+
+    // 标题
+    g.fillStyle=th.tint;
+    g.font="700 30px 'Songti SC',Georgia,serif";
+    g.fillText('🏁 正负狂飙', W/2, 96);
+    g.font="700 20px 'Songti SC',Georgia,serif";
+    g.fillText('车 手 战 报', W/2, 128);
+
+    let y=172;
+    // 关卡结果行
+    g.fillStyle=th.tint; g.font="700 21px 'Songti SC',Georgia,serif";
+    g.fillText('第 '+level+' 关 · '+levelName+(passed?' · 通关':' · 挑战'), W/2, y);
+    y+=34;
+
+    // 星级
+    const star=tier+1;
+    g.font='26px Georgia,serif';
+    g.fillText('⭐'.repeat(star)+'☆'.repeat(3-star), W/2, y+2);
+    y+=48;
+
+    // 主视觉框：奖杯 + 赛车
+    const boxX=54, boxW=W-108, boxY=y, boxH=140;
+    this.roundRect(g,boxX,boxY,boxW,boxH,16);
+    g.fillStyle='rgba(255,255,255,.5)'; g.fill();
+    g.strokeStyle=th.accent; g.lineWidth=2;
+    this.roundRect(g,boxX,boxY,boxW,boxH,16); g.stroke();
+    // 共同地面基线：奖杯底座与领奖台底边对齐
+    const baseY = boxY+boxH-24;
+    // 奖杯（左）
+    this.trophy(g, boxX+70, baseY-34*0.77, 34, th.metal);
+    // 领奖台 + 赛车（右）
+    const podX=boxX+boxW*0.62, podH=30, podY=baseY-podH;
+    g.fillStyle=th.accent;
+    g.fillRect(podX-30, podY, 60, podH);      // 台
+    g.fillStyle=th.metal; g.fillRect(podX-30, podY, 60, 6);
+    g.font='48px serif'; g.textAlign='center'; g.textBaseline='alphabetic';
+    g.fillText(passed?'🏎️':'🚗', podX, podY-6);
+    g.textBaseline='alphabetic';
+    y=boxY+boxH+42;
+
+    // 称号药丸
+    const honor=this.TITLES[tier];
+    g.textAlign='center'; g.textBaseline='alphabetic';
+    g.font="700 25px 'Songti SC',Georgia,serif";
+    const pw=g.measureText(honor).width+60;
+    this.roundRect(g,(W-pw)/2,y-28,pw,46,23);
+    g.fillStyle=th.accent; g.fill();
+    g.fillStyle='#fff'; g.textBaseline='middle';
+    g.fillText(honor, W/2, y-4);
+    g.textBaseline='alphabetic';
+    y+=52;
+
+    // 祝福语两行
+    g.fillStyle=th.tint; g.font="18px 'Songti SC',Georgia,serif";
+    const bless=this.BLESS[tier];
+    g.fillText(bless[0], W/2, y); y+=28;
+    g.fillText(bless[1], W/2, y); y+=42;
+
+    // 数据行
+    g.fillStyle=th.accent; g.font="700 23px 'Songti SC',Georgia,serif";
+    g.fillText('🏆 得分 '+score+'    ⚡ 最高连击 '+maxCombo, W/2, y); y+=32;
+    g.fillStyle=th.tint; g.font="16px 'Songti SC',Georgia,serif";
+    g.fillText('历史最高 '+best+' 分', W/2, y);
+
+    // 尾注
+    g.fillStyle='rgba(0,0,0,.4)'; g.font="italic 14px 'Songti SC',Georgia,serif";
+    g.fillText('～ 看符号，稳过弯 ～', W/2, H-30);
+
+    return cv;
+  },
+
+  build(opts){
+    const cv=this.render(opts);
+    let url;
+    try{ url=cv.toDataURL('image/png'); }catch(e){ url=''; }
+    if(url) document.getElementById('overCard').src=url;
+  }
+};
+
 /* ============ 公共：分数/命/键盘/结算 ============ */
 const Flow = {
   level:1, lives:3, score:0, combo:0, maxCombo:0, cleared:0, goal:8, scene:0,
@@ -699,21 +865,21 @@ const Flow = {
 
   win(){
     this.stop(); SFX.level();
-    const best=+(localStorage.getItem('zfkb_best')||0); if(this.score>best) localStorage.setItem('zfkb_best',this.score);
-    let newly=false;
+    const best0=+(localStorage.getItem('zfkb_best')||0); if(this.score>best0) localStorage.setItem('zfkb_best',this.score);
     // 只解锁到第2关（第3关暂未开放）
-    if(this.level<2 && UI.unlocked<this.level+1){ UI.unlocked=this.level+1; localStorage.setItem('zfkb_unlocked',UI.unlocked); newly=true; }
-    const nextTxt = this.level===1 ? (newly?'🎉 解锁第2关：'+UI.LV[2].name+'！':'再接再厉！')
-                                   : '🎉 恭喜！已完成全部关卡！';
-    document.getElementById('overTitle').textContent='🎉 过关';
-    document.getElementById('overStats').innerHTML='<b>第'+this.level+'关 · 通关！</b><br>得分 <b>'+this.score+'</b>　最高连击 <b>'+this.maxCombo+'</b><br><br><span style="color:var(--gold)">'+nextTxt+'</span>';
-    setTimeout(()=>UI.show('over'),500);
+    if(this.level<2 && UI.unlocked<this.level+1){ UI.unlocked=this.level+1; localStorage.setItem('zfkb_unlocked',UI.unlocked); }
+    this.showCard(true);
   },
   over(){
     this.stop(); SFX.over();
-    const best=+(localStorage.getItem('zfkb_best')||0); if(this.score>best) localStorage.setItem('zfkb_best',this.score);
-    document.getElementById('overTitle').textContent='游戏结束';
-    document.getElementById('overStats').innerHTML='第'+this.level+'关 · '+UI.LV[this.level].name+'<br>通过 <b>'+this.cleared+'</b>/'+this.goal+'　得分 <b>'+this.score+'</b><br>历史最高 <b>'+(localStorage.getItem('zfkb_best')||0)+'</b><br><br><span style="opacity:.8">再试一次！</span>';
+    const best0=+(localStorage.getItem('zfkb_best')||0); if(this.score>best0) localStorage.setItem('zfkb_best',this.score);
+    this.showCard(false);
+  },
+  showCard(passed){
+    const best=+(localStorage.getItem('zfkb_best')||0);
+    const tier=ResultCard.tierOf(this.score);
+    ResultCard.build({ tier, level:this.level, levelName:UI.LV[this.level].name,
+      score:this.score, maxCombo:this.maxCombo, passed, best });
     setTimeout(()=>UI.show('over'),500);
   },
 

@@ -525,7 +525,7 @@ const Game = {
   fishes:[], fishId:0,
   lastTs:0, spawnAcc:0, flipAcc:0, raf:0,
   unlocked: Math.max(1, +(localStorage.getItem('zf_unlocked')||1)),
-  best: +(localStorage.getItem('zf_best')||0),
+  best: +(localStorage.getItem('zf_fish_best')||0),
 
   LV:[ null,
     { name:'固定网', desc:'整局网符号不变，专心判正负捞鱼', dur:60, flip:0,  spawn:0.75, zeroRate:0.16 },
@@ -773,7 +773,7 @@ const Game = {
     // 清场
     document.getElementById('wrongBox').classList.remove('show');
     SFX.over();
-    if(this.caught>this.best){ this.best=this.caught; localStorage.setItem('zf_best', this.best); }
+    if(this.caught>this.best){ this.best=this.caught; localStorage.setItem('zf_fish_best', this.best); }
 
     // 过关判定：捞够目标即解锁下一关（第1关目标8条，第2关10条）
     const goal = this.level===1 ? 8 : 10;
