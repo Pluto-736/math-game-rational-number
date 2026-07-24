@@ -111,7 +111,7 @@ h1 {
   <h1>🎮 有道数学游戏厅</h1>
   <p class="subtitle">初一数学趣味闯关</p>
   <div class="game-list">
-    <a class="game-card" href="rational-number-classify.html" data-unlock="2026-07-13">
+    <a class="game-card" href="rational-number-classify.html" data-unlock="2026-07-13;2026-07-25;2026-08-06">
       <div class="icon">🐾</div>
       <div class="info">
         <div class="name">有理数大冒险</div>
@@ -119,7 +119,7 @@ h1 {
         <span class="tag">有理数分类</span>
       </div>
     </a>
-    <a class="game-card" href="absolute-value/index.html" data-unlock="2026-07-14">
+    <a class="game-card" href="absolute-value/index.html" data-unlock="2026-07-14;2026-07-26;2026-08-07">
       <div class="icon">💥</div>
       <div class="info">
         <div class="name">化简大作战</div>
@@ -127,7 +127,7 @@ h1 {
         <span class="tag">符号化简 · 绝对值</span>
       </div>
     </a>
-    <a class="game-card" href="add-subtract/index.html" data-unlock="2026-07-15">
+    <a class="game-card" href="add-subtract/index.html" data-unlock="2026-07-15;2026-07-27;2026-08-08">
       <div class="icon">🎣</div>
       <div class="info">
         <div class="name">正负捕鱼</div>
@@ -135,7 +135,7 @@ h1 {
         <span class="tag">有理数加减 · 正负判断</span>
       </div>
     </a>
-    <a class="game-card" href="multiply-divide/index.html" data-unlock="2026-07-16">
+    <a class="game-card" href="multiply-divide/index.html" data-unlock="2026-07-16;2026-07-28;2026-08-09">
       <div class="icon">🏎️</div>
       <div class="info">
         <div class="name">正负狂飙</div>
@@ -143,7 +143,7 @@ h1 {
         <span class="tag">有理数乘除 · 符号法则</span>
       </div>
     </a>
-    <a class="game-card" href="power-factory/index.html" data-unlock="2026-07-17">
+    <a class="game-card" href="power-factory/index.html" data-unlock="2026-07-17;2026-07-29;2026-08-10">
       <div class="icon">🏭</div>
       <div class="info">
         <div class="name">幂能工坊</div>
@@ -151,7 +151,7 @@ h1 {
         <span class="tag">有理数乘方 · 符号法则</span>
       </div>
     </a>
-    <a class="game-card" href="polynomial-match/index.html" data-unlock="2026-07-19">
+    <a class="game-card" href="polynomial-match/index.html" data-unlock="2026-07-19;2026-07-31;2026-08-12">
       <div class="icon">🎡</div>
       <div class="info">
         <div class="name">转动的整式</div>
@@ -159,7 +159,7 @@ h1 {
         <span class="tag">整式概念 · 次数与项数</span>
       </div>
     </a>
-    <a class="game-card" href="bracket-merge/index.html" data-unlock="2026-07-20">
+    <a class="game-card" href="bracket-merge/index.html" data-unlock="2026-07-20;2026-08-01;2026-08-13">
       <div class="icon">🔐</div>
       <div class="info">
         <div class="name">开锁特工</div>
@@ -167,7 +167,7 @@ h1 {
         <span class="tag">同类项 · 去括号</span>
       </div>
     </a>
-    <a class="game-card" href="equation-tower/index.html" data-unlock="2026-07-21">
+    <a class="game-card" href="equation-tower/index.html" data-unlock="2026-07-21;2026-08-02;2026-08-14">
       <div class="icon">🗼</div>
       <div class="info">
         <div class="name">方程魔塔</div>
@@ -175,7 +175,7 @@ h1 {
         <span class="tag">一元一次方程 · 解方程</span>
       </div>
     </a>
-    <a class="game-card" href="fold-workshop/index.html" data-unlock="2026-07-22">
+    <a class="game-card" href="fold-workshop/index.html" data-unlock="2026-07-22;2026-08-03;2026-08-15">
       <div class="icon">🏗️</div>
       <div class="info">
         <div class="name">立体几何工坊</div>
@@ -183,7 +183,7 @@ h1 {
         <span class="tag">三视图 · 展开与折叠</span>
       </div>
     </a>
-    <a class="game-card" href="observatory/index.html" data-unlock="2026-07-23">
+    <a class="game-card" href="observatory/index.html" data-unlock="2026-07-23;2026-08-04;2026-08-16">
       <div class="icon">🔭</div>
       <div class="info">
         <div class="name">天文观测台</div>
@@ -196,10 +196,22 @@ h1 {
 <script>
 (function () {
   var now = new Date();
+  // 各期的当天解锁时点(小时)：第一期 12:00，第二期 18:00，第三期 12:00。数组长度 = 已开办的期数。
+  var UNLOCK_HOUR = [12, 18, 12];
+  var LATEST = UNLOCK_HOUR.length; // 最新一期
+  // 分期：链接带 ?c=N 走第 N 期。**不带参数默认落到最新一期**——这样删掉后缀不会掉进"日期全过、等于全开"的旧期，
+  // 反而落到还没到点的最新期(照样被锁)，堵住"去后缀就全解锁"的漏洞。老一期孩子用 ?c=1。
+  var m = location.search.match(/[?&]c=(\d+)/);
+  var phase = m ? parseInt(m[1], 10) : LATEST;
+  if (!(phase >= 1)) phase = LATEST;
+  if (phase > LATEST) phase = LATEST;
+  var hour = UNLOCK_HOUR[phase - 1] != null ? UNLOCK_HOUR[phase - 1] : UNLOCK_HOUR[UNLOCK_HOUR.length - 1];
   document.querySelectorAll('.game-card[data-unlock]').forEach(function (card) {
-    var parts = card.getAttribute('data-unlock').split('-');
-    // 解锁时点：当天 12:00
-    var unlock = new Date(+parts[0], +parts[1] - 1, +parts[2], 12, 0, 0, 0);
+    // data-unlock 可含多期日期，用 ; 分隔：第一期;第二期;…；某期缺失则回退到最后一个已有日期
+    var list = card.getAttribute('data-unlock').split(';');
+    var raw = list[phase - 1] || list[list.length - 1];
+    var parts = raw.split('-');
+    var unlock = new Date(+parts[0], +parts[1] - 1, +parts[2], hour, 0, 0, 0);
     if (now >= unlock) return;
     card.classList.add('locked');
     card.addEventListener('click', function (e) { e.preventDefault(); });
