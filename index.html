@@ -96,9 +96,16 @@ h1 {
   text-align: center;
 }
 </style>
-<!-- 51.la 访问统计 -->
-<script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
-<script>LA.init({id:"3QacsvaHgKQ6M8cx",ck:"3QacsvaHgKQ6M8cx"})</script>
+<!-- 51.la 访问统计（异步加载，不阻塞页面） -->
+<script>
+(function(){
+  var s=document.createElement('script');
+  s.async=true; s.charset='UTF-8'; s.id='LA_COLLECT';
+  s.src='//sdk.51.la/js-sdk-pro.min.js';
+  s.onload=function(){ LA.init({id:"3QacsvaHgKQ6M8cx",ck:"3QacsvaHgKQ6M8cx"}); };
+  document.head.appendChild(s);
+})();
+</script>
 </head>
 <body>
   <h1>🎮 有道数学游戏厅</h1>

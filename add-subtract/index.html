@@ -35,23 +35,38 @@ html,body{
 .btn:active{ transform:translateY(4px); box-shadow:0 1px 0 #b8860b; }
 .btn.ghost{ background:rgba(255,255,255,.16); color:#fff; box-shadow:0 5px 0 rgba(0,0,0,.3); }
 
-/* 入口页 */
-#entry{ background:linear-gradient(135deg,var(--neg2) 0%,#0a2540 50%,var(--pos2) 100%); }
+/* 入口页 · 海洋深水风 */
+#entry{ overflow:hidden; background:
+  radial-gradient(circle at 25% 12%, rgba(130,205,255,.22), transparent 46%),
+  radial-gradient(circle at 82% 84%, rgba(70,200,180,.14), transparent 44%),
+  linear-gradient(180deg,#0a3550 0%, var(--water) 46%, var(--water2) 100%); }
+/* 漂浮气泡装饰 */
+#entry .bubble{ position:absolute; border-radius:50%; pointer-events:none;
+  background:radial-gradient(circle at 34% 30%, rgba(255,255,255,.45), rgba(255,255,255,.06) 62%, transparent 70%);
+  border:1px solid rgba(255,255,255,.18); animation:bubbleUp linear infinite; }
+@keyframes bubbleUp{ 0%{ transform:translateY(0) scale(1); opacity:0; }
+  12%{ opacity:.8; } 100%{ transform:translateY(-120px) scale(1.15); opacity:0; } }
 #entry .title{ font-size:44px; font-weight:900; letter-spacing:3px; margin-bottom:10px;
-  text-shadow:3px 3px 0 rgba(0,0,0,.4); }
+  text-shadow:3px 3px 0 rgba(0,0,0,.4); position:relative; z-index:2; }
 #entry .title .b{ color:#6fa8ff; } #entry .title .r{ color:#ff8a6f; }
-#entry .sub{ font-size:15px; opacity:.85; margin-bottom:40px; }
+#entry .sub{ font-size:15px; color:#bfe6ff; opacity:.9; margin-bottom:40px; position:relative; z-index:2; }
 .entry-foot{ position:absolute; bottom:18px; font-size:13px; opacity:.7; }
 .entry-foot a{ color:var(--gold); text-decoration:none; }
 
-/* 关卡选择菜单 */
-#levelMenu{ display:flex; flex-direction:column; gap:14px; width:100%; max-width:340px; margin-bottom:18px; }
-.lvCard{ display:flex; align-items:center; gap:14px; background:rgba(255,255,255,.14);
-  border-radius:16px; padding:16px 18px; cursor:pointer; border:2px solid transparent; transition:transform .12s, background .12s; }
+/* 关卡选择菜单 · 海洋水牌风 */
+#levelMenu{ display:flex; flex-direction:column; gap:14px; width:100%; max-width:340px; margin-bottom:18px; position:relative; z-index:2; }
+.lvCard{ display:flex; align-items:center; gap:14px;
+  background:linear-gradient(160deg, rgba(22,96,130,.62), rgba(8,52,74,.8));
+  border-radius:16px; padding:16px 18px; cursor:pointer;
+  border:2px solid rgba(130,205,255,.32);
+  box-shadow:0 5px 0 rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.14);
+  transition:transform .12s, background .12s; }
 .lvCard:active{ transform:scale(.97); }
-.lvCard:not(.locked):hover{ background:rgba(255,255,255,.24); }
-.lvCard .lvNo{ font-size:30px; font-weight:900; width:46px; height:46px; flex-shrink:0;
-  display:flex; align-items:center; justify-content:center; border-radius:12px; background:rgba(0,0,0,.25); }
+.lvCard:not(.locked):hover{ background:linear-gradient(160deg, rgba(30,120,160,.7), rgba(12,66,92,.85)); }
+.lvCard .lvNo{ font-size:26px; font-weight:900; width:46px; height:46px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; border-radius:50%;
+  background:radial-gradient(circle at 38% 32%, #2b7bb0, #08344a);
+  border:2px solid rgba(255,255,255,.25); box-shadow:inset 0 2px 4px rgba(0,0,0,.4); }
 .lvCard .lvInfo{ flex:1; text-align:left; }
 .lvCard .lvName{ font-size:17px; font-weight:bold; margin-bottom:3px; }
 .lvCard .lvDesc{ font-size:12px; opacity:.82; line-height:1.4; }
@@ -98,6 +113,20 @@ html,body{
   background:rgba(0,0,0,.35); border-radius:8px; overflow:hidden; border:1px solid rgba(255,255,255,.2); }
 #timeBar{ height:100%; width:100%; background:linear-gradient(90deg,#4be08a,#ffd23f); transition:width .25s linear; }
 #timeBar.low{ background:linear-gradient(90deg,#ff5a3a,#ff8a3a); }
+
+/* 捞鱼计数：计时条下方，从右往左排小鱼，颜色对应鱼身随机色 */
+#catchTally{ position:absolute; top:88px; right:22px; max-width:46vw; height:20px; z-index:20;
+  display:flex; flex-direction:row-reverse; align-items:center; gap:3px;
+  overflow:hidden; pointer-events:none; }
+.miniFish{ position:relative; width:15px; height:10px; flex-shrink:0;
+  border-radius:50% 50% 50% 50% / 62% 62% 40% 40%;
+  background:currentColor; animation:miniPop .3s ease;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.4)); }
+.miniFish::after{ content:''; position:absolute; left:-4px; top:50%; transform:translateY(-50%);
+  border:4px solid transparent; border-right:5px solid currentColor; }
+.miniFish.c0{ color:#e8622e; } .miniFish.c1{ color:#2b6cd8; } .miniFish.c2{ color:#1f9e6e; }
+.miniFish.c3{ color:#8a4fd8; } .miniFish.c4{ color:#d89a1f; } .miniFish.c5{ color:#d83f77; }
+@keyframes miniPop{ 0%{ transform:scale(0);} 70%{ transform:scale(1.25);} 100%{ transform:scale(1);} }
 
 /* 当前网大牌：圆形捕鱼网(网格纹) + 大符号 */
 #netBadge{ position:absolute; top:90px; left:50%; transform:translateX(-50%); z-index:19;
@@ -198,6 +227,10 @@ html,body{
 <div id="app">
   <!-- 入口页 -->
   <div id="entry" class="screen show">
+    <div class="bubble" style="width:26px;height:26px;left:12%;bottom:18%;animation-duration:7s;"></div>
+    <div class="bubble" style="width:16px;height:16px;left:20%;bottom:30%;animation-duration:5.5s;animation-delay:1.2s;"></div>
+    <div class="bubble" style="width:34px;height:34px;right:14%;bottom:12%;animation-duration:8.5s;animation-delay:.6s;"></div>
+    <div class="bubble" style="width:18px;height:18px;right:24%;bottom:26%;animation-duration:6.5s;animation-delay:2s;"></div>
     <div class="title"><span class="b">正</span>负<span class="r">捕鱼</span></div>
     <div class="sub">看符号，下对网 · 有理数加减</div>
     <div id="levelMenu"></div>
@@ -227,6 +260,7 @@ html,body{
     </div>
     <div id="levelLbl"></div>
     <div id="timeWrap"><div id="timeBar"></div></div>
+    <div id="catchTally"></div>
     <div id="netBadge"><div class="netSign pos"><span>＋</span></div><div class="netTxt">正网 · 捞正鱼</div></div>
     <div id="pond"></div>
     <div id="flash"></div>
@@ -544,6 +578,7 @@ const Game = {
     this.netSign = Math.random()<0.5 ? 'pos' : 'neg';
     UI.help(false); UI.show('game');
     document.getElementById('pond').innerHTML='';
+    document.getElementById('catchTally').innerHTML='';
     this.buildLanes();
     this.renderNets(); this.renderNetBadge(false); this.updateHud(); this.updateTimeBar();
     // 预放几条鱼（不超过泳道数）
@@ -646,7 +681,7 @@ const Game = {
     if(initial){ x = this.rnd(20, Math.max(40, Wp-w-20)); }
     const speed = (42 + this.prog()*80 + Math.random()*16) * dir; // px/s，前期稳、后期明显加快
 
-    const fish={ id:++this.fishId, el, x, y, w, dir, speed, q, dead:false, lane:laneIdx };
+    const fish={ id:++this.fishId, el, x, y, w, dir, speed, q, dead:false, lane:laneIdx, color };
     el.style.left='0'; el.style.top='0';
     el.style.transform='translate('+x+'px,'+y+'px)';
     el.addEventListener('click', ()=>this.tapFish(fish));
@@ -676,6 +711,10 @@ const Game = {
       this.flash('good');
       setTimeout(()=>{ if(fish.el.parentNode) fish.el.remove(); }, 460);
       this.fishes=this.fishes.filter(f=>f!==fish);
+      // 计时条下方追加一条小鱼（颜色对应鱼身随机色，row-reverse 使最新在最右）
+      const mf=document.createElement('div');
+      mf.className='miniFish '+fish.color;
+      document.getElementById('catchTally').appendChild(mf);
       this.updateHud();
     } else {
       // 异号 或 零鱼：废网 + 弹答案
@@ -795,8 +834,9 @@ const Game = {
       const locked = lv > this.unlocked;
       const c=document.createElement('div');
       c.className='lvCard'+(locked?' locked':'');
+      const emo = lv===1 ? '🎣' : '🌀';
       c.innerHTML='<div class="lvNo">'+lv+'</div>'+
-        '<div class="lvInfo"><div class="lvName">第'+lv+'关 · '+this.LV[lv].name+'</div>'+
+        '<div class="lvInfo"><div class="lvName">'+emo+' 第'+lv+'关 · '+this.LV[lv].name+'</div>'+
         '<div class="lvDesc">'+this.LV[lv].desc+'</div>'+
         (locked?'<div class="lvStar">🔒 通关上一关解锁</div>':'<div class="lvStar">点击进入</div>')+'</div>';
       if(!locked) c.onclick=()=>this.startLevel(lv);
