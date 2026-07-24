@@ -196,15 +196,18 @@ h1 {
 <script>
 (function () {
   var now = new Date();
-  // 各期的当天解锁时点(小时)：第一期 12:00，第二期 18:00，第三期 12:00。数组长度 = 已开办的期数。
+  // 各期的当天解锁时点(小时)：第一期 12:00，第二期 18:00，第三期 12:00。数组长度 = 已录入的期数。
   var UNLOCK_HOUR = [12, 18, 12];
-  var LATEST = UNLOCK_HOUR.length; // 最新一期
-  // 分期：链接带 ?c=N 走第 N 期。**不带参数默认落到最新一期**——这样删掉后缀不会掉进"日期全过、等于全开"的旧期，
-  // 反而落到还没到点的最新期(照样被锁)，堵住"去后缀就全解锁"的漏洞。老一期孩子用 ?c=1。
+  var MAXP = UNLOCK_HOUR.length;
+  // CURRENT = 当前正在开班的期。裸链接(无 ?c=)默认落到这一期。
+  // 每期结束、下一期开班时，把 CURRENT 改成下一期号即可（现在第二期在上课→CURRENT=2；
+  // 第三期日期虽已录入，但要等第二期结束再把 CURRENT 改成 3）。
+  // 这样删掉后缀不会掉进"日期全过、等于全开"的往期，而是落到当前期(未到点仍锁)，堵住"去后缀就全解锁"。
+  var CURRENT = 2;
   var m = location.search.match(/[?&]c=(\d+)/);
-  var phase = m ? parseInt(m[1], 10) : LATEST;
-  if (!(phase >= 1)) phase = LATEST;
-  if (phase > LATEST) phase = LATEST;
+  var phase = m ? parseInt(m[1], 10) : CURRENT;
+  if (!(phase >= 1)) phase = CURRENT;
+  if (phase > MAXP) phase = CURRENT;
   var hour = UNLOCK_HOUR[phase - 1] != null ? UNLOCK_HOUR[phase - 1] : UNLOCK_HOUR[UNLOCK_HOUR.length - 1];
   document.querySelectorAll('.game-card[data-unlock]').forEach(function (card) {
     // data-unlock 可含多期日期，用 ; 分隔：第一期;第二期;…；某期缺失则回退到最后一个已有日期
